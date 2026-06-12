@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>电商评论洞察分析工具</title>
+<!-- SheetJS for Excel/CSV parsing -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+/* ===== Reset & Base ===== */
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',sans-serif;font-size:14px;color:#333;background:#f0f2f5}
+h4,h5{margin:0 0 8px 0;font-weight:600}
+:root{--primary:#6366f1;--primary-dark:#4f46e5;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--sidebar-w:220px}
+
+/* ===== Sidebar ===== */
+.sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:linear-gradient(180deg,#1e1b4b 0%,#312e81 100%);color:#fff;z-index:1000;overflow-y:auto;box-shadow:2px 0 8px rgba(0,0,0,.1)}
+.sidebar .logo{padding:18px 16px;font-size:16px;font-weight:700;border-bottom:1px solid rgba(255,255,255,.12);display:flex;align-items:center;gap:8px}
+.sidebar .nav-item{display:flex;align-items:center;gap:10px;padding:12px 20px;color:rgba(255,255,255,.7);cursor:pointer;border-left:3px solid transparent;font-size:14px;transition:all .2s;user-select:none}
+.sidebar .nav-item:hover{color:#fff;background:rgba(255,255,255,.08)}
+.sidebar .nav-item.active{color:#fff;background:rgba(255,255,255,.12);border-left-color:#a5b4fc}
+
+/* ===== Main ===== */
+.main-content{margin-left:var(--sidebar-w);padding:24px;min-height:100vh}
+.page{display:none}
+.page.active{display:block}
+
+/* ===== Cards ===== */
+.card{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:16px}
+.card-header{padding:14px 20px;font-weight:600;font-size:15px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center}
+.card-body{padding:20px}
+
+/* ===== KPI ===== */
+.kpi-cards{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.kpi-card{flex:1;min-width:180px;background:#fff;border-radius:10px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.kpi-card .kpi-label{font-size:12px;color:#888;margin-bottom:4px}
+.kpi-card .kpi-value{font-size:24px;font-weight:700;color:#1e1b4b}
+.kpi-card .kpi-sub{font-size:11px;color:#aaa;margin-top:2px}
+
+/* ===== Buttons ===== */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:1px solid #ddd;font-size:13px;cursor:pointer;background:#fff;color:#333;text-decoration:none;transition:all .15s}
+.btn:hover{background:#f5f5f5}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-success{background:var(--success);color:#fff;border-color:var(--success)}
+.btn-success:hover{background:#059669}
+.btn-danger{background:var(--danger);color:#fff;border-color:var(--danger)}
+.btn-danger:hover{background:#dc2626}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-lg{padding:12px 24px;font-size:15px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ===== Forms ===== */
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:13px;font-weight:600;color:#555;margin-bottom:4px}
+.form-group input,.form-group select{width:100%;border:1px solid #ddd;border-radius:8px;padding:8px 12px;font-size:13px;background:#fff}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,.1)}
+.form-group .hint{font-size:11px;color:#999;margin-top:3px}
+
+/* ===== File Upload ===== */
+.upload-zone{border:2px dashed #d1d5db;border-radius:12px;padding:48px 24px;text-align:center;cursor:pointer;transition:all .2s;background:#fafbfc}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--primary);background:#f5f3ff}
+.upload-zone .upload-icon{font-size:48px;margin-bottom:12px}
+.upload-zone .upload-text{font-size:15px;color:#555;margin-bottom:4px}
+.upload-zone .upload-hint{font-size:12px;color:#999}
+
+/* ===== Tables ===== */
+.table-container{overflow-x:auto;max-height:400px;overflow-y:auto}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 12px;text-align:left;border-bottom:1px solid #f0f0f0;font-size:13px}
+th{font-size:11px;text-transform:uppercase;color:#999;font-weight:600;background:#fafafa;white-space:nowrap;position:sticky;top:0;z-index:1}
+tr:hover{background:#fafbfc}
+
+/* ===== Column Mapping ===== */
+.mapping-row{display:flex;gap:12px;align-items:center;margin-bottom:8px;padding:8px 12px;background:#f9fafb;border-radius:8px}
+.mapping-row .source-col{flex:2;font-size:13px;font-weight:500;color:#555}
+.mapping-row select{flex:1;min-width:140px}
+.mapping-row .arrow{color:#999;font-size:16px}
+
+/* ===== Progress ===== */
+.progress-bar-wrap{height:6px;background:#e5e7eb;border-radius:3px;margin:12px 0;overflow:hidden}
+.progress-bar-fill{height:100%;background:var(--primary);border-radius:3px;transition:width .3s;width:0%}
+.progress-status{font-size:13px;color:#666;text-align:center}
+
+/* ===== Report ===== */
+.report-container{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:32px;max-width:900px;margin:0 auto;font-size:15px;line-height:1.8;white-space:pre-wrap;font-family:'Microsoft YaHei','PingFang SC',sans-serif}
+.report-toolbar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.report-empty{text-align:center;padding:60px 20px;color:#999}
+.report-empty .icon{font-size:64px;margin-bottom:16px}
+
+/* ===== Alerts ===== */
+.alert{padding:12px 18px;border-radius:8px;margin:12px 0;font-size:13px}
+.alert-info{background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe}
+.alert-danger{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+.alert-success{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
+.alert-warning{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
+
+/* ===== Badges ===== */
+.badge{display:inline-block;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600}
+.badge-primary{background:#eef2ff;color:var(--primary)}
+.badge-success{background:#ecfdf5;color:var(--success)}
+.badge-warning{background:#fffbeb;color:var(--warning)}
+.badge-danger{background:#fef2f2;color:var(--danger)}
+.badge-secondary{background:#f3f4f6;color:#666}
+
+/* ===== History ===== */
+.history-item{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #f0f0f0;cursor:pointer;transition:background .15s}
+.history-item:hover{background:#f9fafb}
+.history-item .hi-title{font-weight:600;font-size:14px}
+.history-item .hi-meta{font-size:12px;color:#999;margin-top:2px}
+.history-item .hi-actions{display:flex;gap:6px}
+
+/* ===== Tabs ===== */
+.nav-tabs{display:flex;gap:0;border-bottom:2px solid #e5e7eb;margin-bottom:20px;padding:0}
+.nav-tabs .nav-link{padding:8px 20px;cursor:pointer;color:#666;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:14px;transition:all .15s}
+.nav-tabs .nav-link.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+.nav-tabs .nav-link:hover{color:var(--primary)}
+
+/* ===== Modal ===== */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:2000;display:flex;align-items:center;justify-content:center}
+.modal{background:#fff;border-radius:12px;padding:24px;max-width:500px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal h4{margin-bottom:16px}
+.modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+
+/* ===== Utilities ===== */
+.text-muted{color:#999}
+.text-primary{color:var(--primary)}
+.text-danger{color:var(--danger)}
+.text-success{color:var(--success)}
+.fw-bold{font-weight:700}
+.d-flex{display:flex;align-items:center}
+.gap-2{gap:8px}
+.gap-3{gap:12px}
+.mb-3{margin-bottom:12px}
+.mt-3{margin-top:12px}
+.flex-1{flex:1}
+
+/* ===== Skeleton Loading ===== */
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+.skeleton{background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:800px 100%;animation:shimmer 1.5s infinite;border-radius:8px;height:16px;margin:8px 0}
+.skeleton.h-sm{height:12px;width:60%}
+.skeleton.h-lg{height:20px;width:80%}
+
+/* ===== Responsive ===== */
+@media(max-width:768px){
+  .sidebar{width:60px}
+  .sidebar .logo span,.sidebar .nav-item span:not(.nav-icon){display:none}
+  .main-content{margin-left:60px}
+  .mapping-row{flex-direction:column;align-items:stretch}
+  .report-container{padding:16px;font-size:14px}
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="logo"><span style="font-size:22px">📊</span> <span>评论洞察分析</span></div>
+  <a class="nav-item active" data-page="import">
+    <span class="nav-icon">📥</span> <span>数据导入</span>
+  </a>
+  <a class="nav-item" data-page="report">
+    <span class="nav-icon">📋</span> <span>分析报告</span>
+  </a>
+  <a class="nav-item" data-page="history">
+    <span class="nav-icon">🕒</span> <span>历史记录</span>
+  </a>
+  <a class="nav-item" data-page="settings">
+    <span class="nav-icon">⚙</span> <span>设置</span>
+  </a>
+</nav>
+
+<!-- Main Content -->
+<div class="main-content">
+
+  <!-- Page: Import -->
+  <div class="page active" id="page-import">
+    <h4 class="mb-3">📥 导入商品评论数据</h4>
+
+    <!-- Upload Zone -->
+    <div class="card">
+      <div class="card-body">
+        <div class="upload-zone" id="upload-zone">
+          <div class="upload-icon">📁</div>
+          <div class="upload-text">点击上传或拖拽文件到此处</div>
+          <div class="upload-hint">支持 .csv / .xlsx / .xls 格式</div>
+          <input type="file" id="file-input" accept=".csv,.xlsx,.xls" style="display:none">
+        </div>
+      </div>
+    </div>
+
+    <!-- Column Mapping -->
+    <div class="card" id="mapping-card" style="display:none">
+      <div class="card-header">🔗 字段映射 <span class="text-muted" style="font-weight:400;font-size:12px">— 请将文件列对应到分析所需字段</span></div>
+      <div class="card-body">
+        <div id="mapping-rows"></div>
+        <div class="d-flex gap-2 mt-3">
+          <span style="font-size:12px;color:#999;flex:1">至少需要映射"评论正文"字段才能开始分析。如果文件中缺少某些信息（如星级），对应维度将被标记为"未提及"。</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Preview -->
+    <div class="card" id="preview-card" style="display:none">
+      <div class="card-header">📋 数据预览 <span class="text-muted" style="font-weight:400;font-size:12px" id="preview-count"></span></div>
+      <div class="card-body" style="padding:0">
+        <div class="table-container" id="preview-table"></div>
+      </div>
+    </div>
+
+    <!-- Analyze Button -->
+    <div id="analyze-section" style="display:none">
+      <div id="analyze-msg"></div>
+      <div class="d-flex gap-2" style="justify-content:center;margin-top:20px">
+        <button class="btn btn-primary btn-lg" id="btn-analyze" onclick="startAnalysis()">
+          🚀 开始智能分析
+        </button>
+        <button class="btn btn-lg" id="btn-sample" onclick="loadSampleData()">
+          📦 加载示例数据
+        </button>
+      </div>
+      <div class="alert alert-info" style="text-align:center;margin-top:12px" id="analysis-info">
+        已加载 <strong id="review-count-display">0</strong> 条评论，AI 将对每条评论进行 8 个维度的深度分析并生成专业洞察报告。
+      </div>
+      <!-- API Key prompt (shown inline when key is missing) -->
+      <div id="apikey-inline-prompt" style="display:none;text-align:center;margin-top:16px;padding:16px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px">
+        <p style="color:#991b1b;font-weight:600;margin:0 0 8px">⚠ 尚未配置 API Key，分析功能无法使用</p>
+        <p style="color:#666;font-size:13px;margin:0 0 12px">请在下方输入您的 Anthropic API Key，或在「设置」页面进行配置</p>
+        <div class="d-flex gap-2" style="justify-content:center">
+          <input type="password" id="apikey-inline-input" placeholder="sk-ant-api03-..." style="flex:1;max-width:400px;font-family:monospace;padding:8px 12px;border:1px solid #ddd;border-radius:8px">
+          <button class="btn btn-primary btn-sm" onclick="saveApiKeyInline()">💾 保存并分析</button>
+          <button class="btn btn-sm" onclick="switchPage('settings')">⚙ 打开设置</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="card" id="progress-card" style="display:none">
+      <div class="card-header">⏳ 分析进度 <button class="btn btn-danger btn-sm" onclick="cancelAnalysis()" style="margin-left:auto">取消分析</button></div>
+      <div class="card-body">
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div>
+        <div class="progress-status" id="progress-status">准备中...</div>
+        <div class="text-muted" style="font-size:11px;text-align:center;margin-top:4px" id="progress-detail"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page: Report -->
+  <div class="page" id="page-report">
+    <div class="d-flex gap-2 mb-3" style="justify-content:space-between;align-items:center">
+      <h4 style="margin:0">📋 深度洞察分析报告</h4>
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm" onclick="switchPage('import')">← 返回导入</button>
+      </div>
+    </div>
+
+    <div id="report-content">
+      <div class="report-empty">
+        <div class="icon">📋</div>
+        <p>暂无分析报告</p>
+        <p class="text-muted">请先在「数据导入」页面上传评论数据并开始分析</p>
+        <button class="btn btn-primary" onclick="switchPage('import')">前往导入数据</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page: History -->
+  <div class="page" id="page-history">
+    <div class="d-flex gap-2 mb-3" style="justify-content:space-between;align-items:center">
+      <h4 style="margin:0">🕒 历史报告</h4>
+      <button class="btn btn-danger btn-sm" id="btn-clear-history" onclick="clearHistory()" style="display:none">清空全部</button>
+    </div>
+    <div class="card">
+      <div class="card-body" id="history-list">
+        <div class="report-empty">
+          <div class="icon">🕒</div>
+          <p>暂无历史报告</p>
+          <p class="text-muted">完成分析后，报告将自动保存在这里</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page: Settings -->
+  <div class="page" id="page-settings">
+    <h4 class="mb-3">⚙ 设置</h4>
+
+    <div class="card">
+      <div class="card-header">🔑 API 配置</div>
+      <div class="card-body">
+        <div class="form-group">
+          <label>Anthropic API Key</label>
+          <div class="d-flex gap-2">
+            <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." style="flex:1;font-family:monospace">
+            <button class="btn btn-sm" id="btn-toggle-key" onclick="toggleApiKeyVisibility()">👁</button>
+          </div>
+          <div class="hint">API Key 仅存储在浏览器本地，不会上传到任何第三方服务器。可在 <a href="https://platform.deepseek.com/api_keys" target="_blank">platform.deepseek.com</a> 获取。</div>
+        </div>
+        <div class="form-group">
+          <label>模型选择</label>
+          <select id="model-select">
+            <option value="deepseek-chat">DeepSeek V3 (推荐)</option>
+            <option value="deepseek-reasoner">DeepSeek R1 (深度推理)</option>
+          </select>
+          <div class="hint">DeepSeek V3 在成本与质量之间取得最佳平衡。R1 适合对分析深度要求极高的场景。</div>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-primary" onclick="saveSettings()">💾 保存设置</button>
+          <button class="btn btn-outline-secondary btn-sm" id="btn-test-api" onclick="testApiKey()">🔍 测试连接</button>
+        </div>
+        <div id="settings-msg"></div>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header">📖 关于分析框架</div>
+      <div class="card-body">
+        <p style="font-size:13px;color:#666;line-height:1.8">
+          本工具采用专业的消费者行为学分析框架，AI 将对每一条评论进行 <strong>8 个维度</strong> 的深度语义提取：
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+          <div>1. 人群维度 — 性别、年龄段、职业、购买角色</div>
+          <div>2. 场景维度 — 使用场景</div>
+          <div>3. 产品维度 — 功能满意度、具体功能</div>
+          <div>4. 质量维度 — 材质、做工、耐用性</div>
+          <div>5. 服务维度 — 发货速度、包装、客服、退换货</div>
+          <div>6. 体验维度 — 舒适度、易用性、外观设计、价格</div>
+          <div>7. 市场维度 — 竞品对比、复购意愿</div>
+          <div>8. 情感维度 — 总体评价</div>
+        </div>
+        <p style="font-size:12px;color:#999;margin-top:12px">
+          基于提取的结构化标签，生成包含 7 大章节的专业洞察报告：用户画像、核心卖点、主要痛点、改进建议、潜在机会、典型用户解析、关键洞察总结。
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main-content -->
+
+<!-- Hidden modal for sheet picker -->
+<div class="modal-overlay" id="modal-sheet-picker" style="display:none" onclick="if(event.target===this)closeSheetPicker()">
+  <div class="modal" style="max-width:480px">
+    <h4>📄 选择要分析的工作表</h4>
+    <p class="text-muted" style="font-size:13px;margin-bottom:12px">该文件包含多个工作表，请选择包含评论数据的那个：</p>
+    <div id="sheet-list" style="max-height:300px;overflow-y:auto"></div>
+    <div class="actions" style="margin-top:16px">
+      <button class="btn btn-sm" onclick="closeSheetPicker()">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden modal for viewing history report -->
+<div class="modal-overlay" id="modal-history" style="display:none" onclick="if(event.target===this)closeHistoryModal()">
+  <div class="modal" style="max-width:800px;max-height:80vh;overflow-y:auto">
+    <h4>📋 历史报告</h4>
+    <div id="modal-report-content" style="white-space:pre-wrap;font-size:14px;line-height:1.8;max-height:60vh;overflow-y:auto;background:#fafbfc;padding:16px;border-radius:8px"></div>
+    <div class="actions">
+      <button class="btn btn-sm" onclick="copyHistoryReport()">📋 复制</button>
+      <button class="btn btn-sm" onclick="downloadHistoryReport()">💾 下载</button>
+      <button class="btn btn-sm" onclick="closeHistoryModal()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================
+// SYSTEM PROMPT — The complete analysis framework
+// ============================================
+var SYSTEM_PROMPT = [
+'# Role / 角色设定',
+'你是一位拥有15年经验的"消费者行为学家"和"首席跨境电商数据分析师"。你擅长直接处理包含噪音的原始电商表格数据，具备强大的自然语言处理能力，能够从零散的用户评论中自主提取结构化信息，并挖掘市场真相。你的行文风格专业、客观、逻辑严密。',
+'',
+'# Context / 背景',
+'我将为你上传/提供一份商品评论导出表格。这份数据包含用户星级、评论标题、评论正文等信息，它是**未经任何人工打标处理的原始数据**。',
+'',
+'# Processing Logic / 数据处理与提取逻辑 (Crucial)',
+'由于数据未经人工打标，在生成报告之前，你必须先在后台对每一条原始评论进行深度阅读和"隐式打标"。请尝试从原始文本中提取、归纳并统计以下 8 个维度的信息（如果某条评论未提及特定维度，则记为"未提及"）：',
+'1. 人群维度：性别、年龄段、职业、购买角色',
+'2. 场景维度：使用场景',
+'3. 产品维度：功能满意度、具体功能',
+'4. 质量维度：材质、做工、耐用性',
+'5. 服务维度：发货速度、包装质量、客服响应、退换货、保修',
+'6. 体验维度：舒适度、易用性、外观设计、价格感知',
+'7. 市场维度：竞品对比、复购意愿',
+'8. 情感维度：总体评价',
+'',
+'# Task / 任务目标',
+'请先自主完成上述8个维度的语义信息提取与归类统计。随后，综合你的"定量估算"（基于你提取出的标签频次和占比）和"定性分析"（基于原始评论的语义和情绪挖掘），生成一份结构化的《深度洞察分析报告》。',
+'',
+'# Strict Formatting Rules / 严格格式约束 (Crucial)',
+'为了保证报告的整洁性，请严格遵守以下格式要求：',
+'1. 禁止使用任何 Markdown 格式符号（如星号 *、井号 #、下划线 _ 等）。',
+'2. 禁止使用无意义的斜杠 / 作为分隔符。',
+'3. 标题不要用加粗或变大，请使用【 】符号包裹来表示层级（例如：【一、用户画像分析】）。',
+'4. 列表项请使用数字（1. 2. 3.）或简单的连字符（-）。',
+'5. 引用用户原话时，请使用双引号。',
+'6. 输出内容必须纯净、文本化，便于直接阅读和复制。',
+'',
+'# Analysis Framework / 分析框架',
+'请严格按照以下章节进行输出：',
+'',
+'【标题】',
+'常规命名格式：关于XX品牌XX产品的评论深度分析报告',
+'如果识别不到品牌，可以灵活调整进行删减',
+'',
+'【洞察总览】',
+'本次处理的数据范围（必须包括文档中的评论总数，以及有效提取到关键信息的评论数），用2~3句话总结本次评论分析的核心要点（特别是负反馈和产品可优化方向）。',
+'',
+'【一、核心用户画像与场景】',
+'定量统计：分析人群性别、年龄段、职业标签的分布比例。',
+'交叉洞察：通过数据关联，找出"职业"与"使用场景"的强相关性（例如：某种职业的人群是否集中在特定场景使用？）。',
+'典型画像：基于数据，用文字描绘出该产品的核心典型用户形象（User Avatar）。',
+'',
+'【二、核心卖点与价值验证】',
+'满意度归因：在给出了4-5星或情感极佳的评论数据中，统计出现频率最高的体验或质量维度是什么。',
+'语义挖掘（定性）：深入分析原始评论，用户是用什么具体的词汇来描述这些优点的？找出打动用户的具体细节。',
+'',
+'【三、主要痛点与负面归因】',
+'问题分布：在1-3星的差评数据中，统计占比最高的负面维度（是质量问题多，还是服务问题多？）。',
+'根源追溯（定性）：不要只说"耐用性差"，要根据原始评论指出具体是哪个部件坏了；不要只说"舒适度一般"，要指出具体是哪里造成了不适。',
+'严重性评估：区分哪些是导致退货的致命伤，哪些是用户可以忍受的小瑕疵。',
+'',
+'【四、改进建议与优先级】',
+'基于痛点分析，提出3条具体的改进建议。',
+'请按照"问题出现的频率"和"对购买决策的影响程度"进行优先级排序（高/中/低）。',
+'',
+'【五、潜在机会与差异化】',
+'竞品情报：分析评论中用户提到了哪些对手品牌？用户认为我们好在哪里，差在哪里？',
+'蓝海发现：在提取到的"职业"或"场景"信息中，是否存在虽属小众但满意度极高的人群？这可能是一个未被充分服务的细分市场。',
+'',
+'【六、典型用户深度解析】',
+'请从高价值评论样本数据中提取 1-2 个占比最高或最具代表性的"核心用户画像"。',
+'针对每个画像，抽取 1-2 条代表性原始评论（必须包含正面和负面评价，保持分布均匀）进行具体解析，最后总共输出不少于4个评论内容的解析。',
+'请在分析时引用评论样本中的具体内容，严格按照以下格式输出本章节内容：',
+'',
+'典型画像：[年龄段] [性别] [职业] [核心需求]，如果识别不到以上维度信息，可以根据评论内容进行抽象总结，预测用户身份。',
+'评价原文："[保留评论核心内容，过长可适当截断]"',
+'评论解析：[1-2句话简评。指出该用户的核心痛点、爽点或具体建议]',
+'',
+'（请重复上述格式以展示所有选取的评论）',
+'',
+'【七、关键洞察总结】',
+'请用一段精炼的文字（约150字左右）对整份报告进行总结。',
+'核心聚焦：请基于你的专业判断，指出报告中最值得关注的"亮点"与"风险点"。',
+'',
+'# Important Notes',
+'- 如果数据量较大，请确保统计覆盖全部评论，报告中的频次和占比应基于全量数据计算。',
+'- 对于"未提及"比例超过70%的维度，可以在报告中简要说明"数据不足以支撑该维度的分析"，但仍需基于已有信息给出判断。',
+'- 保持专业、客观的语气，不要过度美化或贬低产品。报告应当是一份可操作的商业决策参考。'
+].join('\n');
+
+// ============================================
+// APP STATE
+// ============================================
+var state = {
+  apiKey: '',
+  model: 'claude-sonnet-4-6',
+  reviews: [],           // {star, title, content, ...raw}
+  columns: [],           // file column names
+  mapping: { star: '', title: '', content: '' },
+  report: '',
+  reportMeta: { reviewCount: 0, date: '', productName: '' },
+  isAnalyzing: false,
+  history: [],
+  abortController: null
+};
+
+// ============================================
+// INITIALIZATION
+// ============================================
+function init() {
+  // Detect file:// protocol and warn user
+  if (window.location.protocol === 'file:') {
+    document.body.innerHTML = '<div style="max-width:600px;margin:80px auto;padding:32px;background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.1);text-align:center;font-family:sans-serif">' +
+      '<div style="font-size:48px;margin-bottom:16px">⚠</div>' +
+      '<h2 style="color:#d93025;margin-bottom:12px">请通过本地服务器打开</h2>' +
+      '<p style="color:#666;line-height:1.8;margin-bottom:20px">浏览器安全策略禁止从 <code style="background:#f5f5f5;padding:2px 6px;border-radius:4px">file://</code> 协议向 API 发起请求，请使用以下方式启动：</p>' +
+      '<div style="background:#f8f9fa;padding:16px;border-radius:8px;text-align:left;margin-bottom:16px;font-size:14px">' +
+      '<p style="font-weight:600;margin:0 0 8px">方法一（推荐）：</p>' +
+      '<code style="background:#e8f0fe;padding:4px 8px;border-radius:4px;display:block;margin-bottom:12px">双击项目中的 serve.bat</code>' +
+      '<p style="font-weight:600;margin:0 0 8px">方法二：</p>' +
+      '<code style="background:#e8f0fe;padding:4px 8px;border-radius:4px;display:block;margin-bottom:12px">powershell -ExecutionPolicy Bypass -File serve.ps1</code>' +
+      '<p style="font-weight:600;margin:0 0 8px">方法三（需 Python）：</p>' +
+      '<code style="background:#e8f0fe;padding:4px 8px;border-radius:4px;display:block">python -m http.server 8765</code>' +
+      '</div>' +
+      '<p style="color:#999;font-size:12px">启动服务器后访问 http://localhost:8765</p>' +
+      '</div>';
+    return;
+  }
+
+  loadSettings();
+  loadHistory();
+  setupNavigation();
+  setupUploadZone();
+  // Show API key hint on first visit
+  if (!state.apiKey) {
+    document.getElementById('settings-msg').innerHTML = '<div class="alert alert-warning">请先配置 API Key 以使用分析功能</div>';
+    // Also show a banner on the import page
+    var importPage = document.getElementById('page-import');
+    var hintBanner = document.createElement('div');
+    hintBanner.id = 'apikey-banner';
+    hintBanner.className = 'alert alert-warning';
+    hintBanner.innerHTML = '<strong>⚠ 提示：</strong> 首次使用请先配置 <a href="#" onclick="switchPage(\'settings\');return false" style="color:#92400e;text-decoration:underline">Anthropic API Key</a>，或点击「加载示例数据」后按提示输入。';
+    var firstCard = importPage.querySelector('.card');
+    if (firstCard) {
+      importPage.insertBefore(hintBanner, firstCard);
+    }
+  } else {
+    document.getElementById('settings-msg').innerHTML = '<div class="alert alert-success">API Key 已配置，可直接导入数据开始分析</div>';
+  }
+}
+
+// ============================================
+// NAVIGATION
+// ============================================
+function setupNavigation() {
+  document.querySelectorAll('.nav-item').forEach(function(item) {
+    item.addEventListener('click', function() {
+      switchPage(this.dataset.page);
+    });
+  });
+}
+
+function switchPage(page) {
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  var navItem = document.querySelector('.nav-item[data-page="' + page + '"]');
+  if (navItem) navItem.classList.add('active');
+  var pageEl = document.getElementById('page-' + page);
+  if (pageEl) pageEl.classList.add('active');
+
+  if (page === 'report') renderReport();
+  if (page === 'history') renderHistory();
+  if (page === 'settings') loadSettingsToForm();
+}
+
+// ============================================
+// SETTINGS
+// ============================================
+function loadSettings() {
+  try {
+    var saved = JSON.parse(localStorage.getItem('review-insight-settings') || '{}');
+    state.apiKey = sanitizeApiKey(saved.apiKey || '');
+    state.model = saved.model || 'deepseek-chat';
+  } catch(e) {
+    state.apiKey = '';
+    state.model = 'deepseek-chat';
+  }
+}
+
+function loadSettingsToForm() {
+  document.getElementById('api-key-input').value = state.apiKey;
+  document.getElementById('model-select').value = state.model;
+}
+
+// Strip non-ASCII / non-ISO-8859-1 characters from API key
+// (copy-paste can introduce invisible Unicode chars that break HTTP headers)
+function sanitizeApiKey(key) {
+  if (!key) return '';
+  return key.replace(/[^\x00-\xFF]/g, '').trim();
+}
+
+function saveSettings() {
+  state.apiKey = sanitizeApiKey(document.getElementById('api-key-input').value.trim());
+  state.model = document.getElementById('model-select').value;
+  try {
+    localStorage.setItem('review-insight-settings', JSON.stringify({
+      apiKey: state.apiKey,
+      model: state.model
+    }));
+    document.getElementById('settings-msg').innerHTML = '<div class="alert alert-success">设置已保存</div>';
+  } catch(e) {
+    document.getElementById('settings-msg').innerHTML = '<div class="alert alert-danger">保存失败: ' + e.message + '</div>';
+  }
+  setTimeout(function() {
+    document.getElementById('settings-msg').innerHTML = '';
+  }, 3000);
+}
+
+function toggleApiKeyVisibility() {
+  var input = document.getElementById('api-key-input');
+  var btn = document.getElementById('btn-toggle-key');
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁';
+  }
+}
+
+async function testApiKey() {
+  var key = document.getElementById('api-key-input').value.trim();
+  if (!key) {
+    document.getElementById('settings-msg').innerHTML = '<div class="alert alert-danger">请先输入 API Key</div>';
+    return;
+  }
+  var btn = document.getElementById('btn-test-api');
+  btn.disabled = true;
+  btn.textContent = '测试中...';
+
+  // Test through local proxy
+  try {
+    var resp = await fetch(window.location.origin + '/api/proxy', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-local-api-key': sanitizeApiKey(key),
+        'x-api-provider': 'deepseek'
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        max_tokens: 20,
+        messages: [{ role: 'user', content: 'Hi' }]
+      })
+    });
+    if (resp.ok) {
+      document.getElementById('settings-msg').innerHTML = '<div class="alert alert-success">API Key 有效，DeepSeek 连接成功</div>';
+    } else {
+      var err = await resp.json().catch(function() { return {}; });
+      document.getElementById('settings-msg').innerHTML = '<div class="alert alert-danger">连接失败: ' + (err.error?.message || resp.status + ' ' + resp.statusText) + '</div>';
+    }
+  } catch(e) {
+    document.getElementById('settings-msg').innerHTML = '<div class="alert alert-danger">网络错误: ' + e.message + '</div>';
+  }
+  btn.disabled = false;
+  btn.textContent = '🔍 测试连接';
+}
+
+// ============================================
+// FILE UPLOAD & PARSING
+// ============================================
+function setupUploadZone() {
+  var zone = document.getElementById('upload-zone');
+  var input = document.getElementById('file-input');
+
+  zone.addEventListener('click', function() { input.click(); });
+  zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', function() { zone.classList.remove('drag-over'); });
+  zone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    if (e.dataTransfer.files.length > 0) {
+      parseFile(e.dataTransfer.files[0]);
+    }
+  });
+  input.addEventListener('change', function() {
+    if (input.files.length > 0) {
+      parseFile(input.files[0]);
+    }
+  });
+}
+
+// Hold workbook reference for sheet picker
+var _pendingWorkbook = null;
+
+function parseFile(file) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = new Uint8Array(e.target.result);
+      var workbook = XLSX.read(data, { type: 'array' });
+      var sheets = workbook.SheetNames;
+
+      // Filter out empty sheets
+      var nonEmptySheets = sheets.filter(function(name) {
+        var json = XLSX.utils.sheet_to_json(workbook.Sheets[name], { header: 1, defval: '' });
+        return json.length >= 2; // at least header + 1 data row
+      });
+
+      if (nonEmptySheets.length === 0) {
+        showAlert('import', '文件中没有找到包含数据的工作表', 'danger');
+        return;
+      }
+
+      if (nonEmptySheets.length === 1) {
+        // Single sheet - parse directly
+        parseSheetContent(workbook, nonEmptySheets[0]);
+      } else {
+        // Multiple sheets - ask user to pick
+        _pendingWorkbook = workbook;
+        showSheetPicker(nonEmptySheets);
+      }
+    } catch(err) {
+      showAlert('import', '文件解析失败: ' + err.message, 'danger');
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function showSheetPicker(sheetNames) {
+  var list = document.getElementById('sheet-list');
+  list.innerHTML = sheetNames.map(function(name, i) {
+    // Quick row count
+    var json = XLSX.utils.sheet_to_json(_pendingWorkbook.Sheets[name], { header: 1, defval: '' });
+    var rowCount = Math.max(0, json.length - 1); // minus header
+    return '<div onclick="selectSheet(\'' + escAttr(name) + '\')" style="cursor:pointer;padding:14px 16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:8px;transition:all .15s;display:flex;justify-content:space-between;align-items:center"' +
+      ' onmouseover="this.style.borderColor=\'var(--primary)\';this.style.background=\'#f5f3ff\'"' +
+      ' onmouseout="this.style.borderColor=\'#e5e7eb\';this.style.background=\'#fff\'">' +
+      '<div><strong>' + escHtml(name) + '</strong></div>' +
+      '<div><span class="badge badge-primary">约 ' + rowCount + ' 行</span></div>' +
+      '</div>';
+  }).join('');
+  document.getElementById('modal-sheet-picker').style.display = 'flex';
+}
+
+function selectSheet(sheetName) {
+  closeSheetPicker();
+  if (_pendingWorkbook) {
+    parseSheetContent(_pendingWorkbook, sheetName);
+    _pendingWorkbook = null;
+  }
+}
+
+function closeSheetPicker() {
+  document.getElementById('modal-sheet-picker').style.display = 'none';
+}
+
+function parseSheetContent(workbook, sheetName) {
+  var sheet = workbook.Sheets[sheetName];
+  var json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+  if (json.length < 2) {
+    showAlert('import', '工作表 "' + sheetName + '" 数据不足，至少需要标题行和一行数据', 'danger');
+    return;
+  }
+
+  // First row as headers
+  var headers = json[0].map(function(h) { return String(h).trim(); });
+
+  // Detect if first row is actually data (no headers)
+  var hasHeaders = headers.some(function(h) { return h.length > 0 && isNaN(Number(h)); });
+
+  if (!hasHeaders) {
+    // Treat first row as data, generate generic headers
+    headers = json[0].map(function(_, i) { return '列' + (i + 1); });
+  } else {
+    json = json.slice(1); // Remove header row
+  }
+
+  // Parse data rows
+  var reviews = [];
+  json.forEach(function(row) {
+    if (!row || row.length === 0) return;
+    var hasContent = row.some(function(c) { return String(c).trim().length > 0; });
+    if (!hasContent) return;
+
+    var obj = {};
+    headers.forEach(function(h, i) {
+      obj[h] = (row[i] !== undefined) ? String(row[i]).trim() : '';
+    });
+    reviews.push(obj);
+  });
+
+  if (reviews.length === 0) {
+    showAlert('import', '工作表 "' + sheetName + '" 中未找到有效的评论数据', 'danger');
+    return;
+  }
+
+  state.columns = headers;
+  state.reviews = reviews;
+  state.currentSheet = sheetName;
+  autoDetectMapping();
+  renderMapping();
+  renderPreview();
+  showAnalyzeSection();
+  showAlert('import', '已加载工作表 "' + sheetName + '"：' + reviews.length + ' 条评论', 'success');
+}
+
+function autoDetectMapping() {
+  var headers = state.columns;
+  var mapping = { star: '', title: '', content: '' };
+
+  // Star rating patterns
+  var starPatterns = ['星级', '评分', '星评', '打分', 'star', 'rating', 'score'];
+  var titlePatterns = ['标题', '主题', 'title', 'subject', '摘要', '简述'];
+  var contentPatterns = ['内容', '正文', '评论', '评价', 'content', 'review', 'text', 'body', '描述', '详情'];
+
+  headers.forEach(function(h) {
+    var lower = h.toLowerCase();
+    if (!mapping.star && starPatterns.some(function(p) { return lower.indexOf(p) !== -1; })) {
+      mapping.star = h;
+    }
+    if (!mapping.title && titlePatterns.some(function(p) { return lower.indexOf(p) !== -1; })) {
+      mapping.title = h;
+    }
+    if (!mapping.content && contentPatterns.some(function(p) { return lower.indexOf(p) !== -1; })) {
+      mapping.content = h;
+    }
+  });
+
+  // Fallback: if no content match found, use the longest text column
+  if (!mapping.content && headers.length > 0) {
+    var sampleSize = Math.min(10, state.reviews.length);
+    var maxAvgLen = 0;
+    headers.forEach(function(h) {
+      var totalLen = 0;
+      for (var i = 0; i < sampleSize; i++) {
+        totalLen += (state.reviews[i] && state.reviews[i][h]) ? state.reviews[i][h].length : 0;
+      }
+      var avgLen = totalLen / sampleSize;
+      if (avgLen > maxAvgLen) {
+        maxAvgLen = avgLen;
+        mapping.content = h;
+      }
+    });
+  }
+
+  // If no title match, leave empty (optional)
+  // If no star match, leave empty (optional)
+
+  state.mapping = mapping;
+}
+
+function renderMapping() {
+  var card = document.getElementById('mapping-card');
+  card.style.display = 'block';
+  var container = document.getElementById('mapping-rows');
+
+  var fields = [
+    { key: 'star', label: '星级/评分 (可选)', icon: '⭐' },
+    { key: 'title', label: '评论标题 (可选)', icon: '📝' },
+    { key: 'content', label: '评论正文 (必选)', icon: '💬' }
+  ];
+
+  container.innerHTML = fields.map(function(f) {
+    var options = ['<option value="">-- 不映射 --</option>'];
+    state.columns.forEach(function(col) {
+      var sel = (state.mapping[f.key] === col) ? ' selected' : '';
+      options.push('<option value="' + escHtml(col) + '"' + sel + '>' + escHtml(col) + '</option>');
+    });
+    return '<div class="mapping-row">' +
+      '<span class="source-col">' + f.icon + ' ' + f.label + '</span>' +
+      '<span class="arrow">→</span>' +
+      '<select onchange="updateMapping(\'' + f.key + '\', this.value)">' + options.join('') + '</select>' +
+      '</div>';
+  }).join('');
+}
+
+function updateMapping(key, value) {
+  state.mapping[key] = value;
+  renderPreview();
+}
+
+function renderPreview() {
+  var card = document.getElementById('preview-card');
+  card.style.display = 'block';
+
+  var contentCol = state.mapping.content;
+  var starCol = state.mapping.star;
+  var titleCol = state.mapping.title;
+
+  // Build preview columns
+  var previewCols = [];
+  if (starCol) previewCols.push(starCol);
+  if (titleCol) previewCols.push(titleCol);
+  if (contentCol) previewCols.push(contentCol);
+  if (previewCols.length === 0 && state.columns.length > 0) {
+    previewCols = state.columns.slice(0, 3);
+  }
+
+  var rows = state.reviews.slice(0, 50);
+  var html = '<table><thead><tr><th>#</th>';
+  if (starCol) html += '<th>星级</th>';
+  if (titleCol) html += '<th>标题</th>';
+  html += '<th>正文摘要</th></tr></thead><tbody>';
+
+  rows.forEach(function(r, i) {
+    html += '<tr><td>' + (i+1) + '</td>';
+    if (starCol) html += '<td>' + escHtml(r[starCol] || '-') + '</td>';
+    if (titleCol) html += '<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escHtml(r[titleCol] || '-') + '</td>';
+    var content = r[contentCol] || '';
+    content = content.length > 80 ? content.substring(0, 80) + '...' : content;
+    html += '<td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escHtml(content || '-') + '</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+
+  document.getElementById('preview-table').innerHTML = html;
+  document.getElementById('preview-count').textContent = '共 ' + state.reviews.length + ' 条评论' + (state.reviews.length > 50 ? ' (仅显示前50条)' : '');
+}
+
+function showAnalyzeSection() {
+  document.getElementById('analyze-section').style.display = 'block';
+  document.getElementById('review-count-display').textContent = state.reviews.length;
+}
+
+function showAlert(pageId, message, type) {
+  var page = document.getElementById('page-' + (pageId || 'import'));
+  if (!page) return;
+  // Remove existing alerts in this page
+  var existing = page.querySelectorAll('.alert-dynamic');
+  existing.forEach(function(el) { el.remove(); });
+
+  var alert = document.createElement('div');
+  alert.className = 'alert alert-' + (type || 'info') + ' alert-dynamic';
+  alert.textContent = message;
+  // Insert at the top of the page, before the first card or as first child
+  var firstCard = page.querySelector('.card');
+  if (firstCard) {
+    page.insertBefore(alert, firstCard);
+  } else {
+    page.insertBefore(alert, page.firstChild);
+  }
+  setTimeout(function() {
+    if (alert.parentNode) alert.parentNode.removeChild(alert);
+  }, 8000);
+}
+
+// ============================================
+// SAMPLE DATA
+// ============================================
+function loadSampleData() {
+  var sampleReviews = [
+    { '星级': '5', '标题': '非常好用，强烈推荐', '内容': '买来用于小餐馆收银的，操作界面很直观，上手快。触摸屏灵敏度不错，用了两个月没出现卡顿。打印小票速度也快，顾客排队时间明显缩短了。唯一遗憾是说明书不够详细，有些高级功能需要自己摸索。但客服响应很快，在线问了两个问题都及时解答了。总体来说性价比很高，比之前用的XX品牌好太多，会推荐给同行朋友。' },
+    { '星级': '4', '标题': '功能全面，性价比高', '内容': '作为便利店老板，对比了好几个品牌最终选了这款。收银功能基本满足日常需求，商品录入、扫码支付、库存管理都覆盖了。界面设计简洁，新员工培训一天就能上手。不足之处是报表功能略显简单，希望能增加更多自定义报表模板。另外机器运行时间长了会有点发热，夏天需要注意通风。整体满意，这个价位能做到这样已经很不错了。' },
+    { '星级': '3', '标题': '中规中矩，有些小毛病', '内容': '使用三个月后的评价。优点：外观设计不错，摆在店里挺有档次；基础收银功能稳定；价格适中。缺点：出现过两次死机需要重启，虽然不影响数据但挺烦人的；触摸屏在潮湿环境下灵敏度下降明显，餐饮环境难免有水汽；系统更新后部分设置会重置。客服态度还行，但处理效率一般。适合对稳定性要求不高的场景。' },
+    { '星级': '2', '标题': '打印模块容易坏', '内容': '用了不到半年打印头就出问题了，打印出来的小票字迹模糊，有时候卡纸。联系售后说要寄回去维修，来回要一周时间，小本生意根本等不起。买之前看评价说耐用才选的，现在看来做工确实有待提升。优点是系统操作还算流畅，但硬件质量跟不上软件。如果打印问题不解决，下次换机器不会再考虑这个牌子了。' },
+    { '星级': '5', '标题': '客服服务超赞', '内容': '作为一个电脑不太懂的中年阿姨，客服小张真的帮了大忙！从选购到安装全程指导，视频连线一步一步教我设置商品库。机器用了快一年了，没什么大毛病，日常收银、查账、盘点库存都挺顺手的。外观也好看，来店里的顾客都夸我们设备挺现代化的哈哈。强烈推荐给和我一样对电子产品不太熟悉的小店主。' },
+    { '星级': '5', '标题': '水果店用着很顺手', '内容': '开水果店两年了，之前一直手写记账太累了。朋友介绍买了这款，真的解放双手。称重、计价、打印标签一气呵成，特别是称重功能很精准，跟我在计量局校准过的一致。水果品种多、价格变动频繁，批量改价功能太实用了。数据还能导出到电脑上做账，年底报税方便多了。用了大半年没出过任何问题，满意！' },
+    { '星级': '1', '标题': '收到就是坏的，退货还麻烦', '内容': '满怀期待收到货，结果开机就花屏，根本没法用。联系客服说是运输过程中可能磕碰了，让我自己承担退货邮费。我说这明明是你们质量问题为什么我出邮费？客服就一直打太极。最后拖了快两周才处理完退款。第一次买这个品牌体验极差，品控和售后都需要大幅改进。建议想买的朋友三思，开箱一定要录视频留证据。' },
+    { '星级': '4', '标题': '适合小型服装店', '内容': '我在商场里开了一家女装店，主要看中这款机器的外观，放在收银台上不突兀。日常收银、打小票、会员管理都够用。扫码枪识别速度可以，条码脏一点也能读出来。缺点是系统自带的服装行业模板太少，尺码颜色管理不太方便，希望后续能出行业定制版本。价格比竞品X品牌便宜，功能却差不多，整体推荐。' },
+    { '星级': '5', '标题': '药店的得力助手', '内容': '药店GSP管理要求比较高，选机器的时候特意对比了几家。这款的批次管理和效期提醒功能太贴心了，药品快过期会自动弹窗提醒，帮我们避免了好几起过期销售的风险。医保刷卡对接也很顺畅。机器运行稳定，没有出现过数据丢失的情况。唯一的建议是屏幕亮度可以再高一点，药店的灯光比较亮，有时候反光看不清楚。' },
+    { '星级': '3', '标题': '系统更新后变慢了', '内容': '买来一年多了，前半年体验不错。但最近几次系统更新后明显感觉操作变卡了，扫商品到显示价格要等一两秒，高峰期影响效率。联系客服说这是新功能增加导致的，建议清理缓存。按指导操作了改善不大。电池续航也明显下降了，刚买时能撑一天，现在半天就得充电。电子产品的老化问题吧，但才一年就这样还是有点失望。' },
+    { '星级': '4', '标题': '茶饮店的效率神器', '内容': '我们是做新式茶饮的，高峰期订单量大、出杯速度快，对收银效率要求很高。这款机器的快捷菜单功能很好用，把畅销品设置成一键下单，高峰期不用翻菜单。数据看板能实时看到今日营业额、订单量、热销排行，对经营决策很有帮助。希望后续能和外卖平台深度打通，目前还需要手动确认外卖订单。' },
+    { '星级': '5', '标题': '用了两年了来追评', '内容': '2024年买的，到现在两年了还在稳定运行。期间只换过一次打印纸和清理过触摸屏。作为一个小超市的收银主力，每天从早到晚工作十几个小时，真的很耐造。系统界面虽然不是很时尚但胜在稳定实用。中间有一次系统升级出了点问题，远程技术支持很快就解决了。长期使用下来觉得这个投资很值，产品质量过硬。' },
+    { '星级': '2', '标题': '软件的会员管理太简陋', '内容': '机器硬件还行，但软件的会员管理模块做得太基础了。不能设置积分规则、不能发优惠券、会员标签也只有固定几种。问了客服说高级会员功能要另外付费，这不是变相加价吗？竞品X品牌这些都是标配功能。如果对会员营销有需求的商户要慎重考虑。基础收银没问题，但不要对营销工具有什么期待。' },
+    { '星级': '4', '标题': '母婴店使用感受', '内容': '开母婴店的，用了四个月来评价。优点：外观圆润可爱，跟我们店风格很搭；商品信息和图片显示清晰；奶粉批号追溯功能很实用。缺点：录入新商品时步骤稍多，如果能支持扫码自动填充商品信息就好了；会员宝宝的生日提醒功能不够智能。总的来说基本满足需求，细节上还有优化空间。' },
+    { '星级': '5', '标题': '创业开店首选', '内容': '第一次开店创业，预算有限选了这款入门级收银机。说实话超出预期了，功能对一个奶茶小店来说绰绰有余。安装简单，看视频教程半小时就搞定了。操作逻辑清晰，不需要什么培训。支持多种支付方式聚合，微信、支付宝、云闪付都可以扫同一个码。开店三个月没出过任何问题，对新手非常友好，强烈推荐给创业的小伙伴！' }
+  ];
+
+  state.columns = ['星级', '标题', '内容'];
+  state.reviews = sampleReviews;
+  state.mapping = { star: '星级', title: '标题', content: '内容' };
+  renderMapping();
+  renderPreview();
+  showAnalyzeSection();
+  document.getElementById('review-count-display').textContent = state.reviews.length;
+
+  // Scroll to preview
+  document.getElementById('preview-card').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ============================================
+// ANTHROPIC API CLIENT
+// ============================================
+async function callClaudeAPI(systemPrompt, userMessage, opts) {
+  opts = opts || {};
+  var model = opts.model || state.model || 'deepseek-chat';
+  var maxTokens = opts.maxTokens || 8192;
+  var temperature = (opts.temperature !== undefined) ? opts.temperature : 0.3;
+  var stream = opts.stream || false;
+
+  // DeepSeek / OpenAI-compatible format: system prompt goes in messages array
+  var messages = [];
+  if (systemPrompt) {
+    messages.push({ role: 'system', content: systemPrompt });
+  }
+  messages.push({ role: 'user', content: userMessage });
+
+  var body = {
+    model: model,
+    max_tokens: maxTokens,
+    temperature: temperature,
+    messages: messages
+  };
+
+  if (stream) {
+    body.stream = true;
+  }
+
+  // Sanitize API key
+  var cleanKey = sanitizeApiKey(state.apiKey);
+  if (!cleanKey) {
+    throw new Error('API Key not configured');
+  }
+
+  try {
+    var proxyUrl = window.location.origin + '/api/proxy';
+    var resp = await fetch(proxyUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-local-api-key': cleanKey,
+        'x-api-provider': 'deepseek'
+      },
+      body: JSON.stringify(body),
+      signal: state.abortController ? state.abortController.signal : undefined
+    });
+  } catch (fetchErr) {
+    if (fetchErr.message && fetchErr.message.indexOf('ISO-8859') !== -1) {
+      throw new Error('API Key contains invalid characters. Clear and re-enter in Settings.');
+    }
+    throw new Error('Cannot connect to local proxy. Please ensure serve.ps1 is running on http://localhost:8765');
+  }
+
+  if (!resp.ok) {
+    var errText = '';
+    try {
+      var errJson = await resp.json();
+      errText = errJson.error?.message || '';
+      if (!errText && errJson.error) {
+        errText = JSON.stringify(errJson.error);
+      }
+    } catch(e) {
+      // Fallback: try to read as text
+      try {
+        var clone = resp.clone();
+        errText = await clone.text();
+        if (errText && errText.length > 200) {
+          errText = errText.substring(0, 200) + '...';
+        }
+      } catch(e2) {}
+    }
+    throw new Error(errText || 'API Error: HTTP ' + resp.status);
+  }
+
+  if (stream) {
+    return streamResponse(resp);
+  } else {
+    var data = await resp.json();
+    return data.choices[0].message.content;
+  }
+}
+
+async function streamResponse(resp) {
+  var reader = resp.body.getReader();
+  var decoder = new TextDecoder();
+  var fullText = '';
+  var buffer = '';
+
+  while (true) {
+    var result = await reader.read();
+    if (result.done) break;
+    buffer += decoder.decode(result.value, { stream: true });
+
+    var lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line || !line.startsWith('data: ')) continue;
+      var data = line.slice(6);
+      if (data === '[DONE]') continue;
+
+      try {
+        var json = JSON.parse(data);
+        // OpenAI SSE format: choices[0].delta.content
+        if (json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content) {
+          fullText += json.choices[0].delta.content;
+          state.report = fullText;
+          updateReportTextThrottled();
+        }
+      } catch(e) {
+        // Skip malformed JSON lines
+      }
+    }
+  }
+  return fullText;
+}
+
+// ============================================
+// ANALYSIS ENGINE
+// ============================================
+async function startAnalysis() {
+  if (state.isAnalyzing) return;
+
+  // Validate
+  if (!state.apiKey) {
+    // Show inline prompt instead of switching page
+    document.getElementById('apikey-inline-prompt').style.display = 'block';
+    document.getElementById('apikey-inline-input').focus();
+    return;
+  }
+  // Hide inline prompt if it was shown
+  document.getElementById('apikey-inline-prompt').style.display = 'none';
+
+  if (!state.mapping.content || state.reviews.length === 0) {
+    showAlert('import', '请先导入评论数据或点击「加载示例数据」', 'warning');
+    return;
+  }
+  if (state.reviews.length === 0) {
+    showAlert('import', '未找到有效的评论数据', 'danger');
+    return;
+  }
+
+  state.isAnalyzing = true;
+  state.abortController = new AbortController();
+
+  // Show progress
+  document.getElementById('progress-card').style.display = 'block';
+  document.getElementById('progress-fill').style.width = '0%';
+  document.getElementById('progress-status').textContent = '准备分析...';
+  document.getElementById('progress-detail').textContent = '';
+  document.getElementById('btn-analyze').disabled = true;
+  document.getElementById('analyze-msg').innerHTML = '';
+
+  try {
+    var report = await runAnalysis();
+    state.report = report;
+    state.reportMeta = {
+      reviewCount: state.reviews.length,
+      date: new Date().toLocaleString('zh-CN'),
+      productName: extractProductName(report)
+    };
+
+    // Save to history
+    saveToHistory(report);
+
+    // Hide progress
+    document.getElementById('progress-card').style.display = 'none';
+    document.getElementById('progress-fill').style.width = '0%';
+
+    // Navigate to report
+    switchPage('report');
+  } catch(err) {
+    document.getElementById('progress-card').style.display = 'none';
+    if (err.name === 'AbortError') {
+      document.getElementById('analyze-msg').innerHTML = '<div class="alert alert-warning">分析已取消</div>';
+    } else {
+      document.getElementById('analyze-msg').innerHTML = '<div class="alert alert-danger">分析失败: ' + escHtml(err.message) + '</div>';
+      console.error(err);
+    }
+  }
+
+  state.isAnalyzing = false;
+  state.abortController = null;
+  document.getElementById('btn-analyze').disabled = false;
+}
+
+function saveApiKeyInline() {
+  var key = sanitizeApiKey(document.getElementById('apikey-inline-input').value.trim());
+  if (!key) {
+    showAlert('import', '请输入有效的 API Key', 'warning');
+    return;
+  }
+  state.apiKey = key;
+  try {
+    localStorage.setItem('review-insight-settings', JSON.stringify({
+      apiKey: state.apiKey,
+      model: state.model
+    }));
+    document.getElementById('apikey-inline-prompt').style.display = 'none';
+    document.getElementById('api-key-input').value = key;
+    // Remove the API key banner if present
+    var banner = document.getElementById('apikey-banner');
+    if (banner) banner.remove();
+    showAlert('import', 'API Key 已保存，正在开始分析...', 'success');
+    // Auto-start analysis
+    setTimeout(function() { startAnalysis(); }, 500);
+  } catch(e) {
+    showAlert('import', '保存失败: ' + e.message, 'danger');
+  }
+}
+
+function cancelAnalysis() {
+  if (state.abortController) {
+    state.abortController.abort();
+  }
+}
+
+async function runAnalysis() {
+  var reviews = state.reviews;
+
+  // Build the user message with all review data
+  var userMessage = buildReviewDataMessage(reviews);
+
+  // For large datasets, batch process
+  if (reviews.length > 120) {
+    return await runBatchAnalysis(reviews);
+  }
+
+  // Single call for smaller datasets
+  updateProgress(20, '正在对 ' + reviews.length + ' 条评论进行 8 维度深度分析...', '单次分析模式');
+
+  var report = await callClaudeAPI(SYSTEM_PROMPT, userMessage, {
+    stream: true,
+    maxTokens: 8192
+  });
+
+  updateProgress(100, '分析完成', '报告已生成');
+  return report;
+}
+
+async function runBatchAnalysis(reviews) {
+  var batchSize = 100;
+  var totalBatches = Math.ceil(reviews.length / batchSize);
+
+  updateProgress(10, '数据量较大，启用分批分析模式', '共 ' + totalBatches + ' 个批次');
+
+  // Phase 1: Extract structured data from each batch
+  var extractionPrompt = [
+    '你是一位专业的数据分析师。请对以下商品评论进行结构化信息提取。',
+    '对每条评论，提取以下8个维度的标签（如果评论未提及则标记为"未提及"）：',
+    '1. 人群维度：性别、年龄段、职业、购买角色',
+    '2. 场景维度：使用场景',
+    '3. 产品维度：功能满意度、具体功能',
+    '4. 质量维度：材质、做工、耐用性',
+    '5. 服务维度：发货速度、包装质量、客服响应、退换货、保修',
+    '6. 体验维度：舒适度、易用性、外观设计、价格感知',
+    '7. 市场维度：竞品对比、复购意愿',
+    '8. 情感维度：总体评价（正面/中性/负面）',
+    '',
+    '请以 JSON 数组格式输出，每条评论一个对象，包含 review_index 和 8 个维度的标签。',
+    '格式示例：{"review_index": 0, "人群": {"性别": "男", "年龄段": "30-40", "职业": "餐馆老板"}, "场景": "餐饮收银", ...}',
+    '只输出 JSON 数组，不要其他内容。'
+  ].join('\n');
+
+  var allExtractions = [];
+
+  for (var batch = 0; batch < totalBatches; batch++) {
+    if (!state.isAnalyzing) throw new Error('AbortError');
+
+    var start = batch * batchSize;
+    var end = Math.min(start + batchSize, reviews.length);
+    var batchReviews = reviews.slice(start, end);
+    var progress = 10 + Math.round((batch / totalBatches) * 60);
+
+    updateProgress(progress, '正在提取第 ' + (batch + 1) + '/' + totalBatches + ' 批评论的结构化标签...',
+      '评论 ' + (start + 1) + '-' + end + ' / 共 ' + reviews.length + ' 条');
+
+    var batchMessage = buildReviewDataMessage(batchReviews);
+    var result = await callClaudeAPI(extractionPrompt, batchMessage, {
+      maxTokens: 4096,
+      temperature: 0.1
+    });
+
+    try {
+      // Parse JSON from response
+      var jsonStr = result.trim();
+      // Handle possible markdown code block wrapping
+      jsonStr = jsonStr.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/\s*```$/, '');
+      var extracted = JSON.parse(jsonStr);
+      allExtractions = allExtractions.concat(extracted);
+    } catch(e) {
+      console.warn('Batch ' + (batch + 1) + ' JSON parse error, using raw text', e.message);
+      allExtractions.push({ batch: batch, raw: result });
+    }
+  }
+
+  // Phase 2: Synthesize final report
+  updateProgress(80, '正在综合所有批次数据生成洞察报告...', '总标签数: ' + allExtractions.length);
+
+  var synthesisPrompt = SYSTEM_PROMPT + '\n\n' +
+    '# 预处理数据\n以下是从 ' + reviews.length + ' 条评论中提取的结构化标签数据，请基于这些数据生成完整的分析报告。\n\n' +
+    '## 提取的标签数据\n```json\n' + JSON.stringify(allExtractions, null, 2) + '\n```\n\n' +
+    '## 原始评论原文（定性引用，已包含全部 ' + reviews.length + ' 条）\n' +
+    buildReviewDataMessage(reviews.length > 200 ? reviews.slice(0, 200) : reviews) +
+    '\n\n' +
+    '以上结构化标签已覆盖全部 ' + reviews.length + ' 条评论。请基于全量标签数据做定量统计（频次、占比基于 ' + reviews.length + ' 条），结合评论原文做定性分析，按分析框架生成完整的洞察报告。';
+
+  var report = await callClaudeAPI(synthesisPrompt, '请生成完整的分析报告。', {
+    stream: true,
+    maxTokens: 8192
+  });
+
+  updateProgress(100, '分析完成', '报告已生成');
+  return report;
+}
+
+function buildReviewDataMessage(reviews) {
+  var contentCol = state.mapping.content;
+  var starCol = state.mapping.star;
+  var titleCol = state.mapping.title;
+
+  var lines = ['以下是 ' + reviews.length + ' 条商品评论数据：', ''];
+
+  reviews.forEach(function(r, i) {
+    var parts = [];
+    parts.push('---');
+    parts.push('评论 #' + (i + 1));
+    if (starCol && r[starCol]) {
+      parts.push('星级: ' + r[starCol]);
+    }
+    if (titleCol && r[titleCol]) {
+      parts.push('标题: ' + r[titleCol]);
+    }
+    if (contentCol && r[contentCol]) {
+      parts.push('正文: ' + r[contentCol]);
+    } else {
+      // Use the raw object if no mapping
+      var content = [];
+      for (var key in r) {
+        if (r[key]) content.push(key + ': ' + r[key]);
+      }
+      parts.push('内容: ' + content.join(' | '));
+    }
+    lines.push(parts.join('\n'));
+  });
+
+  lines.push('');
+  lines.push('---结束---');
+  lines.push('请基于以上 ' + reviews.length + ' 条评论数据，按照 System Prompt 中的分析框架生成完整的《深度洞察分析报告》。');
+
+  return lines.join('\n');
+}
+
+function updateProgress(percent, status, detail) {
+  document.getElementById('progress-fill').style.width = percent + '%';
+  document.getElementById('progress-status').textContent = status;
+  if (detail) {
+    document.getElementById('progress-detail').textContent = detail;
+  }
+}
+
+function extractProductName(report) {
+  var match = report.match(/关于(.+?)的评论深度分析报告/);
+  return match ? match[1] : '商品评论分析';
+}
+
+// ============================================
+// REPORT RENDERING
+// ============================================
+function renderReport() {
+  if (!state.report) {
+    document.getElementById('report-content').innerHTML =
+      '<div class="report-empty">' +
+      '<div class="icon">📋</div>' +
+      '<p>暂无分析报告</p>' +
+      '<p class="text-muted">请先在「数据导入」页面上传评论数据并开始分析</p>' +
+      '<button class="btn btn-primary" onclick="switchPage(\'import\')">前往导入数据</button>' +
+      '</div>';
+    return;
+  }
+  renderReportContent();
+}
+
+function renderReportContent() {
+  var html = '<div class="report-toolbar">' +
+    '<button class="btn btn-primary" onclick="copyReport()">📋 复制全文</button>' +
+    '<button class="btn btn-success" onclick="downloadReport()">💾 下载 TXT</button>' +
+    '<button class="btn btn-sm" onclick="switchPage(\'import\')">📥 导入新数据</button>' +
+    '</div>' +
+    '<div class="report-container" id="report-text-container">' + escHtml(state.report) + '</div>';
+  document.getElementById('report-content').innerHTML = html;
+}
+
+// Throttled text update for streaming (avoids re-rendering toolbar)
+var _reportUpdateTimer = null;
+function updateReportTextThrottled() {
+  if (_reportUpdateTimer) return;
+  _reportUpdateTimer = setTimeout(function() {
+    _reportUpdateTimer = null;
+    updateReportText();
+  }, 150);
+}
+
+function updateReportText() {
+  var container = document.getElementById('report-text-container');
+  if (container) {
+    container.textContent = state.report;
+  }
+}
+
+function copyReport() {
+  if (!state.report) return;
+  navigator.clipboard.writeText(state.report).then(function() {
+    showToast('已复制到剪贴板');
+  }).catch(function() {
+    // Fallback
+    var textarea = document.createElement('textarea');
+    textarea.value = state.report;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    showToast('已复制到剪贴板');
+  });
+}
+
+function downloadReport() {
+  if (!state.report) return;
+  var blob = new Blob(['﻿' + state.report], { type: 'text/plain;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = '洞察报告_' + (state.reportMeta.productName || 'analysis') + '_' +
+    new Date().toISOString().slice(0, 10) + '.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ============================================
+// HISTORY MANAGEMENT
+// ============================================
+function loadHistory() {
+  try {
+    state.history = JSON.parse(localStorage.getItem('review-insight-history') || '[]');
+  } catch(e) {
+    state.history = [];
+  }
+}
+
+function saveToHistory(report) {
+  var entry = {
+    id: Date.now(),
+    date: new Date().toLocaleString('zh-CN'),
+    productName: extractProductName(report),
+    reviewCount: state.reviews.length,
+    report: report,
+    preview: report.substring(0, 200) + '...'
+  };
+  state.history.unshift(entry);
+  // Keep only last 20
+  if (state.history.length > 20) {
+    state.history = state.history.slice(0, 20);
+  }
+  try {
+    localStorage.setItem('review-insight-history', JSON.stringify(state.history));
+  } catch(e) {
+    // Storage full, remove oldest
+    state.history.pop();
+    try {
+      localStorage.setItem('review-insight-history', JSON.stringify(state.history));
+    } catch(e2) {
+      // Give up
+    }
+  }
+}
+
+function renderHistory() {
+  var container = document.getElementById('history-list');
+  var btnClear = document.getElementById('btn-clear-history');
+
+  if (state.history.length === 0) {
+    container.innerHTML =
+      '<div class="report-empty">' +
+      '<div class="icon">🕒</div>' +
+      '<p>暂无历史报告</p>' +
+      '<p class="text-muted">完成分析后，报告将自动保存在这里</p>' +
+      '</div>';
+    btnClear.style.display = 'none';
+    return;
+  }
+
+  btnClear.style.display = 'inline-flex';
+
+  container.innerHTML = state.history.map(function(h, i) {
+    return '<div class="history-item" onclick="viewHistoryReport(' + i + ')">' +
+      '<div class="flex-1">' +
+      '<div class="hi-title">' + escHtml(h.productName) + '</div>' +
+      '<div class="hi-meta">' + escHtml(h.date) + ' | ' + h.reviewCount + ' 条评论 | ' + escHtml(h.preview) + '</div>' +
+      '</div>' +
+      '<div class="hi-actions">' +
+      '<button class="btn btn-sm" onclick="event.stopPropagation();deleteHistoryItem(' + i + ')" title="删除">🗑</button>' +
+      '</div>' +
+      '</div>';
+  }).join('');
+}
+
+function viewHistoryReport(index) {
+  var h = state.history[index];
+  if (!h) return;
+  state.report = h.report;
+  state.reportMeta = {
+    reviewCount: h.reviewCount,
+    date: h.date,
+    productName: h.productName
+  };
+
+  document.getElementById('modal-report-content').textContent = h.report;
+  document.getElementById('modal-history').style.display = 'flex';
+  document.getElementById('modal-history').dataset.index = index;
+}
+
+function closeHistoryModal() {
+  document.getElementById('modal-history').style.display = 'none';
+}
+
+function copyHistoryReport() {
+  var report = document.getElementById('modal-report-content').textContent;
+  navigator.clipboard.writeText(report).then(function() {
+    showToast('已复制到剪贴板');
+  }).catch(function() {
+    var textarea = document.createElement('textarea');
+    textarea.value = report;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    showToast('已复制到剪贴板');
+  });
+}
+
+function downloadHistoryReport() {
+  var report = document.getElementById('modal-report-content').textContent;
+  var blob = new Blob(['﻿' + report], { type: 'text/plain;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = '洞察报告_' + new Date().toISOString().slice(0, 10) + '.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function deleteHistoryItem(index) {
+  if (confirm('确定要删除这份报告吗？')) {
+    state.history.splice(index, 1);
+    localStorage.setItem('review-insight-history', JSON.stringify(state.history));
+    renderHistory();
+  }
+}
+
+function clearHistory() {
+  if (confirm('确定要清空所有历史报告吗？此操作不可撤销。')) {
+    state.history = [];
+    localStorage.removeItem('review-insight-history');
+    renderHistory();
+  }
+}
+
+// ============================================
+// UTILITIES
+// ============================================
+function escHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function escAttr(str) {
+  if (!str) return '';
+  return String(str).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+function showToast(message) {
+  var existing = document.querySelector('.toast-msg');
+  if (existing) existing.remove();
+
+  var toast = document.createElement('div');
+  toast.className = 'toast-msg';
+  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e1b4b;color:#fff;padding:10px 24px;border-radius:20px;font-size:14px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.3);transition:opacity .3s';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  setTimeout(function() {
+    toast.style.opacity = '0';
+    setTimeout(function() { toast.remove(); }, 300);
+  }, 2000);
+}
+
+// ============================================
+// APP START
+// ============================================
+document.addEventListener('DOMContentLoaded', init);
+
+// Handle page unload — cancel pending analysis
+window.addEventListener('beforeunload', function() {
+  if (state.abortController) {
+    state.abortController.abort();
+  }
+});
+</script>
+
+</body>
+</html>

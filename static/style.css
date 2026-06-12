@@ -1,0 +1,125 @@
+/* 电商评论洞察分析工具 — Custom Styles */
+
+/* Print styles for report */
+@media print {
+  .sidebar, .report-toolbar, .btn, .nav-tabs, .filter-bar {
+    display: none !important;
+  }
+  .main-content {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+  .report-container {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    font-size: 12px !important;
+    line-height: 1.6 !important;
+  }
+  .page { display: block !important; }
+  body { background: #fff !important; }
+}
+
+/* Smooth page transitions */
+.page {
+  animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Upload zone enhancements */
+.upload-zone.has-file {
+  border-color: var(--success);
+  background: #ecfdf5;
+}
+
+/* Report text readability */
+.report-container {
+  font-kerning: normal;
+  font-variant-ligatures: none;
+  text-rendering: optimizeLegibility;
+}
+
+/* Scrollbar styling for report */
+.report-container::-webkit-scrollbar,
+.table-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.report-container::-webkit-scrollbar-track,
+.table-container::-webkit-scrollbar-track {
+  background: #f5f5f5;
+  border-radius: 3px;
+}
+
+.report-container::-webkit-scrollbar-thumb,
+.table-container::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.report-container::-webkit-scrollbar-thumb:hover,
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Loading spinner for analysis */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+/* Empty state illustrations */
+.empty-state {
+  text-align: center;
+  padding: 48px 20px;
+}
+
+.empty-state .icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.empty-state p {
+  color: #666;
+  margin: 8px 0;
+}
+
+/* Mapping card highlight when content is mapped */
+.mapping-ready {
+  border-left: 4px solid var(--success);
+}
+
+/* History item interaction */
+.history-item:hover {
+  background: #f5f3ff;
+}
+
+.history-item:active {
+  background: #ede9fe;
+}
+
+/* Progress bar animation */
+.progress-bar-fill.active {
+  animation: progressPulse 1.5s ease infinite;
+}
+
+@keyframes progressPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .7; }
+}
