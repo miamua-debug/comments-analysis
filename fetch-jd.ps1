@@ -1,6 +1,5 @@
-# fetch-jd.ps1 — Fetch all reviews for a JD product (SPU-level, all SKUs)
+# fetch-jd.ps1 - Fetch all reviews for a JD product (SPU-level, all SKUs)
 # Usage: powershell -ExecutionPolicy Bypass -File fetch-jd.ps1 -Sku "100191929771"
-# Output: JSON array of all reviews to stdout, one line per status update (prefixed with STATUS:)
 
 param([string]$Sku)
 
@@ -10,7 +9,14 @@ $allComments = @()
 $validSkus = @()
 $productName = ""
 
-Write-Output "STATUS:{\"phase\":\"discover\",\"message\":\"Discovering SKUs under same SPU...\"}"
+# STATUS helper - flush immediately for SSE streaming
+function Write-Status($json) {
+    $line = "STATUS:$json"
+    [Console]::WriteLine($line)
+    [Console]::Out.Flush()
+}
+
+Write-Status '{"phase":"discover","message":"Discovering SKUs under same SPU..."}'
 
 # ===== Step 1: Discover all SKUs via mobile page =====
 try {
@@ -24,7 +30,7 @@ try {
         $skuListJson = $Matches[1] | ConvertFrom-Json
         foreach ($s in $skuListJson) { $allSkuIds[$s.skuId] = $true }
     }
-    # Also find all SKU-like IDs
+    # Also find all SKU-like IDs (10+ digit numbers in skuXXX keys)
     $skuMatches = [regex]::Matches($mContent, '"sku\w*"\s*:\s*"?(\d{10,})"?')
     foreach ($sm in $skuMatches) {
         $sid = $sm.Groups[1].Value
@@ -32,14 +38,14 @@ try {
     }
 
     $allSkuIds[$Sku] = $true
-    Write-Output "STATUS:{\"phase\":\"discover\",\"message\":\"Found $($allSkuIds.Count) candidate SKUs\"}"
+    Write-Status "{`"phase`":`"discover`",`"message`":`"Found $($allSkuIds.Count) candidate SKUs`"}"
 } catch {
-    Write-Output "STATUS:{\"phase\":\"discover\",\"message\":\"Mobile page failed, using single SKU: $_\"}"
+    Write-Status "{`"phase`":`"discover`",`"message`":`"Mobile page failed, using single SKU`"}"
     $allSkuIds = @{ $Sku = $true }
 }
 
 # ===== Step 2: Validate SKUs and get metadata =====
-Write-Output "STATUS:{\"phase\":\"validate\",\"message\":\"Validating SKUs...\"}"
+Write-Status '{"phase":"validate","message":"Validating SKUs and getting metadata..."}'
 
 foreach ($sid in $allSkuIds.Keys) {
     try {
@@ -55,40 +61,45 @@ foreach ($sid in $allSkuIds.Keys) {
 
             if (-not $productName) { $productName = $refName }
 
-            # Only exclude obviously mismatched SKUs
-            $namePrefix = $productName.Substring(0, [Math]::Min(4, $productName.Length))
-            if ($refName.StartsWith($namePrefix) -or $sid -eq $Sku) {
-                $validSkus += [PSCustomObject]@{
-                    SKU = $sid
-                    Name = $refName
-                    Color = $color
-                    MaxPage = $maxPage
-                    Total = $summary.commentCountStr
-                    AvgScore = $summary.averageScore
-                    GoodRate = $summary.goodRateShow
-                    Score5 = $summary.score5Count
-                    Score4 = $summary.score4Count
-                    Score3 = $summary.score3Count
-                    Score2 = $summary.score2Count
-                    Score1 = $summary.score1Count
+            # Filter: skip SKUs whose name is completely different from the target product
+            # Use the original SKU's name as reference for comparison
+            $keep = ($sid -eq $Sku)
+            if (-not $keep) {
+                # Check name similarity: extract key terms (first 2 Chinese chars or first word)
+                $refFirst = $refName.Substring(0, [Math]::Min(6, $refName.Length))
+                $prodFirst = $productName.Substring(0, [Math]::Min(6, $productName.Length))
+                # Keep if names share at least 2 common characters, or same starting brand
+                $common = 0
+                for ($ci = 0; $ci -lt [Math]::Min($refFirst.Length, $prodFirst.Length); $ci++) {
+                    if ($refFirst[$ci] -eq $prodFirst[$ci]) { $common++ }
                 }
-                Write-Output "STATUS:{\"phase\":\"validate\",\"message\":\"Validated SKU $sid` ($color) — $($summary.commentCountStr) reviews\"}"
+                if ($common -ge 2) { $keep = $true }
+            }
+            if ($keep) {
+                $vsku = [PSCustomObject]@{
+                    SKU = $sid; Name = $refName; Color = $color
+                    MaxPage = $maxPage; Total = $summary.commentCountStr
+                    AvgScore = $summary.averageScore; GoodRate = $summary.goodRateShow
+                    Score5 = $summary.score5Count; Score4 = $summary.score4Count
+                    Score3 = $summary.score3Count; Score2 = $summary.score2Count; Score1 = $summary.score1Count
+                }
+                $validSkus += $vsku
+                Write-Status "{`"phase`":`"validate`",`"message`":`"SKU $sid ($color) - $($summary.commentCountStr) reviews, $maxPage pages`"}"
             }
         }
     } catch {
-        Write-Output "STATUS:{\"phase\":\"validate\",\"message\":\"SKU $sid failed: $_\"}"
+        Write-Status "{`"phase`":`"validate`",`"message`":`"SKU $sid request failed, skipping`"}"
     }
     Start-Sleep -Milliseconds 300
 }
 
-Write-Output "STATUS:{\"phase\":\"validate\",\"message\":\"Valid SKUs: $($validSkus.Count)\"}"
+Write-Status "{`"phase`":`"validate`",`"message`":`"Done. Valid SKUs: $($validSkus.Count)`"}"
 
-# ===== Step 3: Fetch all reviews =====
+# ===== Step 3: Fetch all reviews for all valid SKUs =====
 $totalFetched = 0
+
 foreach ($vsku in $validSkus) {
     $sid = $vsku.SKU
-    Write-Output "STATUS:{\"phase\":\"fetch\",\"sku\":\"$sid\",\"color\":\"$($vsku.Color)\",\"maxPage\":$($vsku.MaxPage),\"currentPage\":0}"
-
     for ($page = 1; $page -le $vsku.MaxPage; $page++) {
         try {
             $url = "https://club.jd.com/comment/skuProductPageComments.action?productId=$sid&score=0&sortType=5&page=$page&pageSize=10"
@@ -96,76 +107,68 @@ foreach ($vsku in $validSkus) {
             $data = $r.Content | ConvertFrom-Json
 
             foreach ($c in $data.comments) {
-                $allComments += [PSCustomObject]@{
-                    SKU = $sid
-                    页码 = $page
-                    评价ID = $c.id
-                    昵称 = $c.nickname
-                    评分 = $c.score
-                    评价内容 = ($c.content -replace "[\r\n]+", " ").Trim()
-                    购买规格 = $c.productColor
-                    地区 = $c.location
-                    评价时间 = $c.creationTime
-                    购买时间 = $c.referenceTime
-                    图片数 = $c.imageCount
-                    有用数 = $c.usefulVoteCount
-                    回复数 = $c.replyCount
-                    购买后天数 = $c.days
-                    追评后天数 = $c.afterDays
-                    匿名 = $c.anonymousFlag
-                    客户端 = $c.userClient
-                    Plus = $c.plusAvailable
+                $comment = [PSCustomObject]@{
+                    SKU = $sid; Page = $page; Id = $c.id; Nickname = $c.nickname
+                    Score = $c.score; Content = ($c.content -replace "[\r\n]+", " ").Trim()
+                    Color = $c.productColor; Location = $c.location
+                    CreationTime = $c.creationTime; ReferenceTime = $c.referenceTime
+                    ImageCount = $c.imageCount; UsefulVoteCount = $c.usefulVoteCount
+                    ReplyCount = $c.replyCount; Days = $c.days; AfterDays = $c.afterDays
+                    Anonymous = $c.anonymousFlag; UserClient = $c.userClient; Plus = $c.plusAvailable
                 }
+                $allComments += $comment
             }
             $totalFetched += $data.comments.Count
-            Write-Output "STATUS:{\"phase\":\"fetch\",\"sku\":\"$sid\",\"currentPage\":$page,\"maxPage\":$($vsku.MaxPage),\"totalFetched\":$totalFetched}"
         } catch {
-            Write-Output "STATUS:{\"phase\":\"fetch\",\"sku\":\"$sid\",\"currentPage\":$page,\"error\":\"$_\"}"
+            # Silent skip for individual page errors
         }
-        if ($page -lt $vsku.MaxPage) { Start-Sleep -Milliseconds 500 }
+        if ($page -lt $vsku.MaxPage) {
+            # Progress update every page
+            Write-Status "{`"phase`":`"fetch`",`"sku`":`"$sid`",`"color`":`"$($vsku.Color)`",`"currentPage`":$page,`"maxPage`":$($vsku.MaxPage),`"totalFetched`":$totalFetched}"
+            Start-Sleep -Milliseconds 500
+        }
     }
+    Write-Status "{`"phase`":`"fetch`",`"sku`":`"$sid`",`"color`":`"$($vsku.Color)`",`"currentPage`":$($vsku.MaxPage),`"maxPage`":$($vsku.MaxPage),`"totalFetched`":$totalFetched}"
 }
 
 # ===== Step 4: Output final JSON =====
-Write-Output "STATUS:{\"phase\":\"complete\",\"productName\":\"$productName\",\"skuCount\":$($validSkus.Count),\"totalReviews\":$($allComments.Count)}"
-
-# Output the full data as the final line
-$result = @{
+$summary = [PSCustomObject]@{
     productName = $productName
     skuCount = $validSkus.Count
     totalReviews = $allComments.Count
-    skus = @($validSkus | ForEach-Object {
-        @{
-            sku = $_.SKU
-            name = $_.Name
-            color = $_.Color
-            total = $_.Total
-            avgScore = $_.AvgScore
-            goodRate = $_.GoodRate
-        }
-    })
-    reviews = @($allComments | ForEach-Object {
-        @{
-            SKU = $_.SKU
-            page = $_.页码
-            id = $_.评价ID
-            nickname = $_.昵称
-            score = $_.评分
-            content = $_.评价内容
-            color = $_.购买规格
-            location = $_.地区
-            creationTime = $_.评价时间
-            referenceTime = $_.购买时间
-            imageCount = $_.图片数
-            usefulVoteCount = $_.有用数
-            replyCount = $_.回复数
-            days = $_.购买后天数
-            afterDays = $_.追评后天数
-            anonymous = $_.匿名
-            userClient = $_.客户端
-            plus = $_.Plus
-        }
-    })
 }
 
-Write-Output "DATA:$($result | ConvertTo-Json -Depth 4 -Compress)"
+# Build reviews array (use indexed property access to avoid unicode issues)
+$reviewsArr = @()
+foreach ($c in $allComments) {
+    $reviewsArr += [PSCustomObject]@{
+        SKU = $c.SKU; page = $c.Page; id = $c.Id; nickname = $c.Nickname
+        score = $c.Score; content = $c.Content; color = $c.Color
+        location = $c.Location; creationTime = $c.CreationTime; referenceTime = $c.ReferenceTime
+        imageCount = $c.ImageCount; usefulVoteCount = $c.UsefulVoteCount
+        replyCount = $c.ReplyCount; days = $c.Days; afterDays = $c.AfterDays
+        anonymous = $c.Anonymous; userClient = $c.UserClient; plus = $c.Plus
+    }
+}
+
+# Build SKU summaries
+$skuArr = @()
+foreach ($vs in $validSkus) {
+    $skuArr += [PSCustomObject]@{
+        sku = $vs.SKU; name = $vs.Name; color = $vs.Color
+        total = $vs.Total; avgScore = $vs.AvgScore; goodRate = $vs.GoodRate
+    }
+}
+
+$result = [PSCustomObject]@{
+    productName = $productName
+    skuCount = $validSkus.Count
+    totalReviews = $allComments.Count
+    skus = $skuArr
+    reviews = $reviewsArr
+}
+
+$resultJson = $result | ConvertTo-Json -Depth 4 -Compress
+Write-Status "{`"phase`":`"complete`",`"productName`":`"$($productName -replace '"','\"')`",`"skuCount`":$($validSkus.Count),`"totalReviews`":$($allComments.Count)}"
+[Console]::WriteLine("DATA:$resultJson")
+[Console]::Out.Flush()
