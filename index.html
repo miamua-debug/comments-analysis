@@ -6,6 +6,8 @@
 <title>电商评论洞察分析工具</title>
 <!-- SheetJS for Excel/CSV parsing -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Chart.js for data visualization -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 /* ===== Reset & Base ===== */
 *,*::before,*::after{box-sizing:border-box}
@@ -170,6 +172,18 @@ tr:hover{background:#fafbfc}
 .skeleton.h-sm{height:12px;width:60%}
 .skeleton.h-lg{height:20px;width:80%}
 
+/* ===== Nav Groups (collapsible sidebar) ===== */
+.nav-group{margin:4px 0}
+.nav-group-header{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;color:rgba(255,255,255,.75);cursor:pointer;font-size:14px;font-weight:600;transition:all .15s;user-select:none}
+.nav-group-header:hover{color:#fff;background:rgba(255,255,255,.06)}
+.nav-group-header .nav-arrow{font-size:11px;transition:transform .2s}
+.nav-group-body{overflow:hidden}
+.nav-group-body .nav-item{padding-left:28px;font-size:13px}
+
+/* ===== Strategy Page Styles ===== */
+#store-sku-table{max-height:500px;overflow-y:auto}
+.strategy-metric{font-size:13px;color:#666;margin-left:8px}
+
 /* ===== Responsive ===== */
 @media(max-width:768px){
   .sidebar{width:60px}
@@ -184,18 +198,47 @@ tr:hover{background:#fafbfc}
 
 <!-- Sidebar -->
 <nav class="sidebar">
-  <div class="logo"><span style="font-size:22px">📊</span> <span>评论洞察分析</span></div>
-  <a class="nav-item active" data-page="import">
-    <span class="nav-icon">📥</span> <span>数据导入</span>
-  </a>
-  <a class="nav-item" data-page="report">
-    <span class="nav-icon">📋</span> <span>分析报告</span>
-  </a>
-  <a class="nav-item" data-page="history">
-    <span class="nav-icon">🕒</span> <span>历史记录</span>
-  </a>
-  <a class="nav-item" data-page="settings">
-    <span class="nav-icon">⚙</span> <span>设置</span>
+  <div class="logo"><span style="font-size:22px">📊</span> <span>产品洞察分析</span></div>
+
+  <!-- Group: 评论洞察 -->
+  <div class="nav-group" data-group="reviews">
+    <div class="nav-group-header active" onclick="toggleNavGroup('reviews')">
+      <span>📊 评论洞察</span><span class="nav-arrow">▾</span>
+    </div>
+    <div class="nav-group-body">
+      <a class="nav-item active" data-page="import" data-group="reviews">
+        <span style="margin-left:8px">📥 数据导入</span>
+      </a>
+      <a class="nav-item" data-page="report" data-group="reviews">
+        <span style="margin-left:8px">📋 分析报告</span>
+      </a>
+      <a class="nav-item" data-page="history" data-group="reviews">
+        <span style="margin-left:8px">🕒 历史记录</span>
+      </a>
+      <a class="nav-item" data-page="framework" data-group="reviews">
+        <span style="margin-left:8px">📖 分析框架</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Group: 产品策略洞察 -->
+  <div class="nav-group" data-group="strategy">
+    <div class="nav-group-header" onclick="toggleNavGroup('strategy')">
+      <span>📈 产品策略洞察</span><span class="nav-arrow">▸</span>
+    </div>
+    <div class="nav-group-body" style="display:none">
+      <a class="nav-item" data-page="strategy-fetch" data-group="strategy">
+        <span style="margin-left:8px">🔍 SKU数据获取</span>
+      </a>
+      <a class="nav-item" data-page="strategy-report" data-group="strategy">
+        <span style="margin-left:8px">📊 策略分析报告</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Settings (standalone) -->
+  <a class="nav-item" data-page="settings" data-group="root">
+    <span>⚙ 设置</span>
   </a>
 </nav>
 
@@ -360,6 +403,94 @@ tr:hover{background:#fafbfc}
     </div>
   </div>
 
+  <!-- Page: Analysis Framework -->
+  <div class="page" id="page-framework">
+    <h4 class="mb-3">📖 评论洞察分析框架</h4>
+    <div class="card">
+      <div class="card-header">8 维度语义提取</div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;line-height:1.8">
+          <div style="padding:10px 14px;background:#eef2ff;border-radius:8px"><strong>1. 人群维度</strong><br><span class="text-muted">性别、年龄段、职业、购买角色</span></div>
+          <div style="padding:10px 14px;background:#f0fdf4;border-radius:8px"><strong>2. 场景维度</strong><br><span class="text-muted">使用场景</span></div>
+          <div style="padding:10px 14px;background:#fefce8;border-radius:8px"><strong>3. 产品维度</strong><br><span class="text-muted">功能满意度、具体功能</span></div>
+          <div style="padding:10px 14px;background:#fef2f2;border-radius:8px"><strong>4. 质量维度</strong><br><span class="text-muted">材质、做工、耐用性</span></div>
+          <div style="padding:10px 14px;background:#ecfeff;border-radius:8px"><strong>5. 服务维度</strong><br><span class="text-muted">发货、包装、客服、退换货、保修</span></div>
+          <div style="padding:10px 14px;background:#fdf2f8;border-radius:8px"><strong>6. 体验维度</strong><br><span class="text-muted">舒适度、易用性、外观、价格感知</span></div>
+          <div style="padding:10px 14px;background:#f5f3ff;border-radius:8px"><strong>7. 市场维度</strong><br><span class="text-muted">竞品对比、复购意愿</span></div>
+          <div style="padding:10px 14px;background:#fff7ed;border-radius:8px"><strong>8. 情感维度</strong><br><span class="text-muted">总体评价</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card mt-3">
+      <div class="card-header">7 章节报告结构</div>
+      <div class="card-body" style="font-size:13px;line-height:2">
+        1. 核心用户画像与场景<br>2. 核心卖点与价值验证<br>3. 主要痛点与负面归因<br>
+        4. 改进建议与优先级<br>5. 潜在机会与差异化<br>6. 典型用户深度解析<br>7. 关键洞察总结
+      </div>
+    </div>
+  </div>
+
+  <!-- Page: Strategy Fetch -->
+  <div class="page" id="page-strategy-fetch">
+    <h4 class="mb-3">🔍 店铺SKU数据获取</h4>
+    <div class="card">
+      <div class="card-header">🌐 京东店铺SKU提取</div>
+      <div class="card-body">
+        <div class="form-group"><label>店铺ID</label>
+          <input type="text" id="strategy-shop-id" placeholder="例如: 10320377"></div>
+        <div class="form-group"><label>搜索关键词（品牌词）</label>
+          <input type="text" id="strategy-keyword" placeholder="例如: 芯友"></div>
+        <div class="form-group"><label>目标店铺名（可选，用于过滤）</label>
+          <input type="text" id="strategy-target-shop" placeholder="留空则自动检测"></div>
+        <button class="btn btn-primary" id="btn-store-fetch" onclick="startStoreFetch()">🔍 获取店铺全部SKU</button>
+        <div id="store-fetch-progress" style="display:none;margin-top:12px">
+          <div class="progress-bar-wrap"><div class="progress-bar-fill" id="store-progress-fill"></div></div>
+          <div class="progress-status" id="store-progress-status"></div>
+          <div class="text-muted" style="font-size:11px;text-align:center;margin-top:4px" id="store-progress-detail"></div>
+          <div style="text-align:center;margin-top:8px"><button class="btn btn-danger btn-sm" onclick="cancelStoreFetch()">取消</button></div>
+        </div>
+      </div>
+    </div>
+    <!-- SKU summary table -->
+    <div class="card" id="store-sku-summary" style="display:none">
+      <div class="card-header">📋 SKU数据预览 <span id="store-sku-count"></span></div>
+      <div class="card-body" style="padding:0"><div class="table-container" id="store-sku-table"></div></div>
+    </div>
+  </div>
+
+  <!-- Page: Strategy Report -->
+  <div class="page" id="page-strategy-report">
+    <h4 class="mb-3">📊 产品策略分析报告</h4>
+    <div id="strategy-report-empty">
+      <div class="card"><div class="card-body" style="text-align:center;padding:48px">
+        <div style="font-size:48px;margin-bottom:12px">📈</div>
+        <p>请先在「SKU数据获取」中提取店铺SKU数据</p>
+        <button class="btn btn-primary" onclick="switchPage('strategy-fetch');return false">前往获取数据</button>
+      </div></div>
+    </div>
+    <div id="strategy-report-content" style="display:none">
+      <div class="d-flex gap-2 mb-3">
+        <button class="btn btn-primary" id="btn-strategy-analyze" onclick="startStrategyAnalysis()">🚀 开始策略分析</button>
+        <button class="btn btn-sm" onclick="renderCharts()">📊 仅刷新图表</button>
+      </div>
+      <div id="strategy-charts">
+        <div class="row">
+          <div class="col-lg-6"><div class="card"><div class="card-header">价格带分布</div><div class="card-body"><div class="chart-wrap"><canvas id="chart-price-bands"></canvas></div></div></div></div>
+          <div class="col-lg-6"><div class="card"><div class="card-header">产品矩阵（价格 × 评论数）</div><div class="card-body"><div class="chart-wrap"><canvas id="chart-matrix-bubble"></canvas></div></div></div></div>
+        </div>
+        <div class="row">
+          <div class="col-lg-6"><div class="card"><div class="card-header">型号SKU数分布</div><div class="card-body"><div class="chart-wrap"><canvas id="chart-model-pie"></canvas></div></div></div></div>
+          <div class="col-lg-6"><div class="card"><div class="card-header">评分与价格关系</div><div class="card-body"><div class="chart-wrap"><canvas id="chart-score-scatter"></canvas></div></div></div></div>
+        </div>
+      </div>
+      <div class="card mt-3"><div class="card-header">AI策略分析</div>
+        <div class="card-body" id="strategy-analysis-text" style="white-space:pre-wrap;font-size:15px;line-height:2">
+          <p class="text-muted">点击「开始策略分析」生成AI分析报告</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Page: Settings -->
   <div class="page" id="page-settings">
     <h4 class="mb-3">⚙ 设置</h4>
@@ -391,27 +522,6 @@ tr:hover{background:#fafbfc}
       </div>
     </div>
 
-    <div class="card mt-3">
-      <div class="card-header">📖 关于分析框架</div>
-      <div class="card-body">
-        <p style="font-size:13px;color:#666;line-height:1.8">
-          本工具采用专业的消费者行为学分析框架，AI 将对每一条评论进行 <strong>8 个维度</strong> 的深度语义提取：
-        </p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
-          <div>1. 人群维度 — 性别、年龄段、职业、购买角色</div>
-          <div>2. 场景维度 — 使用场景</div>
-          <div>3. 产品维度 — 功能满意度、具体功能</div>
-          <div>4. 质量维度 — 材质、做工、耐用性</div>
-          <div>5. 服务维度 — 发货速度、包装、客服、退换货</div>
-          <div>6. 体验维度 — 舒适度、易用性、外观设计、价格</div>
-          <div>7. 市场维度 — 竞品对比、复购意愿</div>
-          <div>8. 情感维度 — 总体评价</div>
-        </div>
-        <p style="font-size:12px;color:#999;margin-top:12px">
-          基于提取的结构化标签，生成包含 7 大章节的专业洞察报告：用户画像、核心卖点、主要痛点、改进建议、潜在机会、典型用户解析、关键洞察总结。
-        </p>
-      </div>
-    </div>
   </div>
 
 </div><!-- /main-content -->
@@ -603,6 +713,21 @@ function setupNavigation() {
   });
 }
 
+function toggleNavGroup(group) {
+  var header = document.querySelector('.nav-group[data-group="' + group + '"] .nav-group-header');
+  var body = document.querySelector('.nav-group[data-group="' + group + '"] .nav-group-body');
+  var arrow = header.querySelector('.nav-arrow');
+  if (body.style.display === 'none') {
+    body.style.display = 'block';
+    header.classList.add('active');
+    arrow.textContent = '▾';
+  } else {
+    body.style.display = 'none';
+    header.classList.remove('active');
+    arrow.textContent = '▸';
+  }
+}
+
 function switchPage(page) {
   document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
   document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
@@ -611,9 +736,23 @@ function switchPage(page) {
   var pageEl = document.getElementById('page-' + page);
   if (pageEl) pageEl.classList.add('active');
 
+  // Auto-expand parent group if needed
+  var group = navItem ? navItem.dataset.group : '';
+  if (group && group !== 'root') {
+    var body = document.querySelector('.nav-group[data-group="' + group + '"] .nav-group-body');
+    var header = document.querySelector('.nav-group[data-group="' + group + '"] .nav-group-header');
+    var arrow = header ? header.querySelector('.nav-arrow') : null;
+    if (body && body.style.display === 'none') {
+      body.style.display = 'block';
+      if (header) header.classList.add('active');
+      if (arrow) arrow.textContent = '▾';
+    }
+  }
+
   if (page === 'report') renderReport();
   if (page === 'history') renderHistory();
   if (page === 'settings') loadSettingsToForm();
+  if (page === 'strategy-report') renderStrategyReport();
 }
 
 // ============================================
@@ -1164,6 +1303,12 @@ function showAlert(pageId, message, type) {
 // SAMPLE DATA
 // ============================================
 function loadSampleData() {
+  // Set a default product name for sample data
+  var pnInput = document.getElementById('product-name-input');
+  if (pnInput && !pnInput.value) {
+    pnInput.value = '京东收银 D6 智能收银称';
+  }
+
   var sampleReviews = [
     { '星级': '5', '标题': '非常好用，强烈推荐', '内容': '买来用于小餐馆收银的，操作界面很直观，上手快。触摸屏灵敏度不错，用了两个月没出现卡顿。打印小票速度也快，顾客排队时间明显缩短了。唯一遗憾是说明书不够详细，有些高级功能需要自己摸索。但客服响应很快，在线问了两个问题都及时解答了。总体来说性价比很高，比之前用的XX品牌好太多，会推荐给同行朋友。' },
     { '星级': '4', '标题': '功能全面，性价比高', '内容': '作为便利店老板，对比了好几个品牌最终选了这款。收银功能基本满足日常需求，商品录入、扫码支付、库存管理都覆盖了。界面设计简洁，新员工培训一天就能上手。不足之处是报表功能略显简单，希望能增加更多自定义报表模板。另外机器运行时间长了会有点发热，夏天需要注意通风。整体满意，这个价位能做到这样已经很不错了。' },
@@ -1310,6 +1455,259 @@ async function streamResponse(resp) {
     }
   }
   return fullText;
+}
+
+// ============================================
+// STRATEGY MODULE STATE & FUNCTIONS
+// ============================================
+var _storeFetchAbort = null;
+// Strategy properties on existing state object (declared earlier)
+state.strategySkus = state.strategySkus || null;
+state.strategyReport = state.strategyReport || '';
+state.strategyMeta = state.strategyMeta || {};
+
+async function startStoreFetch() {
+  var shopId = document.getElementById('strategy-shop-id').value.trim();
+  var keyword = document.getElementById('strategy-keyword').value.trim();
+  var targetShop = document.getElementById('strategy-target-shop').value.trim();
+
+  if (!shopId || !keyword) { alert('请输入店铺ID和搜索关键词'); return; }
+
+  _storeFetchAbort = new AbortController();
+  document.getElementById('store-fetch-progress').style.display = 'block';
+  document.getElementById('store-progress-fill').style.width = '0%';
+  document.getElementById('store-progress-status').textContent = '正在搜索店铺商品...';
+  document.getElementById('btn-store-fetch').disabled = true;
+
+  try {
+    var resp = await fetch(window.location.origin + '/api/fetch-store-skus', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ shopId: shopId, keyword: keyword, targetShop: targetShop || '' }),
+      signal: _storeFetchAbort.signal
+    });
+
+    var reader = resp.body.getReader();
+    var decoder = new TextDecoder();
+    var buffer = '';
+    var resultData = null;
+
+    while (true) {
+      var rv = await reader.read();
+      if (rv.done) break;
+      buffer += decoder.decode(rv.value, { stream: true });
+      var lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (line === '' || !line.startsWith('data: ')) continue;
+        var jsonStr = line.slice(6);
+        var data;
+        try { data = JSON.parse(jsonStr); } catch(e) { continue; }
+
+        if (data.type === 'result') { resultData = data; rv = { done: true }; break; }
+
+        // Progress
+        var pct = 0;
+        if (data.phase === 'search') pct = 10;
+        else if (data.phase === 'download') pct = 10 + Math.round(data.current / Math.max(1, data.total) * 25);
+        else if (data.phase === 'extract') pct = 35;
+        else if (data.phase === 'reviews') pct = 40 + Math.round(data.current / Math.max(1, data.total) * 40);
+        else if (data.phase === 'filter' || data.phase === 'family') pct = 85;
+        else if (data.phase === 'output') pct = 95;
+
+        document.getElementById('store-progress-fill').style.width = Math.min(pct, 95) + '%';
+        document.getElementById('store-progress-status').textContent = data.message || '';
+        if (data.current && data.total) {
+          document.getElementById('store-progress-detail').textContent = data.current + ' / ' + data.total;
+        }
+      }
+      if (resultData) break;
+    }
+
+    if (resultData && resultData.skus && resultData.skus.length > 0) {
+      state.strategySkus = resultData;
+      state.strategyMeta = { shopName: resultData.shopName, shopId: resultData.shopId, totalSkus: resultData.totalSkus, familyCount: resultData.familyCount };
+
+      // Render SKU preview table
+      var skus = resultData.skus.slice(0, 100);
+      var html = '<table><thead><tr><th>#</th><th>型号</th><th>名称</th><th>配置</th><th>价格</th><th>评论</th><th>评分</th><th>好评率</th></tr></thead><tbody>';
+      skus.forEach(function(s, idx) {
+        html += '<tr><td>' + (idx+1) + '</td><td><span class="badge badge-primary">' + escHtml(s.model||'-') + '</span></td>' +
+          '<td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escHtml(s.name||'') + '</td>' +
+          '<td style="font-size:11px">' + escHtml((s.cpu||'')+' '+(s.ram||'')+' '+(s.disk||'')+' '+(s.screen||'')+' '+(s.system||'')).trim() + '</td>' +
+          '<td class="text-end">' + (s.price||0).toFixed(0) + '</td>' +
+          '<td class="text-end">' + escHtml(s.commentCount||'0') + '</td>' +
+          '<td class="text-end">' + (s.avgScore||0) + '</td>' +
+          '<td class="text-end">' + escHtml(s.goodRate||'') + '%</td></tr>';
+      });
+      html += '</tbody></table>';
+      document.getElementById('store-sku-table').innerHTML = html;
+      document.getElementById('store-sku-count').textContent = '共 ' + resultData.totalSkus + ' 个SKU，' + resultData.familyCount + ' 个产品族' + (resultData.totalSkus > 100 ? '（仅显示前100条）' : '');
+      document.getElementById('store-sku-summary').style.display = 'block';
+      document.getElementById('store-progress-fill').style.width = '100%';
+      document.getElementById('store-progress-status').textContent = '获取完成：' + resultData.totalSkus + ' 个SKU';
+    }
+  } catch(err) {
+    if (err.name !== 'AbortError') { alert('获取失败: ' + err.message); }
+  }
+  document.getElementById('store-fetch-progress').style.display = 'none';
+  document.getElementById('btn-store-fetch').disabled = false;
+  _storeFetchAbort = null;
+}
+
+function cancelStoreFetch() {
+  if (_storeFetchAbort) { _storeFetchAbort.abort(); _storeFetchAbort = null; }
+  document.getElementById('btn-store-fetch').disabled = false;
+}
+
+// Strategy analysis system prompt
+var STRATEGY_PROMPT = [
+  '# Role',
+  '你是一位拥有15年经验的品牌产品策略分析师。请基于提供的店铺SKU结构化数据，系统分析该品牌的产品策略。',
+  '',
+  '# Analysis Dimensions',
+  '1. 产品矩阵与组合：产品线角色划分（旗舰款/利润款/走量款/引流款）、矩阵健康度、产品替代与蚕食',
+  '2. 定价策略：价格带分布、主攻价格带、定价策略类型（锚点/阶梯/套餐/尾数）、性价比定位',
+  '3. 产品力分析：核心卖点统计、技术路线选型、硬件配置方案策略',
+  '4. 生命周期与迭代：产品阶段判断、迭代模式识别、迭代健康度',
+  '5. 用户画像与细分：价格×配置→用户分层、场景覆盖矩阵',
+  '6. 配件与组套协同：配件生态、组套策略、剃刀模式判断',
+  '',
+  '# Output Format',
+  '请输出结构化产品策略分析报告。使用【】标记章节标题。引用具体SKU数据时标注数量和占比。每个维度给出明确的策略判断。',
+  '结尾给出3-5条具体的策略建议（机会点和风险点）。',
+  '',
+  '# Notes',
+  '- 基于数据说话，不要凭空推断',
+  '- 占比数据精确到小数点后1位',
+  '- 策略建议要具体、可执行',
+  '- 如果数据不足以支撑某个维度，说明数据局限性'
+].join('\n');
+
+async function startStrategyAnalysis() {
+  if (!state.strategySkus || !state.strategySkus.skus || state.strategySkus.skus.length === 0) {
+    alert('请先在「SKU数据获取」中提取店铺SKU数据'); return;
+  }
+  if (state.isAnalyzing) return;
+
+  state.isAnalyzing = true;
+  document.getElementById('btn-strategy-analyze').disabled = true;
+  document.getElementById('strategy-analysis-text').innerHTML = '<p class="text-muted">⏳ AI正在分析品牌产品策略...</p>';
+
+  // Build data summary for the AI
+  var skus = state.strategySkus.skus;
+  var summary = {
+    shopName: state.strategySkus.shopName,
+    totalSkus: skus.length,
+    familyCount: state.strategySkus.familyCount,
+    priceRange: [Math.min.apply(null, skus.map(function(s){return s.price||0;})), Math.max.apply(null, skus.map(function(s){return s.price||0;}))],
+    avgPrice: Math.round(skus.reduce(function(a,s){return a+(s.price||0);},0) / skus.length),
+    modelDistribution: {}
+  };
+
+  skus.forEach(function(s) {
+    var m = s.model || '无型号';
+    summary.modelDistribution[m] = (summary.modelDistribution[m] || 0) + 1;
+  });
+
+  var userMsg = '## 店铺：' + state.strategySkus.shopName + '\n\n';
+  userMsg += 'SKU总数：' + skus.length + ' | 产品族数：' + state.strategySkus.familyCount + '\n';
+  userMsg += '价格区间：¥' + summary.priceRange[0].toFixed(0) + ' ~ ¥' + summary.priceRange[1].toFixed(0) + ' | 均价：¥' + summary.avgPrice + '\n\n';
+  userMsg += '## SKU明细数据\n```json\n' + JSON.stringify(skus.slice(0, 300), null, 1) + '\n```\n\n';
+  userMsg += '请基于以上数据生成品牌产品策略分析报告。';
+
+  try {
+    var report = await callClaudeAPI(STRATEGY_PROMPT, userMsg, { stream: true, maxTokens: 8192 });
+    state.strategyReport = report;
+    document.getElementById('strategy-analysis-text').innerHTML = '<pre class="rpt-pre">' + styleReportText(report) + '</pre>';
+  } catch(err) {
+    document.getElementById('strategy-analysis-text').innerHTML = '<div class="alert alert-danger">分析失败：' + escHtml(err.message) + '</div>';
+  }
+
+  state.isAnalyzing = false;
+  document.getElementById('btn-strategy-analyze').disabled = false;
+}
+
+function renderStrategyReport() {
+  if (!state.strategySkus || state.strategySkus.skus.length === 0) {
+    document.getElementById('strategy-report-empty').style.display = 'block';
+    document.getElementById('strategy-report-content').style.display = 'none';
+    return;
+  }
+  document.getElementById('strategy-report-empty').style.display = 'none';
+  document.getElementById('strategy-report-content').style.display = 'block';
+  renderCharts();
+  if (state.strategyReport) {
+    document.getElementById('strategy-analysis-text').innerHTML = '<pre class="rpt-pre">' + styleReportText(state.strategyReport) + '</pre>';
+  }
+}
+
+function renderCharts() {
+  if (!state.strategySkus || !state.strategySkus.skus) return;
+  var skus = state.strategySkus.skus;
+
+  // Chart 1: Price band distribution
+  var bands = [0, 500, 1000, 2000, 3500, 5000, 6500, 99999];
+  var bandLabels = ['<500','500-1000','1000-2000','2000-3500','3500-5000','5000-6500','6500+'];
+  var bandCounts = bands.slice(0,-1).map(function(_, i) {
+    return skus.filter(function(s) { return (s.price||0) >= bands[i] && (s.price||0) < bands[i+1]; }).length;
+  });
+  var bandColors = ['#6366f1','#818cf8','#a5b4fc','#c7d2fe','#e0e7ff','#eef2ff','#ddd6fe'];
+
+  tryRenderChart('chart-price-bands', 'bar', {
+    labels: bandLabels,
+    datasets: [{ label: 'SKU 数量', data: bandCounts, backgroundColor: bandColors, borderRadius: 6 }]
+  });
+
+  // Chart 2: Model pie
+  var modelMap = {};
+  skus.forEach(function(s) { var m = s.model || '未知'; modelMap[m] = (modelMap[m]||0)+1; });
+  var modelKeys = Object.keys(modelMap).sort(function(a,b){return modelMap[b]-modelMap[a];}).slice(0, 8);
+  var modelData = modelKeys.map(function(k){return modelMap[k];});
+
+  tryRenderChart('chart-model-pie', 'doughnut', {
+    labels: modelKeys,
+    datasets: [{ data: modelData, backgroundColor: bandColors.slice(0, modelKeys.length) }]
+  });
+
+  // Chart 3: Price vs Comments bubble
+  var bubbleData = skus.filter(function(s){return (s.price||0)>0&&s.commentCount;}).slice(0, 100).map(function(s){
+    var cc = 0; var cs = String(s.commentCount||'').replace(/[^0-9]/g,'');
+    if (cs) cc = parseInt(cs); if (cs && s.commentCount.indexOf('万')!==-1) cc*=10000; if (!cc&&cs) cc=parseInt(cs);
+    return { x: s.price||0, y: Math.max(0, cc), r: Math.max(3, Math.min(20, cc/500)) };
+  });
+
+  tryRenderChart('chart-matrix-bubble', 'bubble', {
+    datasets: [{
+      label: 'SKU', data: bubbleData,
+      backgroundColor: bubbleData.map(function(_,i){return 'rgba(99,102,241,'+(0.3+0.5*i/bubbleData.length)+')';})
+    }]
+  }, { scales: { x: { title: { display: true, text: '价格 (¥)' } }, y: { title: { display: true, text: '评论数' } } } });
+
+  // Chart 4: Score vs Price scatter
+  var scatterData = skus.filter(function(s){return (s.price||0)>0&&(s.avgScore||0)>0;}).slice(0, 100).map(function(s){
+    return { x: s.price||0, y: s.avgScore||0 };
+  });
+
+  tryRenderChart('chart-score-scatter', 'scatter', {
+    datasets: [{
+      label: 'SKU', data: scatterData,
+      backgroundColor: 'rgba(16,185,129,0.6)', pointRadius: 4
+    }]
+  }, { scales: { x: { title: { display: true, text: '价格 (¥)' } }, y: { title: { display: true, text: '评分' }, min: 3, max: 5 } } });
+}
+
+function tryRenderChart(canvasId, type, data, extraOpts) {
+  try {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    if (window['_chart_' + canvasId]) window['_chart_' + canvasId].destroy();
+    if (typeof Chart === 'undefined') { console.warn('Chart.js not loaded'); return; }
+    var opts = Object.assign({ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } }, extraOpts || {});
+    window['_chart_' + canvasId] = new Chart(canvas.getContext('2d'), { type: type, data: data, options: opts });
+  } catch(e) { console.warn('Chart render failed:', canvasId, e.message); }
 }
 
 // ============================================

@@ -257,6 +257,86 @@ try {
             continue
         }
 
+        # ===== Store SKU Fetcher (SSE streaming) =====
+        if ($requestPath -eq "/api/fetch-store-skus" -and $request.HttpMethod -eq "POST") {
+            $reader3 = New-Object System.IO.StreamReader($request.InputStream, [System.Text.Encoding]::UTF8)
+            $reqBody3 = $reader3.ReadToEnd()
+            $reader3.Close()
+
+            try {
+                $reqJson = $reqBody3 | ConvertFrom-Json
+                $shopId = $reqJson.shopId
+                $keyword = $reqJson.keyword
+                $targetShop = $reqJson.targetShop
+
+                if (-not $shopId -or -not $keyword) {
+                    $response.StatusCode = 400
+                    $msg = [System.Text.Encoding]::UTF8.GetBytes('{"error":"Required: shopId and keyword"}')
+                    $response.ContentType = "application/json; charset=utf-8"
+                    $response.ContentLength64 = $msg.Length
+                    $response.OutputStream.Write($msg, 0, $msg.Length)
+                    $response.Close()
+                    continue
+                }
+
+                Write-Host "  [STORE] SKU fetch: shopId=$shopId keyword=$keyword" -ForegroundColor Cyan
+
+                $response.ContentType = "text/event-stream; charset=utf-8"
+                $response.Headers["Cache-Control"] = "no-cache"
+                $response.Headers["Connection"] = "keep-alive"
+                $response.Headers["X-Accel-Buffering"] = "no"
+
+                $fetchScript = Join-Path $scriptRoot "fetch-store-skus.ps1"
+                $psi = New-Object System.Diagnostics.ProcessStartInfo
+                $psi.FileName = "powershell.exe"
+                $psi.Arguments = "-ExecutionPolicy Bypass -File `"$fetchScript`" -ShopId `"$shopId`" -Keyword `"$keyword`""
+                if ($targetShop) { $psi.Arguments += " -TargetShop `"$targetShop`"" }
+                $psi.UseShellExecute = $false
+                $psi.RedirectStandardOutput = $true
+                $psi.RedirectStandardError = $true
+                $psi.CreateNoWindow = $true
+                $psi.StandardOutputEncoding = [System.Text.Encoding]::UTF8
+
+                $proc = [System.Diagnostics.Process]::Start($psi)
+
+                while (-not $proc.StandardOutput.EndOfStream) {
+                    $line = $proc.StandardOutput.ReadLine()
+                    if ($line.StartsWith("STATUS:")) {
+                        $statusJson = $line.Substring(7)
+                        $wrap = '{"type":"progress",' + $statusJson.Substring(1)
+                        $sseData = "data: $wrap`n`n"
+                        $bytes = [System.Text.Encoding]::UTF8.GetBytes($sseData)
+                        $response.OutputStream.Write($bytes, 0, $bytes.Length)
+                        $response.OutputStream.Flush()
+                        continue
+                    }
+                    if ($line.StartsWith("DATA:")) {
+                        $dataJson = $line.Substring(5)
+                        $wrap = '{"type":"result",' + $dataJson.Substring(1)
+                        $sseData = "data: $wrap`n`n"
+                        $bytes = [System.Text.Encoding]::UTF8.GetBytes($sseData)
+                        $response.OutputStream.Write($bytes, 0, $bytes.Length)
+                        $response.OutputStream.Flush()
+                        break
+                    }
+                }
+
+                try { while (-not $proc.StandardOutput.EndOfStream) { $null = $proc.StandardOutput.ReadLine() } } catch {}
+                if (-not $proc.HasExited) { $proc.WaitForExit(5000) }
+                $response.Close()
+                Write-Host "  [STORE] Complete" -ForegroundColor Green
+            } catch {
+                $errMsg = $_.Exception.Message -replace '"', '""'
+                $errJson = "{""error"":""$errMsg""}"
+                $errSse = "event: error`ndata: $errJson`n`n"
+                $errBytes = [System.Text.Encoding]::UTF8.GetBytes($errSse)
+                try { $response.OutputStream.Write($errBytes, 0, $errBytes.Length) } catch {}
+                $response.Close()
+                Write-Host "  [STORE] Error: $($_.Exception.Message)" -ForegroundColor Red
+            }
+            continue
+        }
+
         # ===== Static File Serving =====
         if ($requestPath -eq "/") { $requestPath = "/index.html" }
 
