@@ -90,57 +90,32 @@ tr:hover{background:#fafbfc}
 
 /* ===== Styled Report ===== */
 .styled-report{white-space:normal;line-height:1.9;color:#334155;padding:40px}
-.styled-report .rpt-section{margin:0 0 32px 0;padding:24px 28px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0}
-.styled-report .rpt-section.rpt-positive{border-left:5px solid #10b981;background:linear-gradient(135deg,#f0fdf4 0%,#f8fafc 100%)}
-.styled-report .rpt-section.rpt-negative{border-left:5px solid #ef4444;background:linear-gradient(135deg,#fef2f2 0%,#f8fafc 100%)}
-.styled-report .rpt-section.rpt-action{border-left:5px solid #6366f1;background:linear-gradient(135deg,#eef2ff 0%,#f8fafc 100%)}
-.styled-report .rpt-section.rpt-summary{border-left:5px solid #f59e0b;background:linear-gradient(135deg,#fffbeb 0%,#fefce8 50%)}
-.styled-report .rpt-section.rpt-profile{border-left:5px solid #06b6d4}
 
-.styled-report .rpt-section-title{font-size:18px;font-weight:700;color:#1e293b;margin:0 0 16px 0;padding-bottom:10px;border-bottom:2px solid #e2e8f0;display:flex;align-items:center;gap:8px}
-.styled-report .rpt-section.rpt-positive .rpt-section-title{color:#059669;border-bottom-color:#a7f3d0}
-.styled-report .rpt-section.rpt-negative .rpt-section-title{color:#dc2626;border-bottom-color:#fecaca}
-.styled-report .rpt-section.rpt-action .rpt-section-title{color:#4f46e5;border-bottom-color:#c7d2fe}
-.styled-report .rpt-section.rpt-summary .rpt-section-title{color:#b45309;border-bottom-color:#fde68a}
-.styled-report .rpt-section.rpt-summary{font-size:16px;font-weight:600}
+/* Pre wrapper: preserves all content, inherits styling */
+.rpt-pre{white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:15px;line-height:2;margin:0;padding:0;background:transparent;border:none;color:inherit}
 
-.styled-report .rpt-p{margin:0 0 10px 0}
-.styled-report .rpt-list{margin:8px 0 16px 0;padding-left:24px;list-style:none}
-.styled-report .rpt-list li{position:relative;padding:4px 0 4px 20px;margin-bottom:6px}
-.styled-report .rpt-list li::before{position:absolute;left:0;top:8px;width:8px;height:8px;border-radius:50%;background:#6366f1;content:''}
-.styled-report .rpt-positive .rpt-list li::before{background:#10b981}
-.styled-report .rpt-negative .rpt-list li::before{background:#ef4444}
+/* Section headers */
+.rpt-hdr{display:block;font-size:18px;font-weight:700;padding:14px 20px;margin:28px 0 16px 0;border-radius:8px;border-left:5px solid #6366f1;background:#f8fafc;color:#1e293b}
+.rpt-hdr-title{background:linear-gradient(135deg,#1e1b4b,#312e81);color:#fff;font-size:22px;text-align:center;padding:24px;border:none;border-radius:12px}
+.rpt-hdr-pos{border-left-color:#10b981;background:linear-gradient(135deg,#f0fdf4,#f8fafc);color:#065f46}
+.rpt-hdr-neg{border-left-color:#ef4444;background:linear-gradient(135deg,#fef2f2,#f8fafc);color:#991b1b}
+.rpt-hdr-act{border-left-color:#6366f1;background:linear-gradient(135deg,#eef2ff,#f8fafc);color:#4338ca}
+.rpt-hdr-sum{border-left-color:#f59e0b;background:linear-gradient(135deg,#fffbeb,#fefce8);color:#92400e;font-size:20px}
+.rpt-hdr-pro{border-left-color:#06b6d4;background:linear-gradient(135deg,#ecfeff,#f8fafc);color:#0e7490}
 
-.styled-report .rpt-metric{display:inline-block;background:#eef2ff;color:#4338ca;font-weight:700;padding:1px 8px;border-radius:6px;font-size:0.95em}
-.styled-report .rpt-section.rpt-positive .rpt-metric{background:#d1fae5;color:#065f46}
-.styled-report .rpt-section.rpt-negative .rpt-metric{background:#fee2e2;color:#991b1b}
-.styled-report .rpt-quoted{color:#6366f1;font-style:italic}
+/* Inline highlights */
+.rpt-metric{display:inline-block;background:#eef2ff;color:#4338ca;font-weight:700;padding:1px 7px;border-radius:5px;font-size:0.95em;margin:0 1px}
+.rpt-quoted{color:#6366f1;font-weight:500}
+.rpt-badge-sev{display:inline-block;padding:1px 7px;border-radius:4px;font-size:0.85em;font-weight:700;margin:0 2px;background:#ef4444;color:#fff}
 
-.styled-report .rpt-quote{margin:12px 0;padding:14px 18px;background:#f1f5f9;border-radius:8px;border-left:4px solid #94a3b8;color:#475569;font-style:italic;font-size:0.95em}
-.styled-report .rpt-quote-label{font-style:normal;font-weight:700;color:#64748b;font-size:0.85em;text-transform:uppercase;letter-spacing:0.5px}
+/* Severity lines */
+.rpt-sev-fatal{display:block;padding:10px 18px;margin:6px 0;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#991b1b;font-weight:600}
+.rpt-sev-warning{display:block;padding:10px 18px;margin:6px 0;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;color:#92400e;font-weight:600}
+.rpt-sev-minor{display:block;padding:10px 18px;margin:6px 0;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;color:#64748b}
 
-.styled-report .rpt-profile-card{margin:12px 0;padding:16px 20px;background:linear-gradient(135deg,#eff6ff,#f0f9ff);border-radius:10px;border:1px solid #bae6fd}
-.styled-report .rpt-profile-label{font-weight:700;color:#0369a1;font-size:0.85em;margin-bottom:6px}
-.styled-report .rpt-profile-text{color:#0c4a6e;font-size:0.95em}
-
-.styled-report .rpt-verdict{margin:8px 0 16px 0;padding:10px 16px;background:#fefce8;border-radius:8px;border:1px solid #fde68a;color:#713f12;font-size:0.95em}
-
-.styled-report .rpt-severity{padding:8px 16px;border-radius:8px;margin:8px 0;font-weight:600;font-size:0.9em}
-.styled-report .rpt-sev-fatal{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
-.styled-report .rpt-sev-warning{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
-.styled-report .rpt-sev-minor{background:#f8fafc;color:#64748b;border:1px solid #e2e8f0}
-
-.styled-report .rpt-badge-sev{display:inline-block;padding:1px 8px;border-radius:4px;font-size:0.85em;font-weight:700;margin:0 2px}
-.styled-report .rpt-sev-fatal .rpt-badge-sev{background:#dc2626;color:#fff}
-.styled-report .rpt-sev-warning .rpt-badge-sev{background:#f59e0b;color:#fff}
-.styled-report .rpt-sev-minor .rpt-badge-sev{background:#94a3b8;color:#fff}
-
-.styled-report .rpt-badge-pos{display:inline-block;padding:1px 8px;border-radius:4px;font-size:0.85em;font-weight:700;background:#10b981;color:#fff;margin:0 2px}
-
-.styled-report .rpt-section:first-child{background:linear-gradient(135deg,#1e1b4b 0%,#312e81 100%);color:#fff;border:none;text-align:center;padding:32px 28px}
-.styled-report .rpt-section:first-child .rpt-section-title{color:#fff;font-size:22px;border-bottom-color:rgba(255,255,255,.2);justify-content:center}
-.styled-report .rpt-section:first-child .rpt-p{color:rgba(255,255,255,.9);font-size:16px}
-.styled-report .rpt-section:first-child .rpt-metric{background:rgba(255,255,255,.2);color:#fff}
+/* Quote & profile lines */
+.rpt-quote{display:block;padding:12px 18px;margin:8px 0;background:#f1f5f9;border-left:4px solid #94a3b8;border-radius:0 8px 8px 0;color:#475569;font-style:italic}
+.rpt-profile{display:block;padding:14px 18px;margin:8px 0;background:linear-gradient(135deg,#eff6ff,#f0f9ff);border:1px solid #bae6fd;border-radius:10px;color:#0c4a6e;font-weight:500}
 
 /* ===== Alerts ===== */
 .alert{padding:12px 18px;border-radius:8px;margin:12px 0;font-size:13px}
@@ -305,7 +280,17 @@ tr:hover{background:#fafbfc}
     <!-- Analyze Button -->
     <div id="analyze-section" style="display:none">
       <div id="analyze-msg"></div>
-      <div class="d-flex gap-2" style="justify-content:center;margin-top:20px">
+      <!-- Product name input -->
+      <div class="card" style="margin-top:16px">
+        <div class="card-body" style="padding:14px 20px">
+          <div class="d-flex gap-2" style="align-items:center">
+            <span style="font-weight:600;white-space:nowrap">🏷 分析产品：</span>
+            <input type="text" id="product-name-input" placeholder="品牌 + 型号，如：京东收银 D6 智能收银称" style="flex:1;font-size:14px;padding:8px 12px;border:1px solid #ddd;border-radius:8px">
+            <span class="text-muted" style="font-size:11px;white-space:nowrap">用于报告标题识别</span>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex gap-2" style="justify-content:center;margin-top:16px">
         <button class="btn btn-primary btn-lg" id="btn-analyze" onclick="startAnalysis()">
           🚀 开始智能分析
         </button>
@@ -495,7 +480,7 @@ var SYSTEM_PROMPT = [
 '',
 '【标题】',
 '格式：关于[品牌] [产品型号/系列] 的评论深度分析报告',
-'必须从评论中提取品牌和产品型号信息填入标题。如果评论中明确提到了品牌名和型号（如"京东收银D6"、"华为Mate 60"），必须包含。如果无法提取，则使用评论中最常出现的产品关键词代替。',
+'重要：标题必须包含具体品牌名和产品型号！如果用户消息中已注明"产品：XXX"，请直接使用该名称。如果评论中明确提到了品牌名和型号（如"京东收银D6"、"华为Mate 60"），必须提取填入。禁止使用模糊的品类代称（如"收银称重一体机"），必须指明具体品牌型号。',
 '',
 '【洞察总览】',
 '本次处理的数据范围（必须包括文档中的评论总数，以及有效提取到关键信息的评论数），用2~3句话总结本次评论分析的核心要点（特别是负反馈和产品可优化方向）。',
@@ -863,6 +848,14 @@ async function startOnlineFetch() {
       renderPreview();
       showAnalyzeSection();
       document.getElementById('review-count-display').textContent = state.reviews.length;
+      // Auto-fill product name from JD fetch
+      var pnInput = document.getElementById('product-name-input');
+      if (pnInput && allReviews.productName && !pnInput.value) {
+        // Shorten the long JD product name — take first 30 chars before specs
+        var shortName = allReviews.productName.split(' ')[0];
+        if (shortName.length > 40) shortName = shortName.substring(0, 40);
+        pnInput.value = shortName;
+      }
       showAlert('import', '成功获取 ' + allReviews.productName + '：' + allReviews.totalReviews + ' 条评论', 'success');
     } else {
       showAlert('import', '未获取到评论数据，请检查 SKU ID 是否正确', 'danger');
@@ -1529,7 +1522,13 @@ function buildReviewDataMessage(reviews) {
   var starCol = state.mapping.star;
   var titleCol = state.mapping.title;
 
-  var lines = ['以下是 ' + reviews.length + ' 条商品评论数据：', ''];
+  // Include product name context if provided
+  var productName = document.getElementById('product-name-input').value.trim();
+  var header = '以下是 ' + reviews.length + ' 条商品评论数据';
+  if (productName) {
+    header += '（产品：' + productName + '）';
+  }
+  var lines = [header + '：', ''];
 
   reviews.forEach(function(r, i) {
     var parts = [];
@@ -1608,166 +1607,84 @@ function renderReportContent() {
     '<button class="btn btn-primary" onclick="copyReport()">📋 复制全文</button>' +
     '<button class="btn btn-success" onclick="downloadReport()">💾 下载 TXT</button>' +
     '<button class="btn btn-sm" onclick="switchPage(\'import\')">📥 导入新数据</button>' +
-    '<button class="btn btn-sm" onclick="toggleReportStyle()" id="btn-toggle-style">📄 纯文本</button>' +
     '</div>' +
     '<div class="report-container styled-report" id="report-text-container">' +
-    parseReportToHTML(state.report) +
+    '<pre class="rpt-pre">' + styleReportText(state.report) + '</pre>' +
     '</div>';
   document.getElementById('report-content').innerHTML = html;
 }
 
-// ===== REPORT PARSER: plain text → styled HTML =====
-function parseReportToHTML(text) {
-  if (!text) return '<p class="text-muted">暂无报告内容</p>';
-
+// Lightweight inline styling — preserves ALL content, just highlights patterns
+function styleReportText(text) {
+  if (!text) return '<span class="text-muted">暂无报告内容</span>';
   var lines = text.split('\n');
-  var html = '';
-  var inQuote = false;
-  var inProfile = false;
-  var currentSection = '';
-  var listBuffer = [];
-
-  function flushList() {
-    if (listBuffer.length === 0) return '';
-    var out = '<ul class="rpt-list">';
-    for (var i = 0; i < listBuffer.length; i++) {
-      out += '<li>' + highlightInline(listBuffer[i]) + '</li>';
-    }
-    out += '</ul>';
-    listBuffer = [];
-    return out;
-  }
-
+  var out = '';
   for (var i = 0; i < lines.length; i++) {
-    var raw = lines[i];
-    var line = raw.trim();
-    if (line === '') {
-      html += flushList();
-      if (inQuote) { html += '</blockquote>'; inQuote = false; }
-      if (inProfile) { html += '</div>'; inProfile = false; }
-      html += '<br>';
+    var line = lines[i];
+    var trimmed = line.trim();
+    if (trimmed === '') { out += '\n'; continue; }
+
+    // Section headers: wrap entire line in styled span
+    if (trimmed.startsWith('【') && trimmed.indexOf('】') !== -1) {
+      var title = trimmed.replace(/【|】/g, '');
+      var icon = getSectionIcon(title);
+      var cls = getSectionClass(title);
+      out += '<span class="rpt-hdr ' + cls + '">' + icon + ' ' + escHtml(trimmed) + '</span>\n';
       continue;
     }
 
-    // Section headers 【...】
-    if (line.startsWith('【') && line.endsWith('】') && line.length < 30) {
-      html += flushList();
-      if (inQuote) { html += '</blockquote>'; inQuote = false; }
-      if (inProfile) { html += '</div>'; inProfile = false; }
-
-      currentSection = line.replace(/【|】/g, '');
-      var icon = getSectionIcon(currentSection);
-      var cls = getSectionClass(currentSection);
-      html += '<div class="rpt-section ' + cls + '">';
-      html += '<h3 class="rpt-section-title">' + icon + ' ' + escHtml(currentSection) + '</h3>';
-      continue;
+    // Inline pattern highlights for the rest
+    var styled = highlightInline(line);
+    // Severity line coloring
+    if (/\b致命伤\b/.test(trimmed)) {
+      out += '<span class="rpt-sev-fatal">' + styled + '</span>\n';
+    } else if (/\b关注点\b/.test(trimmed)) {
+      out += '<span class="rpt-sev-warning">' + styled + '</span>\n';
+    } else if (/\b小瑕疵\b/.test(trimmed) && trimmed.length < 80) {
+      out += '<span class="rpt-sev-minor">' + styled + '</span>\n';
+    } else if (trimmed.startsWith('评价原文：') || trimmed.startsWith('评价原文:')) {
+      out += '<span class="rpt-quote">' + styled + '</span>\n';
+    } else if (trimmed.startsWith('典型画像：') || trimmed.startsWith('典型画像:')) {
+      out += '<span class="rpt-profile">' + styled + '</span>\n';
+    } else {
+      out += styled + '\n';
     }
-
-    // Sub-headers like 典型画像： or 评价原文：
-    if (line.startsWith('典型画像：') || line.startsWith('典型画像:')) {
-      html += flushList();
-      if (inProfile) { html += '</div>'; }
-      html += '<div class="rpt-profile-card"><div class="rpt-profile-label">👤 典型画像</div><div class="rpt-profile-text">' + highlightInline(line.replace(/^典型画像[：:]/, '')) + '</div>';
-      inProfile = true;
-      continue;
-    }
-
-    if (line.startsWith('评价原文：') || line.startsWith('评价原文:')) {
-      html += flushList();
-      html += '<blockquote class="rpt-quote"><span class="rpt-quote-label">💬 评价原文</span><br>' + highlightInline(line.replace(/^评价原文[：:]/, '').replace(/^"|"$/g, '')) + '</blockquote>';
-      inQuote = true;
-      continue;
-    }
-
-    if (line.startsWith('评论解析：') || line.startsWith('评论解析:')) {
-      html += flushList();
-      if (inQuote) { html += '</blockquote>'; inQuote = false; }
-      html += '<div class="rpt-verdict">📝 ' + highlightInline(line.replace(/^评论解析[：:]/, '')) + '</div>';
-      continue;
-    }
-
-    // Severity badges: detect 致命伤/关注点/小瑕疵
-    var sevMatch = line.match(/致命伤|关注点|小瑕疵/g);
-    if (sevMatch && line.length < 80) {
-      html += flushList();
-      var sev = sevMatch[0];
-      var sevCls = sev === '致命伤' ? 'rpt-sev-fatal' : sev === '关注点' ? 'rpt-sev-warning' : 'rpt-sev-minor';
-      html += '<div class="rpt-severity ' + sevCls + '">' + highlightInline(line) + '</div>';
-      continue;
-    }
-
-    // List items
-    if (/^[\d]+[\.\、]\s/.test(line) || /^[-–—]\s/.test(line)) {
-      var content = line.replace(/^[\d]+[\.\、]\s/, '').replace(/^[-–—]\s/, '');
-      listBuffer.push(content);
-      continue;
-    }
-
-    // Regular paragraph
-    html += flushList();
-    html += '<p class="rpt-p">' + highlightInline(line) + '</p>';
   }
-
-  html += flushList();
-  if (inQuote) { html += '</blockquote>'; }
-  if (inProfile) { html += '</div>'; }
-  html += '</div>'; // close last section
-
-  return html;
-}
-
-// Highlight percentages, numbers, and key terms inline
-function highlightInline(text) {
-  var escaped = escHtml(text);
-  // Highlight percentages
-  escaped = escaped.replace(/(\d+\.?\d*%)/g, '<span class="rpt-metric">$1</span>');
-  // Highlight quoted phrases
-  escaped = escaped.replace(/"([^"]{3,60})"/g, '<span class="rpt-quoted">"$1"</span>');
-  // Highlight severity keywords
-  escaped = escaped.replace(/(致命伤|关注点|小瑕疵)/g, '<span class="rpt-badge-sev">$1</span>');
-  // Highlight positive keywords
-  escaped = escaped.replace(/(高优先级|核心卖点|强推荐|极佳)/g, '<span class="rpt-badge-pos">$1</span>');
-  return escaped;
+  return out;
 }
 
 function getSectionIcon(title) {
-  var map = {
-    '标题': '📊', '洞察总览': '🔍',
-    '一、核心用户画像与场景': '👥', '二、核心卖点与价值验证': '⭐',
-    '三、主要痛点与负面归因': '⚠', '四、改进建议与优先级': '🔧',
-    '五、潜在机会与差异化': '💡', '六、典型用户深度解析': '📖',
-    '七、关键洞察总结': '🎯'
-  };
-  // Fuzzy match
-  for (var key in map) {
-    if (title.indexOf(key) !== -1) return map[key];
-  }
+  if (title.indexOf('标题') !== -1) return '📊';
+  if (title.indexOf('洞察总览') !== -1) return '🔍';
+  if (title.indexOf('用户画像') !== -1) return '👥';
+  if (title.indexOf('卖点') !== -1) return '⭐';
+  if (title.indexOf('痛点') !== -1) return '⚠';
+  if (title.indexOf('改进建议') !== -1) return '🔧';
+  if (title.indexOf('潜在机会') !== -1) return '💡';
+  if (title.indexOf('典型用户') !== -1) return '📖';
+  if (title.indexOf('洞察总结') !== -1) return '🎯';
   return '📌';
 }
 
 function getSectionClass(title) {
-  if (title.indexOf('卖点') !== -1) return 'rpt-positive';
-  if (title.indexOf('痛点') !== -1) return 'rpt-negative';
-  if (title.indexOf('建议') !== -1) return 'rpt-action';
-  if (title.indexOf('总结') !== -1) return 'rpt-summary';
-  if (title.indexOf('画像') !== -1) return 'rpt-profile';
+  if (title.indexOf('卖点') !== -1) return 'rpt-hdr-pos';
+  if (title.indexOf('痛点') !== -1) return 'rpt-hdr-neg';
+  if (title.indexOf('改进建议') !== -1) return 'rpt-hdr-act';
+  if (title.indexOf('洞察总结') !== -1) return 'rpt-hdr-sum';
+  if (title.indexOf('用户画像') !== -1) return 'rpt-hdr-pro';
+  if (title.indexOf('标题') !== -1) return 'rpt-hdr-title';
   return '';
 }
 
-var _reportStyled = true;
-function toggleReportStyle() {
-  _reportStyled = !_reportStyled;
-  var container = document.getElementById('report-text-container');
-  var btn = document.getElementById('btn-toggle-style');
-  if (_reportStyled) {
-    container.className = 'report-container styled-report';
-    container.innerHTML = parseReportToHTML(state.report);
-    btn.textContent = '📄 纯文本';
-  } else {
-    container.className = 'report-container';
-    container.textContent = state.report;
-    btn.textContent = '🎨 美化版';
-  }
+function highlightInline(text) {
+  var escaped = escHtml(text);
+  // Highlight percentages
+  escaped = escaped.replace(/(\d+\.?\d*%)/g, '<span class="rpt-metric">$1</span>');
+  // Highlight quoted short phrases
+  escaped = escaped.replace(/\x22([^\x22]{3,80})\x22/g, '<span class="rpt-quoted">\x22$1\x22</span>');
+  // Severity keywords
+  escaped = escaped.replace(/(致命伤|关注点|小瑕疵)/g, '<span class="rpt-badge-sev">$1</span>');
+  return escaped;
 }
 
 // Throttled text update for streaming (avoids re-rendering toolbar)
@@ -1783,13 +1700,9 @@ function updateReportTextThrottled() {
 function updateReportText() {
   var container = document.getElementById('report-text-container');
   if (!container) return;
-  // During streaming, show plain text for performance
+  // During streaming, show plain text; when done, apply styling
   if (state.isAnalyzing) {
-    container.className = 'report-container';
-    container.textContent = state.report;
-  } else {
-    container.className = 'report-container styled-report';
-    container.innerHTML = parseReportToHTML(state.report);
+    container.innerHTML = '<pre class="rpt-pre">' + escHtml(state.report) + '</pre>';
   }
 }
 
