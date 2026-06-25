@@ -173,6 +173,81 @@ try {
             continue
         }
 
+        # ===== JD Review Fetcher (SSE streaming) =====
+        if ($requestPath -eq "/api/fetch-reviews" -and $request.HttpMethod -eq "POST") {
+            $reader2 = New-Object System.IO.StreamReader($request.InputStream, [System.Text.Encoding]::UTF8)
+            $reqBody2 = $reader2.ReadToEnd()
+            $reader2.Close()
+
+            try {
+                $reqJson = $reqBody2 | ConvertFrom-Json
+                $platform = $reqJson.platform
+                $sku = $reqJson.sku
+
+                if ($platform -ne "jd" -or -not $sku) {
+                    $response.StatusCode = 400
+                    $msg = [System.Text.Encoding]::UTF8.GetBytes('{"error":"Invalid request. Required: {platform:\"jd\", sku:\"123456\"}"}')
+                    $response.ContentType = "application/json; charset=utf-8"
+                    $response.ContentLength64 = $msg.Length
+                    $response.OutputStream.Write($msg, 0, $msg.Length)
+                    $response.Close()
+                    continue
+                }
+
+                Write-Host "  [FETCH] JD reviews for SKU: $sku" -ForegroundColor Cyan
+
+                # Set up SSE response
+                $response.ContentType = "text/event-stream; charset=utf-8"
+                $response.Headers["Cache-Control"] = "no-cache"
+                $response.Headers["Connection"] = "keep-alive"
+                $response.Headers["X-Accel-Buffering"] = "no"
+
+                # Spawn fetch-jd.ps1
+                $fetchScript = Join-Path $scriptRoot "fetch-jd.ps1"
+                $psi = New-Object System.Diagnostics.ProcessStartInfo
+                $psi.FileName = "powershell.exe"
+                $psi.Arguments = "-ExecutionPolicy Bypass -File `"$fetchScript`" -Sku `"$sku`""
+                $psi.UseShellExecute = $false
+                $psi.RedirectStandardOutput = $true
+                $psi.RedirectStandardError = $true
+                $psi.CreateNoWindow = $true
+                $psi.StandardOutputEncoding = [System.Text.Encoding]::UTF8
+
+                $proc = [System.Diagnostics.Process]::Start($psi)
+
+                # Read stdout line by line and stream as SSE
+                while (-not $proc.StandardOutput.EndOfStream) {
+                    $line = $proc.StandardOutput.ReadLine()
+                    if ($line.StartsWith("STATUS:")) {
+                        $statusJson = $line.Substring(7)
+                        $sseData = "data: $statusJson`n`n"
+                        $bytes = [System.Text.Encoding]::UTF8.GetBytes($sseData)
+                        $response.OutputStream.Write($bytes, 0, $bytes.Length)
+                        $response.OutputStream.Flush()
+                    } elseif ($line.StartsWith("DATA:")) {
+                        $dataJson = $line.Substring(5)
+                        $sseData = "event: complete`ndata: $dataJson`n`n"
+                        $bytes = [System.Text.Encoding]::UTF8.GetBytes($sseData)
+                        $response.OutputStream.Write($bytes, 0, $bytes.Length)
+                        $response.OutputStream.Flush()
+                    }
+                }
+
+                $proc.WaitForExit()
+                $response.Close()
+                Write-Host "  [FETCH] Complete" -ForegroundColor Green
+            } catch {
+                $errMsg = $_.Exception.Message -replace '"', '""'
+                $errJson = "{""error"":""$errMsg""}"
+                $errSse = "event: error`ndata: $errJson`n`n"
+                $errBytes = [System.Text.Encoding]::UTF8.GetBytes($errSse)
+                try { $response.OutputStream.Write($errBytes, 0, $errBytes.Length) } catch {}
+                $response.Close()
+                Write-Host "  [FETCH] Error: $($_.Exception.Message)" -ForegroundColor Red
+            }
+            continue
+        }
+
         # ===== Static File Serving =====
         if ($requestPath -eq "/") { $requestPath = "/index.html" }
 

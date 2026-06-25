@@ -177,14 +177,54 @@ tr:hover{background:#fafbfc}
   <div class="page active" id="page-import">
     <h4 class="mb-3">📥 导入商品评论数据</h4>
 
-    <!-- Upload Zone -->
-    <div class="card">
-      <div class="card-body">
-        <div class="upload-zone" id="upload-zone">
-          <div class="upload-icon">📁</div>
-          <div class="upload-text">点击上传或拖拽文件到此处</div>
-          <div class="upload-hint">支持 .csv / .xlsx / .xls 格式</div>
-          <input type="file" id="file-input" accept=".csv,.xlsx,.xls" style="display:none">
+    <!-- Import mode tabs -->
+    <div class="nav-tabs" id="import-tabs">
+      <a class="nav-link active" data-import-mode="file">📁 文件导入</a>
+      <a class="nav-link" data-import-mode="online">🌐 在线获取</a>
+    </div>
+
+    <!-- FILE UPLOAD mode -->
+    <div id="import-mode-file">
+      <div class="card">
+        <div class="card-body">
+          <div class="upload-zone" id="upload-zone">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">点击上传或拖拽文件到此处</div>
+            <div class="upload-hint">支持 .csv / .xlsx / .xls 格式</div>
+            <input type="file" id="file-input" accept=".csv,.xlsx,.xls" style="display:none">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ONLINE FETCH mode -->
+    <div id="import-mode-online" style="display:none">
+      <div class="card">
+        <div class="card-header">🌐 在线获取评论</div>
+        <div class="card-body">
+          <div class="form-group">
+            <label>电商平台</label>
+            <select id="online-platform">
+              <option value="jd">京东 (JD.com)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>SKU ID 或商品链接</label>
+            <div class="d-flex gap-2">
+              <input type="text" id="online-sku" placeholder="例如: 100191929771 或 https://item.jd.com/100191929771.html" style="flex:1">
+              <button class="btn btn-primary" id="btn-fetch-reviews" onclick="startOnlineFetch()">🔍 获取评论</button>
+            </div>
+            <div class="hint">系统将自动发现该商品同 SPU 下的全部 SKU，并抓取所有评论数据</div>
+          </div>
+          <!-- Fetch progress -->
+          <div id="fetch-progress" style="display:none;margin-top:16px">
+            <div class="progress-bar-wrap"><div class="progress-bar-fill" id="fetch-progress-fill"></div></div>
+            <div class="progress-status" id="fetch-progress-status">连接中...</div>
+            <div class="text-muted" style="font-size:11px;text-align:center;margin-top:4px" id="fetch-progress-detail"></div>
+            <div style="text-align:center;margin-top:8px">
+              <button class="btn btn-danger btn-sm" onclick="cancelOnlineFetch()">取消</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -491,6 +531,7 @@ function init() {
   loadSettings();
   loadHistory();
   setupNavigation();
+  setupImportTabs();
   setupUploadZone();
   // Show API key hint on first visit
   if (!state.apiKey) {
@@ -630,6 +671,189 @@ async function testApiKey() {
 // ============================================
 // FILE UPLOAD & PARSING
 // ============================================
+// Import mode tab switching
+var _importMode = 'file';
+function setupImportTabs() {
+  document.querySelectorAll('#import-tabs .nav-link').forEach(function(link) {
+    link.addEventListener('click', function() {
+      document.querySelectorAll('#import-tabs .nav-link').forEach(function(l) { l.classList.remove('active'); });
+      this.classList.add('active');
+      _importMode = this.dataset.importMode;
+      document.getElementById('import-mode-file').style.display = (_importMode === 'file') ? 'block' : 'none';
+      document.getElementById('import-mode-online').style.display = (_importMode === 'online') ? 'block' : 'none';
+      // Hide analysis section when switching modes
+      if (_importMode === 'online' && state.reviews.length === 0) {
+        document.getElementById('analyze-section').style.display = 'none';
+      }
+    });
+  });
+}
+
+var _fetchAbortController = null;
+
+async function startOnlineFetch() {
+  var skuInput = document.getElementById('online-sku').value.trim();
+  if (!skuInput) {
+    showAlert('import', '请输入 SKU ID 或商品链接', 'warning');
+    return;
+  }
+
+  // Extract SKU from URL if needed
+  var sku = skuInput;
+  var urlMatch = skuInput.match(/item\.jd\.com\/(\d+)/);
+  if (urlMatch) {
+    sku = urlMatch[1];
+  }
+  // Validate it's a numeric ID
+  if (!/^\d{8,}$/.test(sku)) {
+    showAlert('import', '无效的 SKU ID，请输入纯数字 ID 或京东商品链接', 'warning');
+    return;
+  }
+
+  _fetchAbortController = new AbortController();
+
+  document.getElementById('fetch-progress').style.display = 'block';
+  document.getElementById('fetch-progress-fill').style.width = '0%';
+  document.getElementById('fetch-progress-status').textContent = '正在发现同 SPU 下的所有 SKU...';
+  document.getElementById('fetch-progress-detail').textContent = '';
+  document.getElementById('btn-fetch-reviews').disabled = true;
+
+  var totalPages = 0;
+  var completedPages = 0;
+
+  try {
+    var resp = await fetch(window.location.origin + '/api/fetch-reviews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ platform: 'jd', sku: sku }),
+      signal: _fetchAbortController.signal
+    });
+
+    var reader = resp.body.getReader();
+    var decoder = new TextDecoder();
+    var buffer = '';
+    var allReviews = null;
+
+    while (true) {
+      var result = await reader.read();
+      if (result.done) break;
+      buffer += decoder.decode(result.value, { stream: true });
+
+      var lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      var currentEvent = '';
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+
+        // Track event type
+        if (line.startsWith('event: ')) {
+          currentEvent = line.slice(7).trim();
+          continue;
+        }
+
+        if (!line.startsWith('data: ')) continue;
+        var jsonStr = line.slice(6);
+
+        // Handle complete event
+        if (currentEvent === 'complete') {
+          try {
+            allReviews = JSON.parse(jsonStr);
+          } catch(e) { console.warn('Parse complete data failed:', e); }
+          currentEvent = '';
+          continue;
+        }
+
+        // Handle error event
+        if (currentEvent === 'error') {
+          try {
+            var errData = JSON.parse(jsonStr);
+            showAlert('import', '获取失败: ' + (errData.error || 'Unknown error'), 'danger');
+          } catch(e) {}
+          currentEvent = '';
+          continue;
+        }
+
+        // Handle status/progress updates
+        try {
+          var data = JSON.parse(jsonStr);
+
+          if (data.phase === 'discover') {
+            document.getElementById('fetch-progress-status').textContent = data.message;
+            document.getElementById('fetch-progress-fill').style.width = '10%';
+          } else if (data.phase === 'validate') {
+            document.getElementById('fetch-progress-status').textContent = data.message;
+            document.getElementById('fetch-progress-fill').style.width = '20%';
+          } else if (data.phase === 'fetch') {
+            if (data.currentPage === 1) {
+              totalPages = data.maxPage || 1;
+            }
+            completedPages = data.currentPage || completedPages;
+            var pct = 20 + Math.round((completedPages / Math.max(1, data.maxPage || 1)) * 75);
+            document.getElementById('fetch-progress-fill').style.width = Math.min(pct, 95) + '%';
+            document.getElementById('fetch-progress-status').textContent =
+              '正在抓取评论... SKU ' + (data.sku || '') + ' (' + completedPages + '/' + (data.maxPage || '?') + ' 页)';
+            document.getElementById('fetch-progress-detail').textContent =
+              '已获取 ' + (data.totalFetched || 0) + ' 条评论';
+          } else if (data.phase === 'complete') {
+            // Inline complete
+            allReviews = data;
+          }
+        } catch(e) {}
+      }
+    }
+
+    // Process the complete data
+    if (allReviews && allReviews.reviews && allReviews.reviews.length > 0) {
+      document.getElementById('fetch-progress-fill').style.width = '100%';
+      document.getElementById('fetch-progress-status').textContent =
+        '获取完成：' + allReviews.totalReviews + ' 条评论（' + allReviews.skuCount + ' 个 SKU）';
+
+      // Convert to the format expected by the analysis pipeline
+      state.columns = ['SKU', '昵称', '评分', '评价内容', '购买规格', '地区', '评价时间'];
+      state.reviews = allReviews.reviews.map(function(r) {
+        return {
+          'SKU': r.SKU || '',
+          '昵称': r.nickname || '',
+          '评分': String(r.score || ''),
+          '评价内容': r.content || '',
+          '购买规格': r.color || '',
+          '地区': r.location || '',
+          '评价时间': r.creationTime || ''
+        };
+      });
+      state.mapping = { star: '评分', title: '', content: '评价内容' };
+
+      renderMapping();
+      renderPreview();
+      showAnalyzeSection();
+      document.getElementById('review-count-display').textContent = state.reviews.length;
+      showAlert('import', '成功获取 ' + allReviews.productName + '：' + allReviews.totalReviews + ' 条评论', 'success');
+    } else {
+      showAlert('import', '未获取到评论数据，请检查 SKU ID 是否正确', 'danger');
+    }
+
+  } catch(err) {
+    if (err.name === 'AbortError') {
+      showAlert('import', '获取已取消', 'warning');
+    } else {
+      showAlert('import', '获取失败: ' + err.message, 'danger');
+    }
+  }
+
+  document.getElementById('fetch-progress').style.display = 'none';
+  document.getElementById('btn-fetch-reviews').disabled = false;
+  _fetchAbortController = null;
+}
+
+function cancelOnlineFetch() {
+  if (_fetchAbortController) {
+    _fetchAbortController.abort();
+    _fetchAbortController = null;
+  }
+  document.getElementById('btn-fetch-reviews').disabled = false;
+}
+
 function setupUploadZone() {
   var zone = document.getElementById('upload-zone');
   var input = document.getElementById('file-input');
