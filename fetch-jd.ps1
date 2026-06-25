@@ -3,6 +3,10 @@
 
 param([string]$Sku)
 
+# Force UTF-8 output encoding (critical for Chinese characters)
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+
 $ErrorActionPreference = "Continue"
 $headers = @{"User-Agent"="Mozilla/5.0"; "Referer"="https://item.jd.com/$Sku.html"}
 $allComments = @()
@@ -61,19 +65,19 @@ foreach ($sid in $allSkuIds.Keys) {
 
             if (-not $productName) { $productName = $refName }
 
-            # Filter: skip SKUs whose name is completely different from the target product
-            # Use the original SKU's name as reference for comparison
+            # Filter: only keep SKUs that are clearly the same product
             $keep = ($sid -eq $Sku)
-            if (-not $keep) {
-                # Check name similarity: extract key terms (first 2 Chinese chars or first word)
-                $refFirst = $refName.Substring(0, [Math]::Min(6, $refName.Length))
-                $prodFirst = $productName.Substring(0, [Math]::Min(6, $productName.Length))
-                # Keep if names share at least 2 common characters, or same starting brand
-                $common = 0
-                for ($ci = 0; $ci -lt [Math]::Min($refFirst.Length, $prodFirst.Length); $ci++) {
-                    if ($refFirst[$ci] -eq $prodFirst[$ci]) { $common++ }
+            if (-not $keep -and $productName.Length -gt 0) {
+                # Extract meaningful keywords (2+ consecutive Chinese/ASCII chars, skip whitespace)
+                $targetWords = [regex]::Matches($productName, '[一-鿿\w]{2,}') | ForEach-Object { $_.Value }
+                $refWords = [regex]::Matches($refName, '[一-鿿\w]{2,}') | ForEach-Object { $_.Value }
+                $matchCount = 0
+                foreach ($tw in $targetWords) {
+                    if ($tw.Length -ge 3 -and $refName.Contains($tw)) { $matchCount += 2 }
+                    elseif ($tw.Length -ge 2 -and $refName.Contains($tw)) { $matchCount++ }
                 }
-                if ($common -ge 2) { $keep = $true }
+                # Keep if significant keyword overlap (at least one long match or two short ones)
+                if ($matchCount -ge 2) { $keep = $true }
             }
             if ($keep) {
                 $vsku = [PSCustomObject]@{

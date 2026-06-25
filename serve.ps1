@@ -220,20 +220,29 @@ try {
                     $line = $proc.StandardOutput.ReadLine()
                     if ($line.StartsWith("STATUS:")) {
                         $statusJson = $line.Substring(7)
-                        $sseData = "data: $statusJson`n`n"
+                        # Wrap: add type field so frontend can distinguish progress vs result
+                        $wrap = '{"type":"progress",' + $statusJson.Substring(1)
+                        $sseData = "data: $wrap`n`n"
                         $bytes = [System.Text.Encoding]::UTF8.GetBytes($sseData)
                         $response.OutputStream.Write($bytes, 0, $bytes.Length)
                         $response.OutputStream.Flush()
-                    } elseif ($line.StartsWith("DATA:")) {
+                        continue
+                    }
+                    if ($line.StartsWith("DATA:")) {
                         $dataJson = $line.Substring(5)
-                        $sseData = "event: complete`ndata: $dataJson`n`n"
+                        # Wrap: add type field for result
+                        $wrap = '{"type":"result",' + $dataJson.Substring(1)
+                        $sseData = "data: $wrap`n`n"
                         $bytes = [System.Text.Encoding]::UTF8.GetBytes($sseData)
                         $response.OutputStream.Write($bytes, 0, $bytes.Length)
                         $response.OutputStream.Flush()
+                        break
                     }
                 }
 
-                $proc.WaitForExit()
+                # Drain remaining stream to avoid orphaned process
+                try { while (-not $proc.StandardOutput.EndOfStream) { $null = $proc.StandardOutput.ReadLine() } } catch {}
+                if (-not $proc.HasExited) { $proc.WaitForExit(5000) }
                 $response.Close()
                 Write-Host "  [FETCH] Complete" -ForegroundColor Green
             } catch {
