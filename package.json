@@ -1,0 +1,19 @@
+{
+  "name": "product-insight-analysis",
+  "version": "3.0.0",
+  "description": "Product Insight Analysis System - Multi-platform e-commerce data analysis",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "optionalDependencies": {},
+  "keywords": ["ecommerce", "product-analysis", "jd", "tmall", "xiaohongshu"],
+  "license": "MIT"
+}

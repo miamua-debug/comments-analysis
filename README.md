@@ -12,20 +12,21 @@
 
 ## 启动方式
 
-**方式一（推荐）**：双击 `serve.bat`，自动启动本地服务器并打开浏览器。
+## 启动方式
 
-**方式二**：在终端中运行：
+**推荐**：Node.js 运行（跨平台，支持 Linux 云服务器部署）
+```bash
+npm install
+npm start
+# 访问 http://localhost:9876
+```
+
+**Windows 备选**：PowerShell 运行（需要 Windows）
 ```powershell
 powershell -ExecutionPolicy Bypass -File serve.ps1
 ```
 
-**方式三**：如果你有 Python：
-```bash
-python -m http.server 8765
-# 然后打开 http://localhost:8765
-```
-
-> ⚠ **重要**：不要直接双击打开 `index.html`！浏览器出于安全策略，禁止从 `file://` 协议向 `api.anthropic.com` 发起请求，会导致 "Failed to fetch" 错误。必须通过本地 HTTP 服务器访问。
+> ⚠ **重要**：不要直接双击打开 `index.html`！浏览器禁止从 `file://` 协议向外部 API 发请求，必须通过本地 HTTP 服务器访问。
 
 ## 功能特性
 
