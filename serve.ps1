@@ -1,7 +1,7 @@
 # Review Insight - Local HTTP Server with API Proxy
 # Usage: powershell -ExecutionPolicy Bypass -File serve.ps1
 
-$port = 8765
+$port = 9877
 $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 Write-Host "========================================" -ForegroundColor Cyan
@@ -337,6 +337,179 @@ try {
             continue
         }
 
+        # ===== XHS Note Fetcher (SSE streaming) =====
+        if ($requestPath -eq "/api/fetch-xhs-notes" -and $request.HttpMethod -eq "POST") {
+            $reader4 = New-Object System.IO.StreamReader($request.InputStream, [System.Text.Encoding]::UTF8)
+            $reqBody4 = $reader4.ReadToEnd()
+            $reader4.Close()
+
+            try {
+                $reqJson = $reqBody4 | ConvertFrom-Json
+                $keyword = $reqJson.keyword; $limit = [int]$reqJson.limit; $profile = $reqJson.profile
+                if (-not $keyword) { $response.StatusCode = 400; $msg = [System.Text.Encoding]::UTF8.GetBytes('{"error":"keyword required"}'); $response.OutputStream.Write($msg,0,$msg.Length); $response.Close(); continue }
+                if ($limit -le 0) { $limit = 20 }
+                if (-not $profile) { $profile = "hkzg2bpx" }
+
+                Write-Host "  [XHS] Fetch: keyword=$keyword limit=$limit profile=$profile" -ForegroundColor Cyan
+                $response.ContentType = "text/event-stream; charset=utf-8"
+                $response.Headers["Cache-Control"] = "no-cache"
+                $response.Headers["Connection"] = "keep-alive"
+
+                $fetchScript = Join-Path $scriptRoot "fetch-xhs.ps1"
+                $psi = New-Object System.Diagnostics.ProcessStartInfo
+                $psi.FileName = "powershell.exe"
+                $psi.Arguments = "-ExecutionPolicy Bypass -File `"$fetchScript`" -Keyword `"$keyword`" -Limit $limit -Profile `"$profile`""
+                $psi.UseShellExecute = $false
+                $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true
+                $psi.CreateNoWindow = $true
+                $psi.StandardOutputEncoding = [System.Text.Encoding]::UTF8
+
+                $proc = [System.Diagnostics.Process]::Start($psi)
+                while (-not $proc.StandardOutput.EndOfStream) {
+                    $line = $proc.StandardOutput.ReadLine()
+                    if ($line.StartsWith("STATUS:")) {
+                        $wrap = '{"type":"progress",' + $line.Substring(7).Substring(1)
+                        $sseData = "data: $wrap`n`n"
+                        $bytes = [System.Text.Encoding]::UTF8.GetBytes($sseData)
+                        $response.OutputStream.Write($bytes, 0, $bytes.Length)
+                        $response.OutputStream.Flush()
+                    } elseif ($line.StartsWith("DATA:")) {
+                        $wrap = '{"type":"result",' + $line.Substring(5).Substring(1)
+                        $sseData = "data: $wrap`n`n"
+                        $bytes = [System.Text.Encoding]::UTF8.GetBytes($sseData)
+                        $response.OutputStream.Write($bytes, 0, $bytes.Length)
+                        $response.OutputStream.Flush()
+                        break
+                    }
+                }
+                try { while (-not $proc.StandardOutput.EndOfStream) { $null = $proc.StandardOutput.ReadLine() } } catch {}
+                if (-not $proc.HasExited) { $proc.WaitForExit(5000) }
+                $response.Close()
+                Write-Host "  [XHS] Complete" -ForegroundColor Green
+            } catch {
+                $errSse = "event: error`ndata: {`"error`":`"$($_.Exception.Message -replace '"','\"')`"}`n`n"
+                $errBytes = [System.Text.Encoding]::UTF8.GetBytes($errSse)
+                try { $response.OutputStream.Write($errBytes, 0, $errBytes.Length) } catch {}
+                $response.Close()
+                Write-Host "  [XHS] Error: $($_.Exception.Message)" -ForegroundColor Red
+            }
+            continue
+        }
+
+        # ===== Douyin Store SKU Fetcher (SSE streaming) =====
+        if ($requestPath -eq "/api/fetch-douyin-skus" -and $request.HttpMethod -eq "POST") {
+            $reader5 = New-Object System.IO.StreamReader($request.InputStream, [System.Text.Encoding]::UTF8)
+            $reqBody5 = $reader5.ReadToEnd(); $reader5.Close()
+            try {
+                $reqJson = $reqBody5 | ConvertFrom-Json
+                $keyword = $reqJson.keyword; $token = $reqJson.apifyToken; $maxPages = [int]$reqJson.maxPages
+                if (-not $keyword -or -not $token) { $response.StatusCode = 400; $msg = [System.Text.Encoding]::UTF8.GetBytes('{"error":"keyword and apifyToken required"}'); $response.OutputStream.Write($msg,0,$msg.Length); $response.Close(); continue }
+                if ($maxPages -le 0) { $maxPages = 10 }
+
+                Write-Host "  [DOUYIN] Fetch: keyword=$keyword maxPages=$maxPages" -ForegroundColor Cyan
+                $response.ContentType = "text/event-stream; charset=utf-8"
+                $response.Headers["Cache-Control"] = "no-cache"
+
+                # Write keyword to temp file to avoid encoding issues in command-line args
+                $tmpFile = [System.IO.Path]::GetTempFileName() + ".json"
+                $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+                [System.IO.File]::WriteAllText($tmpFile, ($reqBody5 | ConvertFrom-Json | ConvertTo-Json -Compress), $utf8NoBom)
+
+                $pyScript = Join-Path $scriptRoot "fetch-douyin-skus.py"
+                $psi = New-Object System.Diagnostics.ProcessStartInfo
+                $psi.FileName = "python"
+                $psi.Arguments = "`"$pyScript`" --file `"$tmpFile`""
+                $psi.UseShellExecute = $false
+                $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true
+                $psi.CreateNoWindow = $true
+                $psi.StandardOutputEncoding = [System.Text.Encoding]::UTF8
+                $psi.EnvironmentVariables["PYTHONUNBUFFERED"] = "1"
+                $psi.EnvironmentVariables["PYTHONIOENCODING"] = "utf-8"
+                $psi.EnvironmentVariables["PYTHONUTF8"] = "1"
+
+                $proc = [System.Diagnostics.Process]::Start($psi)
+                while (-not $proc.StandardOutput.EndOfStream) {
+                    $line = $proc.StandardOutput.ReadLine()
+                    if ($line.StartsWith("STATUS:")) {
+                        $wrap = '{"type":"progress",' + $line.Substring(7).Substring(1)
+                        $bytes = [System.Text.Encoding]::UTF8.GetBytes("data: $wrap`n`n")
+                        $response.OutputStream.Write($bytes, 0, $bytes.Length); $response.OutputStream.Flush()
+                    } elseif ($line.StartsWith("DATA:")) {
+                        $wrap = '{"type":"result",' + $line.Substring(5).Substring(1)
+                        $bytes = [System.Text.Encoding]::UTF8.GetBytes("data: $wrap`n`n")
+                        $response.OutputStream.Write($bytes, 0, $bytes.Length); $response.OutputStream.Flush()
+                        break
+                    }
+                }
+                try { while (-not $proc.StandardOutput.EndOfStream) { $null = $proc.StandardOutput.ReadLine() } } catch {}
+                if (-not $proc.HasExited) { $proc.WaitForExit(5000) }
+                $response.Close()
+                Write-Host "  [DOUYIN] Complete" -ForegroundColor Green
+            } catch {
+                $errSse = "event: error`ndata: {`"error`":`"$($_.Exception.Message -replace '"','\"')`"}`n`n"
+                try { $response.OutputStream.Write([System.Text.Encoding]::UTF8.GetBytes($errSse),0,$errSse.Length) } catch {}
+                $response.Close()
+                Write-Host "  [DOUYIN] Error: $($_.Exception.Message)" -ForegroundColor Red
+            }
+            continue
+        }
+
+        # ===== Tmall Store SKU Fetcher (SSE streaming) =====
+        if ($requestPath -eq "/api/fetch-tmall-skus" -and $request.HttpMethod -eq "POST") {
+            $reader6 = New-Object System.IO.StreamReader($request.InputStream, [System.Text.Encoding]::UTF8)
+            $reqBody6 = $reader6.ReadToEnd(); $reader6.Close()
+            try {
+                $reqJson = $reqBody6 | ConvertFrom-Json
+                $keyword = $reqJson.keyword; $token = $reqJson.apifyToken; $maxPages = [int]$reqJson.maxPages
+                if (-not $keyword -or -not $token) { $response.StatusCode = 400; $msg = [System.Text.Encoding]::UTF8.GetBytes('{"error":"keyword and apifyToken required"}'); $response.OutputStream.Write($msg,0,$msg.Length); $response.Close(); continue }
+                if ($maxPages -le 0) { $maxPages = 3 }
+
+                Write-Host "  [TMALL] Fetch: keyword=$keyword maxPages=$maxPages" -ForegroundColor Cyan
+                Write-Host "  [TMALL] Raw body (first 200): $($reqBody6.Substring(0, [Math]::Min(200, $reqBody6.Length)))"
+                Write-Host "  [TMALL] Token length: $($token.Length) starts with: $($token.Substring(0, [Math]::Min(8, $token.Length)))"
+                $response.ContentType = "text/event-stream; charset=utf-8"
+                $response.Headers["Cache-Control"] = "no-cache"
+
+                $tmpFile = [System.IO.Path]::GetTempFileName() + ".json"
+                $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+                [System.IO.File]::WriteAllText($tmpFile, ($reqBody6 | ConvertFrom-Json | ConvertTo-Json -Compress), $utf8NoBom)
+
+                $pyScript = Join-Path $scriptRoot "fetch-tmall-skus.py"
+                $psi = New-Object System.Diagnostics.ProcessStartInfo
+                $psi.FileName = "python"; $psi.Arguments = "`"$pyScript`" --file `"$tmpFile`""
+                $psi.UseShellExecute = $false; $psi.RedirectStandardOutput = $true; $psi.RedirectStandardError = $true
+                $psi.CreateNoWindow = $true; $psi.StandardOutputEncoding = [System.Text.Encoding]::UTF8
+                $psi.EnvironmentVariables["PYTHONUNBUFFERED"] = "1"
+                $psi.EnvironmentVariables["PYTHONIOENCODING"] = "utf-8"
+                $psi.EnvironmentVariables["PYTHONUTF8"] = "1"
+
+                $proc = [System.Diagnostics.Process]::Start($psi)
+                while (-not $proc.StandardOutput.EndOfStream) {
+                    $line = $proc.StandardOutput.ReadLine()
+                    if ($line.StartsWith("STATUS:")) {
+                        $wrap = '{"type":"progress",' + $line.Substring(7).Substring(1)
+                        $bytes = [System.Text.Encoding]::UTF8.GetBytes("data: $wrap`n`n")
+                        $response.OutputStream.Write($bytes, 0, $bytes.Length); $response.OutputStream.Flush()
+                    } elseif ($line.StartsWith("DATA:")) {
+                        $wrap = '{"type":"result",' + $line.Substring(5).Substring(1)
+                        $bytes = [System.Text.Encoding]::UTF8.GetBytes("data: $wrap`n`n")
+                        $response.OutputStream.Write($bytes, 0, $bytes.Length); $response.OutputStream.Flush()
+                        break
+                    }
+                }
+                try { while (-not $proc.StandardOutput.EndOfStream) { $null = $proc.StandardOutput.ReadLine() } } catch {}
+                if (-not $proc.HasExited) { $proc.WaitForExit(5000) }
+                $response.Close()
+                Write-Host "  [TMALL] Complete" -ForegroundColor Green
+            } catch {
+                $errSse = "event: error`ndata: {`"error`":`"$($_.Exception.Message -replace '"','\"')`"}`n`n"
+                try { $response.OutputStream.Write([System.Text.Encoding]::UTF8.GetBytes($errSse),0,$errSse.Length) } catch {}
+                $response.Close()
+                Write-Host "  [TMALL] Error: $($_.Exception.Message)" -ForegroundColor Red
+            }
+            continue
+        }
+
         # ===== Static File Serving =====
         if ($requestPath -eq "/") { $requestPath = "/index.html" }
 
@@ -349,6 +522,10 @@ try {
 
             $response.ContentType = $mime
             $response.StatusCode = 200
+            # Disable caching for HTML/CSS/JS
+            if ($ext -match '\.(html|css|js)$') {
+                $response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            }
 
             $bytes = [System.IO.File]::ReadAllBytes($filePath)
             $response.ContentLength64 = $bytes.Length

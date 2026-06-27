@@ -1,196 +1,337 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>电商评论洞察分析工具</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>产品洞察分析系统</title>
 <!-- SheetJS for Excel/CSV parsing -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Chart.js for data visualization -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.8.1/github-markdown.min.css">
 <style>
-/* ===== Reset & Base ===== */
+/* ===== Feishu-inspired Design System ===== */
+
+
 *,*::before,*::after{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',sans-serif;font-size:14px;color:#333;background:#f0f2f5}
-h4,h5{margin:0 0 8px 0;font-weight:600}
-:root{--primary:#6366f1;--primary-dark:#4f46e5;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--sidebar-w:220px}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;font-size:14px;color:#1F2329;background:#F5F6F7!important;-webkit-font-smoothing:antialiased}
+.test-visible{background:red!important;color:white!important;padding:20px!important;font-size:30px!important;text-align:center!important;display:block!important}
+h4,h5{margin:0 0 8px 0;font-weight:600;color:#1F2329}
 
 /* ===== Sidebar ===== */
-.sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:linear-gradient(180deg,#1e1b4b 0%,#312e81 100%);color:#fff;z-index:1000;overflow-y:auto;box-shadow:2px 0 8px rgba(0,0,0,.1)}
-.sidebar .logo{padding:18px 16px;font-size:16px;font-weight:700;border-bottom:1px solid rgba(255,255,255,.12);display:flex;align-items:center;gap:8px}
-.sidebar .nav-item{display:flex;align-items:center;gap:10px;padding:12px 20px;color:rgba(255,255,255,.7);cursor:pointer;border-left:3px solid transparent;font-size:14px;transition:all .2s;user-select:none}
-.sidebar .nav-item:hover{color:#fff;background:rgba(255,255,255,.08)}
-.sidebar .nav-item.active{color:#fff;background:rgba(255,255,255,.12);border-left-color:#a5b4fc}
+.sidebar{position:fixed;top:0;left:0;width:220px;height:100vh;background:#1F2329;color:#fff;z-index:1000;overflow-y:auto;display:flex;flex-direction:column}
+.sidebar .logo{padding:20px 20px 16px;font-size:15px;font-weight:600;color:#fff;display:flex;align-items:center;gap:8px;letter-spacing:-0.2px}
+.sidebar .nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;margin:1px 8px;color:rgba(255,255,255,.65);cursor:pointer;border-radius:6px;font-size:13px;transition:all .15s;user-select:none;line-height:1.5}
+.sidebar .nav-item:hover{color:#fff;background:#2B2F36}
+.sidebar .nav-item.active{color:#fff;background:#3370FF}
+.sidebar .nav-group{margin:4px 0}
+.sidebar .nav-group-header{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;margin:2px 8px;color:rgba(255,255,255,.55);cursor:pointer;font-size:13px;font-weight:500;text-transform:none;letter-spacing:0;transition:all .15s;user-select:none;border-radius:6px}
+.sidebar .nav-group-header:hover{color:rgba(255,255,255,.65);background:#2B2F36}
+.sidebar .nav-group-header .nav-arrow{font-size:10px;margin-left:auto}
+.sidebar .nav-group-body{overflow:hidden;padding-bottom:4px}
+.sidebar .nav-group-body .nav-item{padding-left:32px;font-size:13px}
+.nav-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.5;flex-shrink:0;margin-right:2px}
+.lucide-icon{width:16px;height:16px;flex-shrink:0;opacity:.65;margin-right:4px;stroke-width:2}
+.sidebar .nav-item.active .lucide-icon{opacity:1}
+.nav-group-header .lucide-icon{width:14px;height:14px;opacity:.5}
 
 /* ===== Main ===== */
-.main-content{margin-left:var(--sidebar-w);padding:24px;min-height:100vh}
+.main-content{margin-left:220px;padding:28px 32px;min-height:100vh;max-width:1400px}
 .page{display:none}
-.page.active{display:block}
+.page.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
 /* ===== Cards ===== */
-.card{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:16px}
-.card-header{padding:14px 20px;font-weight:600;font-size:15px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center}
+.card{background:#FFFFFF;border-radius:8px;box-shadow:0 1px 2px rgba(31,35,41,.04);margin-bottom:16px;border:1px solid #F2F3F5}
+.card-header{padding:14px 20px;font-weight:600;font-size:14px;border-bottom:1px solid #F2F3F5;display:flex;align-items:center;gap:6px;color:#1F2329}
+.card-header .header-right{margin-left:auto}
 .card-body{padding:20px}
 
 /* ===== KPI ===== */
 .kpi-cards{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap}
-.kpi-card{flex:1;min-width:180px;background:#fff;border-radius:10px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-.kpi-card .kpi-label{font-size:12px;color:#888;margin-bottom:4px}
-.kpi-card .kpi-value{font-size:24px;font-weight:700;color:#1e1b4b}
-.kpi-card .kpi-sub{font-size:11px;color:#aaa;margin-top:2px}
+.kpi-card{flex:1;min-width:180px;background:#FFFFFF;border-radius:8px;padding:18px 20px;border:1px solid #F2F3F5}
+.kpi-card .kpi-label{font-size:12px;color:#8F959E;margin-bottom:4px}
+.kpi-card .kpi-value{font-size:24px;font-weight:700;color:#1F2329}
+.kpi-card .kpi-sub{font-size:11px;color:#8F959E;margin-top:2px}
 
 /* ===== Buttons ===== */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:1px solid #ddd;font-size:13px;cursor:pointer;background:#fff;color:#333;text-decoration:none;transition:all .15s}
-.btn:hover{background:#f5f5f5}
-.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
-.btn-primary:hover{background:var(--primary-dark)}
-.btn-success{background:var(--success);color:#fff;border-color:var(--success)}
-.btn-success:hover{background:#059669}
-.btn-danger{background:var(--danger);color:#fff;border-color:var(--danger)}
-.btn-danger:hover{background:#dc2626}
-.btn-sm{padding:5px 12px;font-size:12px}
-.btn-lg{padding:12px 24px;font-size:15px}
-.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 15px;border-radius:6px;border:1px solid #CFD1D7;font-size:13px;cursor:pointer;background:#FFFFFF;color:#1F2329;text-decoration:none;transition:all .15s;font-weight:500;line-height:1.4;height:34px;box-sizing:border-box}
+.btn:hover{background:#F5F6F7;border-color:#B0B5BD}
+.btn-primary{background:#3370FF;color:#fff;border-color:#3370FF}
+.btn-primary:hover{background:#2860E1;border-color:#2860E1}
+.btn-success{background:#2860E1;color:#fff;border-color:#2860E1}
+.btn-success:hover{background:#1D4ED8;border-color:#1D4ED8}
+.btn-danger{background:#F54A45;color:#fff;border-color:#F54A45}
+.btn-danger:hover{background:#E0423E;border-color:#E0423E}
+.btn-sm{padding:5px 12px;font-size:13px;height:30px}
+.btn-lg{padding:10px 22px;font-size:15px;height:40px}
+.btn:disabled{opacity:.45;cursor:not-allowed;pointer-events:none}
 
 /* ===== Forms ===== */
-.form-group{margin-bottom:14px}
-.form-group label{display:block;font-size:13px;font-weight:600;color:#555;margin-bottom:4px}
-.form-group input,.form-group select{width:100%;border:1px solid #ddd;border-radius:8px;padding:8px 12px;font-size:13px;background:#fff}
-.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,.1)}
-.form-group .hint{font-size:11px;color:#999;margin-top:3px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:13px;font-weight:500;color:#1F2329;margin-bottom:6px}
+.form-group input,.form-group select{width:100%;border:1px solid #E5E6EB;border-radius:6px;padding:8px 12px;font-size:13px;background:#FFFFFF;color:#1F2329;transition:border-color .15s}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:#3370FF;box-shadow:0 0 0 3px rgba(51,112,255,.1)}
+.form-group input::placeholder{color:#8F959E}
+.form-group .hint{font-size:12px;color:#8F959E;margin-top:4px}
 
 /* ===== File Upload ===== */
-.upload-zone{border:2px dashed #d1d5db;border-radius:12px;padding:48px 24px;text-align:center;cursor:pointer;transition:all .2s;background:#fafbfc}
-.upload-zone:hover,.upload-zone.drag-over{border-color:var(--primary);background:#f5f3ff}
-.upload-zone .upload-icon{font-size:48px;margin-bottom:12px}
-.upload-zone .upload-text{font-size:15px;color:#555;margin-bottom:4px}
-.upload-zone .upload-hint{font-size:12px;color:#999}
+.upload-zone{border:2px dashed #E5E6EB;border-radius:8px;padding:48px 24px;text-align:center;cursor:pointer;transition:all .2s;background:#FAFBFC}
+.upload-zone:hover,.upload-zone.drag-over{border-color:#3370FF;background:#ECF2FE}
+.upload-zone .upload-icon{font-size:40px;margin-bottom:12px;opacity:.7}
+.upload-zone .upload-text{font-size:14px;color:#646A73;margin-bottom:4px}
+.upload-zone .upload-hint{font-size:12px;color:#8F959E}
 
 /* ===== Tables ===== */
 .table-container{overflow-x:auto;max-height:400px;overflow-y:auto}
 table{width:100%;border-collapse:collapse}
-th,td{padding:8px 12px;text-align:left;border-bottom:1px solid #f0f0f0;font-size:13px}
-th{font-size:11px;text-transform:uppercase;color:#999;font-weight:600;background:#fafafa;white-space:nowrap;position:sticky;top:0;z-index:1}
-tr:hover{background:#fafbfc}
+th,td{padding:8px 12px;text-align:left;border-bottom:1px solid #F2F3F5;font-size:13px}
+th{font-size:12px;color:#646A73;font-weight:500;background:#FAFBFC;white-space:nowrap;position:sticky;top:0;z-index:1;text-transform:none;letter-spacing:0}
+tr:hover{background:#F7F8FA}
+tr:nth-child(even){background:#FAFBFC}
+tr:nth-child(even):hover{background:#F2F3F5}
 
 /* ===== Column Mapping ===== */
-.mapping-row{display:flex;gap:12px;align-items:center;margin-bottom:8px;padding:8px 12px;background:#f9fafb;border-radius:8px}
-.mapping-row .source-col{flex:2;font-size:13px;font-weight:500;color:#555}
+.mapping-row{display:flex;gap:12px;align-items:center;margin-bottom:8px;padding:10px 14px;background:#F5F6F7;border-radius:6px}
+.mapping-row .source-col{flex:2;font-size:13px;font-weight:500;color:#646A73}
 .mapping-row select{flex:1;min-width:140px}
-.mapping-row .arrow{color:#999;font-size:16px}
+.mapping-row .arrow{color:#8F959E;font-size:16px}
 
 /* ===== Progress ===== */
-.progress-bar-wrap{height:6px;background:#e5e7eb;border-radius:3px;margin:12px 0;overflow:hidden}
-.progress-bar-fill{height:100%;background:var(--primary);border-radius:3px;transition:width .3s;width:0%}
-.progress-status{font-size:13px;color:#666;text-align:center}
+.progress-bar-wrap{height:4px;background:#F2F3F5;border-radius:2px;margin:12px 0;overflow:hidden}
+.progress-bar-fill{height:100%;background:#3370FF;border-radius:2px;transition:width .4s ease;width:0%}
+.progress-bar-fill.indeterminate{width:40%!important;animation:progressPulse 1.8s ease-in-out infinite}
+@keyframes progressPulse{0%{width:20%}50%{width:70%}100%{width:20%}}
+.progress-status{font-size:13px;color:#646A73;text-align:center}
 
 /* ===== Report ===== */
-.report-container{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:32px;max-width:900px;margin:0 auto;font-size:15px;line-height:1.8;white-space:pre-wrap;font-family:'Microsoft YaHei','PingFang SC',sans-serif}
-.report-toolbar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-.report-empty{text-align:center;padding:60px 20px;color:#999}
-.report-empty .icon{font-size:64px;margin-bottom:16px}
+.report-container{background:#FFFFFF;border-radius:8px;padding:32px 40px;max-width:900px;margin:0 auto;font-size:15px;line-height:1.85;white-space:pre-wrap;border:1px solid #F2F3F5;color:#1F2329}
+.report-toolbar{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.report-empty{text-align:center;padding:60px 20px;color:#8F959E}
+.report-empty .icon{font-size:48px;margin-bottom:16px;opacity:.5}
 
 /* ===== Styled Report ===== */
-.styled-report{white-space:normal;line-height:1.9;color:#334155;padding:40px}
+.styled-report{white-space:normal;line-height:1.85;color:#1F2329;padding:32px 40px}
+.rpt-pre{white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:14px;line-height:1.9;margin:0;padding:0;background:transparent;border:none;color:inherit}
 
-/* Pre wrapper: preserves all content, inherits styling */
-.rpt-pre{white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:15px;line-height:2;margin:0;padding:0;background:transparent;border:none;color:inherit}
-
-/* Section headers */
-.rpt-hdr{display:block;font-size:18px;font-weight:700;padding:14px 20px;margin:28px 0 16px 0;border-radius:8px;border-left:5px solid #6366f1;background:#f8fafc;color:#1e293b}
-.rpt-hdr-title{background:linear-gradient(135deg,#1e1b4b,#312e81);color:#fff;font-size:22px;text-align:center;padding:24px;border:none;border-radius:12px}
-.rpt-hdr-pos{border-left-color:#10b981;background:linear-gradient(135deg,#f0fdf4,#f8fafc);color:#065f46}
-.rpt-hdr-neg{border-left-color:#ef4444;background:linear-gradient(135deg,#fef2f2,#f8fafc);color:#991b1b}
-.rpt-hdr-act{border-left-color:#6366f1;background:linear-gradient(135deg,#eef2ff,#f8fafc);color:#4338ca}
-.rpt-hdr-sum{border-left-color:#f59e0b;background:linear-gradient(135deg,#fffbeb,#fefce8);color:#92400e;font-size:20px}
-.rpt-hdr-pro{border-left-color:#06b6d4;background:linear-gradient(135deg,#ecfeff,#f8fafc);color:#0e7490}
+/* Section headers - Feishu style */
+.rpt-hdr{display:block;font-size:16px;font-weight:600;padding:12px 16px;margin:24px 0 12px 0;border-radius:6px;border-left:3px solid #3370FF;background:#ECF2FE;color:#1F2329}
+.rpt-hdr-title{background:#3370FF;color:#fff;font-size:18px;text-align:center;padding:20px;border:none;border-radius:8px;font-weight:600}
+.rpt-hdr-pos{border-left-color:#1BAC6B;background:#E8F8F2;color:#065F46}
+.rpt-hdr-neg{border-left-color:#F54A45;background:#FEF0EF;color:#991B1B}
+.rpt-hdr-act{border-left-color:#3370FF;background:#ECF2FE;color:#1D39C4}
+.rpt-hdr-sum{border-left-color:#F2A227;background:#FEF6EC;color:#92400E;font-size:17px}
+.rpt-hdr-pro{border-left-color:#06B6D4;background:#ECFEFF;color:#0E7490}
 
 /* Inline highlights */
-.rpt-metric{display:inline-block;background:#eef2ff;color:#4338ca;font-weight:700;padding:1px 7px;border-radius:5px;font-size:0.95em;margin:0 1px}
-.rpt-quoted{color:#6366f1;font-weight:500}
-.rpt-badge-sev{display:inline-block;padding:1px 7px;border-radius:4px;font-size:0.85em;font-weight:700;margin:0 2px;background:#ef4444;color:#fff}
+.rpt-metric{display:inline-block;background:#ECF2FE;color:#3370FF;font-weight:600;padding:1px 6px;border-radius:4px;font-size:.93em;margin:0 2px}
+.rpt-quoted{color:#3370FF;font-weight:500}
+.rpt-badge-sev{display:inline-block;padding:1px 6px;border-radius:3px;font-size:.85em;font-weight:600;margin:0 2px;background:#F54A45;color:#fff}
 
 /* Severity lines */
-.rpt-sev-fatal{display:block;padding:10px 18px;margin:6px 0;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#991b1b;font-weight:600}
-.rpt-sev-warning{display:block;padding:10px 18px;margin:6px 0;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;color:#92400e;font-weight:600}
-.rpt-sev-minor{display:block;padding:10px 18px;margin:6px 0;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;color:#64748b}
+.rpt-sev-fatal{display:block;padding:8px 14px;margin:4px 0;background:#FEF0EF;border:1px solid #FECACA;border-radius:6px;color:#991B1B;font-weight:500;font-size:13px}
+.rpt-sev-warning{display:block;padding:8px 14px;margin:4px 0;background:#FEF6EC;border:1px solid #FDE68A;border-radius:6px;color:#92400E;font-weight:500;font-size:13px}
+.rpt-sev-minor{display:block;padding:8px 14px;margin:4px 0;background:#F8FAFC;border:1px solid #E5E6EB;border-radius:6px;color:#646A73;font-size:13px}
+.rpt-sev-pos{display:block;padding:8px 14px;margin:4px 0;background:#E8F8F2;border:1px solid #A7F3D0;border-radius:6px;color:#065F46;font-weight:500;font-size:13px}
+.rpt-sev-act{display:block;padding:8px 14px;margin:4px 0;background:#ECF2FE;border:1px solid #C7D2FE;border-radius:6px;color:#3730A3;font-weight:500;font-size:13px}
 
 /* Quote & profile lines */
-.rpt-quote{display:block;padding:12px 18px;margin:8px 0;background:#f1f5f9;border-left:4px solid #94a3b8;border-radius:0 8px 8px 0;color:#475569;font-style:italic}
-.rpt-profile{display:block;padding:14px 18px;margin:8px 0;background:linear-gradient(135deg,#eff6ff,#f0f9ff);border:1px solid #bae6fd;border-radius:10px;color:#0c4a6e;font-weight:500}
+.rpt-quote{display:block;padding:10px 16px;margin:6px 0;background:#F5F6F7;border-left:3px solid #E5E6EB;border-radius:0 6px 6px 0;color:#646A73;font-style:italic;font-size:13px}
+.rpt-profile{display:block;padding:12px 16px;margin:6px 0;background:#ECF2FE;border:1px solid #BAE6FD;border-radius:8px;color:#1F2329;font-weight:500;font-size:13px}
+
+/* ===== KPI Cards Row ===== */
+.rpt-kpi-row{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.rpt-kpi-card{flex:1;min-width:140px;padding:18px 20px 14px;border-radius:8px;text-align:center;background:#fff;border:1px solid #F2F3F5;border-top:3px solid #E5E6EB;position:relative}
+.rpt-kpi-card .kpi-num{font-size:30px;font-weight:700;color:#1F2329;line-height:1.2}
+.rpt-kpi-card .kpi-label{font-size:12px;color:#646A73;margin-top:6px}
+.rpt-kpi-card .kpi-sub{font-size:11px;color:#8F959E;margin-top:2px}
+.rpt-kpi-card.kpi-positive{border-top-color:#10B981}
+.rpt-kpi-card.kpi-positive .kpi-num{color:#065F46}
+.rpt-kpi-card.kpi-negative{border-top-color:#F54A45}
+.rpt-kpi-card.kpi-negative .kpi-num{color:#991B1B}
+.rpt-kpi-card.kpi-neutral{border-top-color:#3370FF}
+.rpt-kpi-card.kpi-neutral .kpi-num{color:#1D39C4}
+.rpt-kpi-card.kpi-warning{border-top-color:#F2A227}
+.rpt-kpi-card.kpi-warning .kpi-num{color:#92400E}
+
+/* ===== Collapsible Report Sections ===== */
+.rpt-section-wrap{margin-bottom:10px;border:1px solid #F2F3F5;border-radius:8px;overflow:hidden;background:#fff}
+.rpt-section-hdr{padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;color:#1F2329;user-select:none;transition:background .15s}
+.rpt-section-hdr:hover{background:#F5F6F7}
+.rpt-section-hdr .rpt-chevron{transition:transform .2s;opacity:.4;font-size:10px}
+.rpt-section-wrap.open .rpt-section-hdr .rpt-chevron{transform:rotate(90deg)}
+.rpt-section-body{padding:0 16px 16px;display:none;font-size:14px;line-height:1.9}
+.rpt-section-wrap.open .rpt-section-body{display:block}
+.rpt-section-wrap.positive{border-left:3px solid #10B981}
+.rpt-section-wrap.negative{border-left:3px solid #F54A45}
+.rpt-section-wrap.insight{border-left:3px solid #3370FF}
+.rpt-section-wrap.summary{border-left:3px solid #F2A227;background:#FFFBEB}
+
+/* ===== Insight Callout ===== */
+.rpt-callout{padding:14px 18px;border-radius:10px;margin:10px 0;font-size:14px;line-height:1.8}
+.rpt-callout-pos{background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46}
+.rpt-callout-neg{background:#FEF2F2;border:1px solid #FECACA;color:#991B1B}
+.rpt-callout-info{background:#EEF2FF;border:1px solid #C7D2FE;color:#3730A3}
+
+.rpt-quote-card{padding:14px 18px;background:#F5F6F7;border-left:3px solid #3370FF;border-radius:0 10px 10px 0;margin:10px 0;font-size:14px;line-height:1.8;color:#475569}
+.rpt-quote-card .rpt-quote-text{font-style:italic}
+
+/* ===== Quote Card ===== */
+.rpt-quote-card{padding:14px 18px;background:#F5F6F7;border-left:3px solid #3370FF;border-radius:0 6px 6px 0;margin:8px 0;font-size:13px;line-height:1.7;color:#475569}
+.rpt-quote-card .rpt-quote-text{font-style:italic}
+.rpt-quote-card .rpt-quote-meta{font-size:11px;color:#8F959E;margin-top:6px;font-style:normal}
+
+/* ===== Interactive Report Container ===== */
+.rpt-interactive{max-width:900px;margin:0 auto}
+
+/* Report title */
+.rpt-report-title{text-align:center;padding:32px 20px 16px;font-size:22px;font-weight:700;color:#1F2329;line-height:1.4}
+.rpt-report-title .rpt-metric{font-size:inherit}
+.rpt-report-subtitle{text-align:center;font-size:13px;color:#8F959E;margin-bottom:20px}
+.rpt-report-wrapper{background:#fff;border-radius:8px;border:1px solid #F2F3F5;overflow:hidden}
+
+/* Tab bar */
+.rpt-tab-bar{display:flex;gap:0;overflow-x:auto;border-bottom:2px solid #E5E6EB;margin:24px 0 0 0;padding:0 4px;-webkit-overflow-scrolling:touch;background:#fff;border-radius:8px 8px 0 0}
+.rpt-tab-bar::-webkit-scrollbar{height:0}
+.rpt-tab-item{flex-shrink:0;padding:12px 20px;cursor:pointer;color:#646A73;font-size:13px;font-weight:500;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;display:flex;align-items:center;gap:6px;white-space:nowrap;user-select:none}
+.rpt-tab-item:hover{color:#1F2329}
+.rpt-tab-item.active{color:#3370FF;border-bottom-color:#3370FF;font-weight:600}
+.rpt-tab-content{min-height:200px;background:#fff;border:1px solid #F2F3F5;border-top:none;border-radius:0 0 8px 8px;padding:28px 32px}
+
+/* Tab panels */
+.rpt-tab-panel{padding:0}
+.rpt-tab-panel.negative .rpt-metric{background:#FEF2F2;color:#991B1B}
+.rpt-tab-panel.positive .rpt-metric{background:#ECFDF5;color:#065F46}
+
+/* Two-column layout inside tab panel */
+.rpt-two-col{display:flex;gap:28px;flex-wrap:wrap}
+.rpt-two-col .rpt-col-main{flex:2;min-width:300px}
+.rpt-two-col .rpt-col-side{flex:1;min-width:220px}
+
+/* Score distribution bars */
+.rpt-score-bar-row{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:12px}
+.rpt-score-bar-label{width:28px;text-align:right;color:#646A73;flex-shrink:0}
+.rpt-score-bar-track{flex:1;height:8px;background:#F2F3F5;border-radius:4px;overflow:hidden}
+.rpt-score-bar-fill{height:100%;border-radius:4px;background:#3370FF}
+.rpt-score-bar-fill.high{background:#10B981}
+.rpt-score-bar-fill.mid{background:#F2A227}
+.rpt-score-bar-fill.low{background:#F54A45}
+.rpt-score-bar-count{width:36px;font-size:11px;color:#8F959E;flex-shrink:0}
+
+/* Profile card */
+.rpt-profile-card{display:flex;gap:12px;padding:14px;margin:10px 0;background:#F5F6F7;border-radius:8px;align-items:flex-start}
+.rpt-profile-avatar{width:40px;height:40px;border-radius:50%;background:#3370FF;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+.rpt-profile-info{flex:1;font-size:13px;line-height:1.7}
+.rpt-profile-name{font-weight:600;color:#1F2329}
+
+/* Better typography in report body */
+.rpt-section-body{font-size:15px;line-height:2;color:#374151}
+.rpt-section-body p{margin:0 0 12px 0}
+.rpt-section-body strong,.rpt-section-body b{color:#1F2329}
+
+/* Colored bullet lists */
+.rpt-section-body ul,.rpt-section-body ol{margin:8px 0 16px 0;padding-left:20px}
+.rpt-section-body li{margin-bottom:8px;position:relative}
+
+/* Horizontal divider between major topics */
+.rpt-divider{border:none;border-top:1px solid #F2F3F5;margin:20px 0}
+
+/* Highlight boxes for key data */
+.rpt-highlight-box{padding:12px 16px;margin:12px 0;border-radius:6px;font-weight:500}
+.rpt-highlight-box.green{background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46}
+.rpt-highlight-box.red{background:#FEF2F2;border:1px solid #FECACA;color:#991B1B}
+.rpt-highlight-box.blue{background:#EEF2FF;border:1px solid #C7D2FE;color:#3730A3}
+
+/* KPIs row wrapper */
+.rpt-kpi-row{margin:0 0 28px 0}
+
+/* ===== GitHub Markdown Overrides ===== */
+.markdown-body{font-size:15px;max-width:100%}
+.markdown-body h3{border-bottom:1px solid #d8dee4;padding-bottom:8px}
 
 /* ===== Alerts ===== */
-.alert{padding:12px 18px;border-radius:8px;margin:12px 0;font-size:13px}
-.alert-info{background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe}
-.alert-danger{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
-.alert-success{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
-.alert-warning{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
+.alert{padding:10px 16px;border-radius:6px;margin:12px 0;font-size:13px}
+.alert-info{background:#ECF2FE;color:#1D39C4;border:1px solid #C7D2FE}
+.alert-danger{background:#FEF0EF;color:#991B1B;border:1px solid #FECACA}
+.alert-success{background:#E8F8F2;color:#065F46;border:1px solid #A7F3D0}
+.alert-warning{background:#FEF6EC;color:#92400E;border:1px solid #FDE68A}
 
 /* ===== Badges ===== */
-.badge{display:inline-block;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600}
-.badge-primary{background:#eef2ff;color:var(--primary)}
-.badge-success{background:#ecfdf5;color:var(--success)}
-.badge-warning{background:#fffbeb;color:var(--warning)}
-.badge-danger{background:#fef2f2;color:var(--danger)}
-.badge-secondary{background:#f3f4f6;color:#666}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500}
+.badge-primary{background:#ECF2FE;color:#3370FF}
+.badge-success{background:#E8F8F2;color:#1BAC6B}
+.badge-warning{background:#FEF6EC;color:#F2A227}
+.badge-danger{background:#FEF0EF;color:#F54A45}
+.badge-secondary{background:#F5F6F7;color:#646A73}
 
 /* ===== History ===== */
-.history-item{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #f0f0f0;cursor:pointer;transition:background .15s}
-.history-item:hover{background:#f9fafb}
-.history-item .hi-title{font-weight:600;font-size:14px}
-.history-item .hi-meta{font-size:12px;color:#999;margin-top:2px}
+.history-item{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid #F2F3F5;transition:background .15s}
+.history-item:hover{background:#F5F6F7}
+.history-item .hi-title{font-weight:500;font-size:14px;color:#1F2329}
+.history-item .hi-meta{font-size:12px;color:#8F959E;margin-top:3px}
 .history-item .hi-actions{display:flex;gap:6px}
 
 /* ===== Tabs ===== */
-.nav-tabs{display:flex;gap:0;border-bottom:2px solid #e5e7eb;margin-bottom:20px;padding:0}
-.nav-tabs .nav-link{padding:8px 20px;cursor:pointer;color:#666;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:14px;transition:all .15s}
-.nav-tabs .nav-link.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
-.nav-tabs .nav-link:hover{color:var(--primary)}
+.nav-tabs{display:flex;gap:0;border-bottom:2px solid #F2F3F5;margin-bottom:24px;padding:0}
+.nav-tabs .nav-link{padding:10px 20px;cursor:pointer;color:#646A73;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:14px;transition:all .15s;font-weight:500}
+.nav-tabs .nav-link.active{color:#3370FF;border-bottom-color:#3370FF;font-weight:600}
+.nav-tabs .nav-link:hover{color:#3370FF}
 
 /* ===== Modal ===== */
-.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:2000;display:flex;align-items:center;justify-content:center}
-.modal{background:#fff;border-radius:12px;padding:24px;max-width:500px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2)}
-.modal h4{margin-bottom:16px}
-.modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(31,35,41,.5);z-index:2000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.modal{background:#FFFFFF;border-radius:12px;padding:24px 28px;max-width:500px;width:90%;box-shadow:0 8px 40px rgba(31,35,41,.15);border:1px solid #F2F3F5}
+.modal h4{margin-bottom:16px;font-size:16px}
+.modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
 
 /* ===== Utilities ===== */
-.text-muted{color:#999}
-.text-primary{color:var(--primary)}
-.text-danger{color:var(--danger)}
-.text-success{color:var(--success)}
-.fw-bold{font-weight:700}
+.text-muted{color:#8F959E}
+.text-primary{color:#3370FF}
+.text-danger{color:#F54A45}
+.text-success{color:#1BAC6B}
+.fw-bold{font-weight:600}
 .d-flex{display:flex;align-items:center}
 .gap-2{gap:8px}
 .gap-3{gap:12px}
-.mb-3{margin-bottom:12px}
-.mt-3{margin-top:12px}
+.mb-3{margin-bottom:16px}
+.mt-3{margin-top:16px}
 .flex-1{flex:1}
+.row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:0}
+.col-lg-6{flex:1;min-width:380px}
+.col-lg-4{flex:1;min-width:240px}
+.col-12{flex:0 0 100%}
 
 /* ===== Skeleton Loading ===== */
 @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
-.skeleton{background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:800px 100%;animation:shimmer 1.5s infinite;border-radius:8px;height:16px;margin:8px 0}
+.skeleton{background:linear-gradient(90deg,#F2F3F5 25%,#E5E6EB 50%,#F2F3F5 75%);background-size:800px 100%;animation:shimmer 1.5s infinite;border-radius:6px;height:16px;margin:8px 0}
 .skeleton.h-sm{height:12px;width:60%}
 .skeleton.h-lg{height:20px;width:80%}
 
-/* ===== Nav Groups (collapsible sidebar) ===== */
-.nav-group{margin:4px 0}
-.nav-group-header{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;color:rgba(255,255,255,.75);cursor:pointer;font-size:14px;font-weight:600;transition:all .15s;user-select:none}
-.nav-group-header:hover{color:#fff;background:rgba(255,255,255,.06)}
-.nav-group-header .nav-arrow{font-size:11px;transition:transform .2s}
-.nav-group-body{overflow:hidden}
-.nav-group-body .nav-item{padding-left:28px;font-size:13px}
-
 /* ===== Strategy Page Styles ===== */
-#store-sku-table{max-height:500px;overflow-y:auto}
-.strategy-metric{font-size:13px;color:#666;margin-left:8px}
+#store-sku-table{max-height:500px;overflow:auto}
+#store-sku-table table th,#store-sku-table table td{white-space:nowrap;padding:6px 10px;line-height:1.4}
+#store-sku-table table th{position:sticky;top:0;z-index:2}
+#sku-detail-table{max-height:70vh;overflow:auto}
+.strategy-metric{font-size:13px;color:#646A73;margin-left:8px}
+.chart-wrap{position:relative;height:300px;width:100%}
+.chart-wrap-lg{height:360px}
+
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* ===== Responsive ===== */
 @media(max-width:768px){
-  .sidebar{width:60px}
-  .sidebar .logo span,.sidebar .nav-item span:not(.nav-icon){display:none}
-  .main-content{margin-left:60px}
+  .sidebar{width:56px}
+  .sidebar .logo span,.sidebar .nav-item span:not(.nav-icon),.sidebar .nav-group-header span:first-child{display:none}
+  .sidebar .nav-group-header .nav-arrow{display:none}
+  .main-content{margin-left:56px;padding:16px}
   .mapping-row{flex-direction:column;align-items:stretch}
-  .report-container{padding:16px;font-size:14px}
+  .report-container{padding:20px;font-size:14px}
+  .col-lg-6,.col-lg-4{min-width:100%}
 }
 </style>
 </head>
@@ -198,61 +339,90 @@ tr:hover{background:#fafbfc}
 
 <!-- Sidebar -->
 <nav class="sidebar">
-  <div class="logo"><span style="font-size:22px">📊</span> <span>产品洞察分析</span></div>
+  <div class="logo"><span>产品洞察分析</span><span style="font-size:10px;opacity:.5;margin-left:auto">v2.0</span></div>
 
   <!-- Group: 评论洞察 -->
   <div class="nav-group" data-group="reviews">
     <div class="nav-group-header active" onclick="toggleNavGroup('reviews')">
-      <span>📊 评论洞察</span><span class="nav-arrow">▾</span>
+      <i data-lucide="message-square-text" class="lucide-icon"></i><span>评论洞察</span><span class="nav-arrow">▾</span>
     </div>
     <div class="nav-group-body">
       <a class="nav-item active" data-page="import" data-group="reviews">
-        <span style="margin-left:8px">📥 数据导入</span>
+        <i data-lucide="download" class="lucide-icon"></i><span>评论数据获取</span>
       </a>
       <a class="nav-item" data-page="report" data-group="reviews">
-        <span style="margin-left:8px">📋 分析报告</span>
+        <i data-lucide="file-text" class="lucide-icon"></i><span>用户评论分析报告</span>
+      </a>
+      <a class="nav-item" data-page="review-detail" data-group="reviews">
+        <i data-lucide="list" class="lucide-icon"></i><span>评论全部明细</span>
       </a>
       <a class="nav-item" data-page="history" data-group="reviews">
-        <span style="margin-left:8px">🕒 历史记录</span>
-      </a>
-      <a class="nav-item" data-page="framework" data-group="reviews">
-        <span style="margin-left:8px">📖 分析框架</span>
+        <i data-lucide="clock" class="lucide-icon"></i><span>历史记录</span>
       </a>
     </div>
   </div>
 
   <!-- Group: 产品策略洞察 -->
   <div class="nav-group" data-group="strategy">
-    <div class="nav-group-header" onclick="toggleNavGroup('strategy')">
-      <span>📈 产品策略洞察</span><span class="nav-arrow">▸</span>
+    <div class="nav-group-header active" onclick="toggleNavGroup('strategy')">
+      <i data-lucide="bar-chart-3" class="lucide-icon"></i><span>产品策略洞察</span><span class="nav-arrow">▾</span>
     </div>
-    <div class="nav-group-body" style="display:none">
+    <div class="nav-group-body">
       <a class="nav-item" data-page="strategy-fetch" data-group="strategy">
-        <span style="margin-left:8px">🔍 SKU数据获取</span>
+        <i data-lucide="search" class="lucide-icon"></i><span>SKU数据获取</span>
       </a>
       <a class="nav-item" data-page="strategy-report" data-group="strategy">
-        <span style="margin-left:8px">📊 策略分析报告</span>
+        <i data-lucide="pie-chart" class="lucide-icon"></i><span>策略分析报告</span>
+      </a>
+      <a class="nav-item" data-page="sku-detail" data-group="strategy">
+        <i data-lucide="list" class="lucide-icon"></i><span>SKU全部明细</span>
+      </a>
+      <a class="nav-item" data-page="strategy-history" data-group="strategy">
+        <i data-lucide="clock" class="lucide-icon"></i><span>历史记录</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Group: 品类趋势洞察 -->
+  <div class="nav-group" data-group="trend">
+    <div class="nav-group-header active" onclick="toggleNavGroup('trend')">
+      <i data-lucide="trending-up" class="lucide-icon"></i><span>品类趋势洞察</span><span class="nav-arrow">▾</span>
+    </div>
+    <div class="nav-group-body">
+      <a class="nav-item" data-page="trend-fetch" data-group="trend">
+        <i data-lucide="search" class="lucide-icon"></i><span>笔记数据获取</span>
+      </a>
+      <a class="nav-item" data-page="trend-report" data-group="trend">
+        <i data-lucide="bar-chart-3" class="lucide-icon"></i><span>趋势分析报告</span>
+      </a>
+      <a class="nav-item" data-page="trend-detail" data-group="trend">
+        <i data-lucide="list" class="lucide-icon"></i><span>笔记全部明细</span>
+      </a>
+      <a class="nav-item" data-page="trend-history" data-group="trend">
+        <i data-lucide="clock" class="lucide-icon"></i><span>历史记录</span>
       </a>
     </div>
   </div>
 
   <!-- Settings (standalone) -->
   <a class="nav-item" data-page="settings" data-group="root">
-    <span>⚙ 设置</span>
+    <i data-lucide="settings" class="lucide-icon"></i><span>设置</span>
   </a>
 </nav>
 
 <!-- Main Content -->
 <div class="main-content">
+  <div style="background:#EEF2FF;color:#3730A3;padding:4px 12px;border-radius:4px;margin-bottom:12px;font-size:11px;display:inline-block">UI v3.0 — marked + github-markdown-css</div>
+
 
   <!-- Page: Import -->
   <div class="page active" id="page-import">
-    <h4 class="mb-3">📥 导入商品评论数据</h4>
+    <h4 class="mb-3"><i data-lucide="download" class="lucide-icon" style="width:20px;height:20px;opacity:.7"></i> 评论数据获取</h4>
 
     <!-- Import mode tabs -->
     <div class="nav-tabs" id="import-tabs">
-      <a class="nav-link active" data-import-mode="file">📁 文件导入</a>
-      <a class="nav-link" data-import-mode="online">🌐 在线获取</a>
+      <a class="nav-link active" data-import-mode="file"><i data-lucide="file-up" class="lucide-icon"></i> 文件导入</a>
+      <a class="nav-link" data-import-mode="online"><i data-lucide="globe" class="lucide-icon"></i> 在线获取</a>
     </div>
 
     <!-- FILE UPLOAD mode -->
@@ -260,7 +430,7 @@ tr:hover{background:#fafbfc}
       <div class="card">
         <div class="card-body">
           <div class="upload-zone" id="upload-zone">
-            <div class="upload-icon">📁</div>
+            <div class="upload-icon"><i data-lucide="cloud-upload" style="width:36px;height:36px;opacity:.4"></i></div>
             <div class="upload-text">点击上传或拖拽文件到此处</div>
             <div class="upload-hint">支持 .csv / .xlsx / .xls 格式</div>
             <input type="file" id="file-input" accept=".csv,.xlsx,.xls" style="display:none">
@@ -272,7 +442,7 @@ tr:hover{background:#fafbfc}
     <!-- ONLINE FETCH mode -->
     <div id="import-mode-online" style="display:none">
       <div class="card">
-        <div class="card-header">🌐 在线获取评论</div>
+        <div class="card-header"><i data-lucide="globe" class="lucide-icon"></i> 在线获取评论</div>
         <div class="card-body">
           <div class="form-group">
             <label>电商平台</label>
@@ -284,7 +454,7 @@ tr:hover{background:#fafbfc}
             <label>SKU ID 或商品链接</label>
             <div class="d-flex gap-2">
               <input type="text" id="online-sku" placeholder="例如: 100191929771 或 https://item.jd.com/100191929771.html" style="flex:1">
-              <button class="btn btn-primary" id="btn-fetch-reviews" onclick="startOnlineFetch()">🔍 获取评论</button>
+              <button class="btn btn-primary" id="btn-fetch-reviews" onclick="startOnlineFetch()"><i data-lucide="search" class="lucide-icon"></i> 获取评论</button>
             </div>
             <div class="hint">系统将自动发现该商品同 SPU 下的全部 SKU，并抓取所有评论数据</div>
           </div>
@@ -294,7 +464,7 @@ tr:hover{background:#fafbfc}
             <div class="progress-status" id="fetch-progress-status">连接中...</div>
             <div class="text-muted" style="font-size:11px;text-align:center;margin-top:4px" id="fetch-progress-detail"></div>
             <div style="text-align:center;margin-top:8px">
-              <button class="btn btn-danger btn-sm" onclick="cancelOnlineFetch()">取消</button>
+              <button class="btn btn-danger btn-sm" onclick="cancelOnlineFetch()"><i data-lucide="x" class="lucide-icon"></i> 取消</button>
             </div>
           </div>
         </div>
@@ -303,7 +473,7 @@ tr:hover{background:#fafbfc}
 
     <!-- Column Mapping -->
     <div class="card" id="mapping-card" style="display:none">
-      <div class="card-header">🔗 字段映射 <span class="text-muted" style="font-weight:400;font-size:12px">— 请将文件列对应到分析所需字段</span></div>
+      <div class="card-header"><i data-lucide="link-2" class="lucide-icon"></i> 字段映射 <span class="text-muted" style="font-weight:400;font-size:12px">— 请将文件列对应到分析所需字段</span></div>
       <div class="card-body">
         <div id="mapping-rows"></div>
         <div class="d-flex gap-2 mt-3">
@@ -314,51 +484,47 @@ tr:hover{background:#fafbfc}
 
     <!-- Data Preview -->
     <div class="card" id="preview-card" style="display:none">
-      <div class="card-header">📋 数据预览 <span class="text-muted" style="font-weight:400;font-size:12px" id="preview-count"></span></div>
+      <div class="card-header"><i data-lucide="table" class="lucide-icon"></i> 数据预览 <span class="text-muted" style="font-weight:400;font-size:12px" id="preview-count"></span></div>
       <div class="card-body" style="padding:0">
         <div class="table-container" id="preview-table"></div>
       </div>
     </div>
 
     <!-- Analyze Button -->
-    <div id="analyze-section" style="display:none">
+    <div id="analyze-section">
       <div id="analyze-msg"></div>
       <!-- Product name input -->
       <div class="card" style="margin-top:16px">
         <div class="card-body" style="padding:14px 20px">
           <div class="d-flex gap-2" style="align-items:center">
-            <span style="font-weight:600;white-space:nowrap">🏷 分析产品：</span>
+            <span style="font-weight:600;white-space:nowrap"><i data-lucide="tag" class="lucide-icon"></i> 分析产品：</span>
             <input type="text" id="product-name-input" placeholder="品牌 + 型号，如：京东收银 D6 智能收银称" style="flex:1;font-size:14px;padding:8px 12px;border:1px solid #ddd;border-radius:8px">
             <span class="text-muted" style="font-size:11px;white-space:nowrap">用于报告标题识别</span>
           </div>
         </div>
       </div>
       <div class="d-flex gap-2" style="justify-content:center;margin-top:16px">
-        <button class="btn btn-primary btn-lg" id="btn-analyze" onclick="startAnalysis()">
-          🚀 开始智能分析
-        </button>
-        <button class="btn btn-lg" id="btn-sample" onclick="loadSampleData()">
-          📦 加载示例数据
-        </button>
+        <button class="btn btn-primary btn-lg" id="btn-analyze" onclick="startAnalysis()">`n          <i data-lucide="sparkles" class="lucide-icon"></i> 开始智能分析`n        </button>
+        <button class="btn btn-lg" id="btn-sample" onclick="loadSampleData()">`n          <i data-lucide="package" class="lucide-icon"></i> 加载示例数据`n        </button>
       </div>
       <div class="alert alert-info" style="text-align:center;margin-top:12px" id="analysis-info">
         已加载 <strong id="review-count-display">0</strong> 条评论，AI 将对每条评论进行 8 个维度的深度分析并生成专业洞察报告。
       </div>
       <!-- API Key prompt (shown inline when key is missing) -->
       <div id="apikey-inline-prompt" style="display:none;text-align:center;margin-top:16px;padding:16px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px">
-        <p style="color:#991b1b;font-weight:600;margin:0 0 8px">⚠ 尚未配置 API Key，分析功能无法使用</p>
+        <p style="color:#991b1b;font-weight:600;margin:0 0 8px"><i data-lucide="alert-triangle" class="lucide-icon" style="width:18px;height:18px"></i> 尚未配置 API Key，分析功能无法使用</p>
         <p style="color:#666;font-size:13px;margin:0 0 12px">请在下方输入您的 Anthropic API Key，或在「设置」页面进行配置</p>
         <div class="d-flex gap-2" style="justify-content:center">
           <input type="password" id="apikey-inline-input" placeholder="sk-ant-api03-..." style="flex:1;max-width:400px;font-family:monospace;padding:8px 12px;border:1px solid #ddd;border-radius:8px">
-          <button class="btn btn-primary btn-sm" onclick="saveApiKeyInline()">💾 保存并分析</button>
-          <button class="btn btn-sm" onclick="switchPage('settings')">⚙ 打开设置</button>
+          <button class="btn btn-primary btn-sm" onclick="saveApiKeyInline()"><i data-lucide='save' class='lucide-icon'></i> 保存并分析</button>
+          <button class="btn btn-sm" onclick="switchPage('settings')"><i data-lucide='settings' class='lucide-icon'></i> 打开设置</button>
         </div>
       </div>
     </div>
 
     <!-- Progress -->
     <div class="card" id="progress-card" style="display:none">
-      <div class="card-header">⏳ 分析进度 <button class="btn btn-danger btn-sm" onclick="cancelAnalysis()" style="margin-left:auto">取消分析</button></div>
+      <div class="card-header"><i data-lucide="loader-2" class="lucide-icon"></i> 分析进度 <button class="btn btn-danger btn-sm" onclick="cancelAnalysis()" style="margin-left:auto"><i data-lucide="x" class="lucide-icon"></i> 取消分析</button></div>
       <div class="card-body">
         <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div>
         <div class="progress-status" id="progress-status">准备中...</div>
@@ -370,7 +536,7 @@ tr:hover{background:#fafbfc}
   <!-- Page: Report -->
   <div class="page" id="page-report">
     <div class="d-flex gap-2 mb-3" style="justify-content:space-between;align-items:center">
-      <h4 style="margin:0">📋 深度洞察分析报告</h4>
+      <h4 style="margin:0"><i data-lucide="file-text" class="lucide-icon" style="width:20px;height:20px"></i> 用户评论分析报告</h4>
       <div class="d-flex gap-2">
         <button class="btn btn-sm" onclick="switchPage('import')">← 返回导入</button>
       </div>
@@ -378,10 +544,10 @@ tr:hover{background:#fafbfc}
 
     <div id="report-content">
       <div class="report-empty">
-        <div class="icon">📋</div>
+        <div class="icon"><i data-lucide="file-text" style="width:48px;height:48px;opacity:.25"></i></div>
         <p>暂无分析报告</p>
-        <p class="text-muted">请先在「数据导入」页面上传评论数据并开始分析</p>
-        <button class="btn btn-primary" onclick="switchPage('import')">前往导入数据</button>
+        <p class="text-muted">请先在「评论数据获取」页面获取或上传评论数据</p>
+        <button class="btn btn-primary" onclick="switchPage('import')"><i data-lucide="arrow-right" class="lucide-icon"></i> 前往导入数据</button>
       </div>
     </div>
   </div>
@@ -389,13 +555,13 @@ tr:hover{background:#fafbfc}
   <!-- Page: History -->
   <div class="page" id="page-history">
     <div class="d-flex gap-2 mb-3" style="justify-content:space-between;align-items:center">
-      <h4 style="margin:0">🕒 历史报告</h4>
+      <h4 style="margin:0"><i data-lucide="clock" class="lucide-icon" style="width:20px;height:20px"></i> 历史报告</h4>
       <button class="btn btn-danger btn-sm" id="btn-clear-history" onclick="clearHistory()" style="display:none">清空全部</button>
     </div>
     <div class="card">
       <div class="card-body" id="history-list">
         <div class="report-empty">
-          <div class="icon">🕒</div>
+          <div class="icon"><i data-lucide="clock" style="width:48px;height:48px;opacity:.25"></i></div>
           <p>暂无历史报告</p>
           <p class="text-muted">完成分析后，报告将自动保存在这里</p>
         </div>
@@ -403,46 +569,41 @@ tr:hover{background:#fafbfc}
     </div>
   </div>
 
-  <!-- Page: Analysis Framework -->
-  <div class="page" id="page-framework">
-    <h4 class="mb-3">📖 评论洞察分析框架</h4>
-    <div class="card">
-      <div class="card-header">8 维度语义提取</div>
-      <div class="card-body">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;line-height:1.8">
-          <div style="padding:10px 14px;background:#eef2ff;border-radius:8px"><strong>1. 人群维度</strong><br><span class="text-muted">性别、年龄段、职业、购买角色</span></div>
-          <div style="padding:10px 14px;background:#f0fdf4;border-radius:8px"><strong>2. 场景维度</strong><br><span class="text-muted">使用场景</span></div>
-          <div style="padding:10px 14px;background:#fefce8;border-radius:8px"><strong>3. 产品维度</strong><br><span class="text-muted">功能满意度、具体功能</span></div>
-          <div style="padding:10px 14px;background:#fef2f2;border-radius:8px"><strong>4. 质量维度</strong><br><span class="text-muted">材质、做工、耐用性</span></div>
-          <div style="padding:10px 14px;background:#ecfeff;border-radius:8px"><strong>5. 服务维度</strong><br><span class="text-muted">发货、包装、客服、退换货、保修</span></div>
-          <div style="padding:10px 14px;background:#fdf2f8;border-radius:8px"><strong>6. 体验维度</strong><br><span class="text-muted">舒适度、易用性、外观、价格感知</span></div>
-          <div style="padding:10px 14px;background:#f5f3ff;border-radius:8px"><strong>7. 市场维度</strong><br><span class="text-muted">竞品对比、复购意愿</span></div>
-          <div style="padding:10px 14px;background:#fff7ed;border-radius:8px"><strong>8. 情感维度</strong><br><span class="text-muted">总体评价</span></div>
-        </div>
+  <!-- Page: Review Detail -->
+  <div class="page" id="page-review-detail">
+    <div class="d-flex gap-2 mb-3" style="justify-content:space-between;align-items:center">
+      <h4 style="margin:0"><i data-lucide="list" class="lucide-icon" style="width:20px;height:20px"></i> 评论全部明细 <span id="review-detail-count" class="text-muted" style="font-size:14px"></span></h4>
+      <div class="d-flex gap-2">
+        <button class="btn btn-success btn-sm" onclick="downloadReviewCsv()"><i data-lucide="file-down" class="lucide-icon"></i> 下载 CSV</button>
+        <button class="btn btn-sm" onclick="switchPage('import')"><i data-lucide="arrow-left" class="lucide-icon"></i> 返回</button>
       </div>
     </div>
-    <div class="card mt-3">
-      <div class="card-header">7 章节报告结构</div>
-      <div class="card-body" style="font-size:13px;line-height:2">
-        1. 核心用户画像与场景<br>2. 核心卖点与价值验证<br>3. 主要痛点与负面归因<br>
-        4. 改进建议与优先级<br>5. 潜在机会与差异化<br>6. 典型用户深度解析<br>7. 关键洞察总结
-      </div>
-    </div>
+    <div class="card"><div class="card-body" style="padding:0">
+      <div id="review-detail-table" style="max-height:70vh;overflow:auto"></div>
+    </div></div>
   </div>
 
   <!-- Page: Strategy Fetch -->
   <div class="page" id="page-strategy-fetch">
-    <h4 class="mb-3">🔍 店铺SKU数据获取</h4>
+    <h4 class="mb-3"><i data-lucide="search" class="lucide-icon" style="width:20px;height:20px"></i> 店铺SKU数据获取</h4>
     <div class="card">
-      <div class="card-header">🌐 京东店铺SKU提取</div>
+      <div class="card-header"><i data-lucide="database" class="lucide-icon"></i> 在线获取店铺全部SKU</div>
       <div class="card-body">
-        <div class="form-group"><label>店铺ID</label>
+        <div class="form-group">
+          <label>电商平台</label>
+          <select id="strategy-platform" onchange="toggleShopIdField()">
+            <option value="jd">京东 (JD.com)</option>
+            <option value="douyin">抖音 (Douyin)</option>
+            <option value="tmall">天猫 (Tmall)</option>
+          </select>
+        </div>
+        <div class="form-group" id="shop-id-group"><label>店铺ID</label>
           <input type="text" id="strategy-shop-id" placeholder="例如: 10320377"></div>
         <div class="form-group"><label>搜索关键词（品牌词）</label>
           <input type="text" id="strategy-keyword" placeholder="例如: 芯友"></div>
         <div class="form-group"><label>目标店铺名（可选，用于过滤）</label>
           <input type="text" id="strategy-target-shop" placeholder="留空则自动检测"></div>
-        <button class="btn btn-primary" id="btn-store-fetch" onclick="startStoreFetch()">🔍 获取店铺全部SKU</button>
+        <button class="btn btn-primary" id="btn-store-fetch" onclick="startStoreFetch()"><i data-lucide="search" class="lucide-icon"></i> 获取店铺全部SKU</button>
         <div id="store-fetch-progress" style="display:none;margin-top:12px">
           <div class="progress-bar-wrap"><div class="progress-bar-fill" id="store-progress-fill"></div></div>
           <div class="progress-status" id="store-progress-status"></div>
@@ -453,58 +614,157 @@ tr:hover{background:#fafbfc}
     </div>
     <!-- SKU summary table -->
     <div class="card" id="store-sku-summary" style="display:none">
-      <div class="card-header">📋 SKU数据预览 <span id="store-sku-count"></span></div>
+      <div class="card-header"><i data-lucide="table" class="lucide-icon"></i> SKU数据预览 <span id="store-sku-count"></span>
+        <button class="btn btn-primary btn-sm" onclick="saveAndViewAllSkus()" style="margin-left:auto"><i data-lucide="list" class="lucide-icon"></i> 查看全部明细</button>
+      </div>
       <div class="card-body" style="padding:0"><div class="table-container" id="store-sku-table"></div></div>
     </div>
   </div>
 
+  <!-- Page: SKU Detail View -->
+  <div class="page" id="page-sku-detail">
+    <div class="d-flex gap-2 mb-3" style="justify-content:space-between;align-items:center">
+      <h4 style="margin:0"><i data-lucide="list" class="lucide-icon" style="width:20px;height:20px"></i> SKU 全部明细 <span id="sku-detail-shop" style="color:#3370FF"></span> <span id="sku-detail-count" class="text-muted" style="font-size:14px"></span></h4>
+      <div class="d-flex gap-2">
+        <button class="btn btn-success btn-sm" onclick="downloadSkuCsv()"><i data-lucide="file-down" class="lucide-icon"></i> 下载 CSV</button>
+        <button class="btn btn-sm" onclick="switchPage('strategy-fetch')">← 返回</button>
+      </div>
+    </div>
+    <div class="card"><div class="card-body" style="padding:0">
+      <div id="sku-detail-table" style="max-height:70vh;overflow:auto"></div>
+    </div></div>
+  </div>
+
   <!-- Page: Strategy Report -->
   <div class="page" id="page-strategy-report">
-    <h4 class="mb-3">📊 产品策略分析报告</h4>
+    <h4 class="mb-3"><i data-lucide="pie-chart" class="lucide-icon" style="width:20px;height:20px"></i> 产品策略分析报告</h4>
     <div id="strategy-report-empty">
       <div class="card"><div class="card-body" style="text-align:center;padding:48px">
-        <div style="font-size:48px;margin-bottom:12px">📈</div>
+        <div style="font-size:48px;margin-bottom:12px;opacity:.25"><i data-lucide="bar-chart-3" style="width:48px;height:48px"></i></div>
         <p>请先在「SKU数据获取」中提取店铺SKU数据</p>
-        <button class="btn btn-primary" onclick="switchPage('strategy-fetch');return false">前往获取数据</button>
+        <button class="btn btn-primary" onclick="switchPage('strategy-fetch');return false"><i data-lucide="arrow-right" class="lucide-icon"></i> 前往获取数据</button>
       </div></div>
     </div>
     <div id="strategy-report-content" style="display:none">
       <div class="d-flex gap-2 mb-3">
-        <button class="btn btn-primary" id="btn-strategy-analyze" onclick="startStrategyAnalysis()">🚀 开始策略分析</button>
-        <button class="btn btn-sm" onclick="renderCharts()">📊 仅刷新图表</button>
+        <button class="btn btn-sm" onclick="renderCharts()"><i data-lucide="refresh-cw" class="lucide-icon"></i> 刷新图表</button>
       </div>
       <div id="strategy-charts">
         <div class="row">
           <div class="col-lg-6"><div class="card"><div class="card-header">价格带分布</div><div class="card-body"><div class="chart-wrap"><canvas id="chart-price-bands"></canvas></div></div></div></div>
-          <div class="col-lg-6"><div class="card"><div class="card-header">产品矩阵（价格 × 评论数）</div><div class="card-body"><div class="chart-wrap"><canvas id="chart-matrix-bubble"></canvas></div></div></div></div>
+          <div class="col-lg-6"><div class="card"><div class="card-header">产品矩阵（价格 × 评论数） <small class="text-muted">（点击查看明细）</small></div><div class="card-body"><div class="chart-wrap"><canvas id="chart-matrix-bubble"></canvas></div></div></div></div>
         </div>
         <div class="row">
-          <div class="col-lg-6"><div class="card"><div class="card-header">型号SKU数分布</div><div class="card-body"><div class="chart-wrap"><canvas id="chart-model-pie"></canvas></div></div></div></div>
-          <div class="col-lg-6"><div class="card"><div class="card-header">评分与价格关系</div><div class="card-body"><div class="chart-wrap"><canvas id="chart-score-scatter"></canvas></div></div></div></div>
+          <div class="col-lg-6"><div class="card"><div class="card-header">型号SKU数分布 <small class="text-muted">（点击查看明细）</small></div><div class="card-body"><div class="chart-wrap"><canvas id="chart-model-pie"></canvas></div></div></div></div>
+          <div class="col-lg-6"><div class="card"><div class="card-header">产品类型分布</div><div class="card-body"><div class="chart-wrap"><canvas id="chart-type-pie"></canvas></div></div></div></div>
+        </div>
+        <div class="row">
+          <div class="col-12"><div class="card"><div class="card-header">型号深度分析
+            <select id="model-selector" onchange="renderModelAnalysis()" style="margin-left:12px;padding:4px 10px;border-radius:6px;border:1px solid #ddd">
+              <option value="">-- 选择型号 --</option>
+            </select>
+          </div>
+          <div class="card-body" id="model-analysis-panel">
+            <p class="text-muted" style="text-align:center;padding:20px">请先选择一个型号进行分析</p>
+          </div></div></div>
         </div>
       </div>
-      <div class="card mt-3"><div class="card-header">AI策略分析</div>
-        <div class="card-body" id="strategy-analysis-text" style="white-space:pre-wrap;font-size:15px;line-height:2">
-          <p class="text-muted">点击「开始策略分析」生成AI分析报告</p>
+      <div class="card mt-3" id="strategy-analysis-card"><div class="card-header"><i data-lucide="bot" class="lucide-icon"></i> AI策略分析</div>
+        <div class="card-body" id="strategy-analysis-text" style="font-size:15px;line-height:2">
+          <p class="text-muted">正在自动生成品牌产品策略分析报告...</p>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Page: Trend Fetch -->
+  <div class="page" id="page-trend-fetch">
+    <h4 class="mb-3"><i data-lucide="search" class="lucide-icon" style="width:20px;height:20px"></i> 笔记数据获取</h4>
+    <div class="card">
+      <div class="card-header"><i data-lucide="globe" class="lucide-icon"></i> 小红书笔记搜索</div>
+      <div class="card-body">
+        <div class="form-group"><label>搜索关键词</label><input type="text" id="trend-keyword" placeholder="例如: 收银机、智能收银秤"></div>
+        <div class="form-group"><label>获取数量</label>
+          <select id="trend-limit"><option value="10">10</option><option value="20" selected>20</option><option value="50">50</option><option value="100">100</option><option value="150">150</option><option value="200">200</option></select></div>
+        <div class="form-group"><label>Chrome Profile</label><input type="text" id="trend-profile" value="hkzg2bpx" placeholder="opencli profile name"></div>
+        <button class="btn btn-primary" id="btn-trend-fetch" onclick="startTrendFetch()"><i data-lucide="search" class="lucide-icon"></i> 搜索笔记</button>
+        <div id="trend-fetch-progress" style="display:none;margin-top:12px">
+          <div class="progress-bar-wrap"><div class="progress-bar-fill" id="trend-progress-fill"></div></div>
+          <div class="progress-status" id="trend-progress-status"></div>
+          <div style="text-align:center;margin-top:8px"><button class="btn btn-danger btn-sm" onclick="cancelTrendFetch()"><i data-lucide="x" class="lucide-icon"></i> 取消</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" id="trend-note-summary" style="display:none">
+      <div class="card-header"><i data-lucide="table" class="lucide-icon"></i> 笔记预览 <span id="trend-note-count"></span></div>
+      <div class="card-body" style="padding:0"><div class="table-container" id="trend-note-table"></div></div>
+    </div>
+  </div>
+
+  <!-- Page: Trend Report -->
+  <div class="page" id="page-trend-report">
+    <h4 class="mb-3"><i data-lucide="bar-chart-3" class="lucide-icon" style="width:20px;height:20px"></i> 品类趋势分析报告</h4>
+    <div id="trend-report-empty">
+      <div class="card"><div class="card-body" style="text-align:center;padding:48px">
+        <div style="font-size:48px;margin-bottom:12px;opacity:.25"><i data-lucide="trending-up" style="width:48px;height:48px"></i></div>
+        <p>请先在「笔记数据获取」中搜索小红书笔记</p>
+        <button class="btn btn-primary" onclick="switchPage('trend-fetch');return false"><i data-lucide="arrow-right" class="lucide-icon"></i> 前往获取数据</button>
+      </div></div>
+    </div>
+    <div id="trend-report-content" style="display:none">
+      <div class="d-flex gap-2 mb-3">
+        <button class="btn btn-sm" onclick="startTrendAnalysis()"><i data-lucide="refresh-cw" class="lucide-icon"></i> 重新分析</button>
+      </div>
+      <div class="card" id="trend-analysis-card"><div class="card-header"><i data-lucide="bot" class="lucide-icon"></i> AI品类趋势分析</div>
+        <div class="card-body" id="trend-analysis-text" style="font-size:14px;line-height:2">
+          <p class="text-muted">正在自动生成品类趋势分析报告...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page: Trend Detail -->
+  <div class="page" id="page-trend-detail">
+    <div class="d-flex gap-2 mb-3" style="justify-content:space-between;align-items:center">
+      <h4 style="margin:0"><i data-lucide="list" class="lucide-icon" style="width:20px;height:20px"></i> 笔记全部明细 <span id="trend-detail-count" class="text-muted" style="font-size:14px"></span></h4>
+      <div class="d-flex gap-2">
+        <button class="btn btn-success btn-sm" onclick="downloadTrendCsv()"><i data-lucide="file-down" class="lucide-icon"></i> 下载 CSV</button>
+        <button class="btn btn-sm" onclick="switchPage('trend-fetch')"><i data-lucide="arrow-left" class="lucide-icon"></i> 返回</button>
+      </div>
+    </div>
+    <div class="card"><div class="card-body" style="padding:0"><div id="trend-detail-table" style="max-height:70vh;overflow:auto"></div></div></div>
+  </div>
+
+  <!-- Page: Trend History -->
+  <div class="page" id="page-trend-history">
+    <div class="d-flex gap-2 mb-3" style="justify-content:space-between;align-items:center">
+      <h4 style="margin:0"><i data-lucide="clock" class="lucide-icon" style="width:20px;height:20px"></i> 历史记录</h4>
+      <button class="btn btn-danger btn-sm" id="btn-clear-trend-history" onclick="clearTrendHistory()" style="display:none"><i data-lucide="trash-2" class="lucide-icon"></i> 清空全部</button>
+    </div>
+    <div class="card"><div class="card-body" id="trend-history-list">
+      <div class="report-empty"><div class="icon"><i data-lucide="clock" style="width:48px;height:48px;opacity:.25"></i></div><p>暂无历史记录</p></div>
+    </div></div>
+  </div>
+
   <!-- Page: Settings -->
   <div class="page" id="page-settings">
-    <h4 class="mb-3">⚙ 设置</h4>
+    <h4 class="mb-3">设置</h4>
 
     <div class="card">
-      <div class="card-header">🔑 API 配置</div>
+      <div class="card-header"><i data-lucide="key" class="lucide-icon"></i> API 配置</div>
       <div class="card-body">
         <div class="form-group">
           <label>Anthropic API Key</label>
           <div class="d-flex gap-2">
             <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." style="flex:1;font-family:monospace">
-            <button class="btn btn-sm" id="btn-toggle-key" onclick="toggleApiKeyVisibility()">👁</button>
+            <button class="btn btn-sm" id="btn-toggle-key" onclick="toggleApiKeyVisibility()"><i data-lucide="eye" class="lucide-icon"></i></button>
           </div>
           <div class="hint">API Key 仅存储在浏览器本地，不会上传到任何第三方服务器。可在 <a href="https://platform.deepseek.com/api_keys" target="_blank">platform.deepseek.com</a> 获取。</div>
+        </div>
+        <div class="form-group">
+          <label>Apify API Token <span class="text-muted">（抖音店铺数据获取需要）</span></label>
+          <input type="password" id="apify-token-input" placeholder="apify_api_...">
+          <div class="hint">在 <a href="https://console.apify.com/settings/integrations" target="_blank">console.apify.com</a> 获取</div>
         </div>
         <div class="form-group">
           <label>模型选择</label>
@@ -515,8 +775,8 @@ tr:hover{background:#fafbfc}
           <div class="hint">DeepSeek V3 在成本与质量之间取得最佳平衡。R1 适合对分析深度要求极高的场景。</div>
         </div>
         <div class="d-flex gap-2">
-          <button class="btn btn-primary" onclick="saveSettings()">💾 保存设置</button>
-          <button class="btn btn-outline-secondary btn-sm" id="btn-test-api" onclick="testApiKey()">🔍 测试连接</button>
+          <button class="btn btn-primary" onclick="saveSettings()"><i data-lucide="save" class="lucide-icon"></i> 保存设置</button>
+          <button class="btn btn-outline-secondary btn-sm" id="btn-test-api" onclick="testApiKey()"><i data-lucide="wifi" class="lucide-icon"></i> 测试连接</button>
         </div>
         <div id="settings-msg"></div>
       </div>
@@ -525,6 +785,18 @@ tr:hover{background:#fafbfc}
   </div>
 
 </div><!-- /main-content -->
+
+<!-- Hidden modal for chart drill-down -->
+<div class="modal-overlay" id="modal-chart-detail" style="display:none" onclick="if(event.target===this)closeChartDetail()">
+  <div class="modal" style="max-width:900px;max-height:80vh;overflow-y:auto">
+    <h4>SKU明细 <span id="chart-detail-title"></span></h4>
+    <div id="chart-detail-table" style="max-height:55vh;overflow:auto;font-size:11px"></div>
+    <div class="actions">
+      <button class="btn btn-success btn-sm" onclick="copyChartDetail()"><i data-lucide='copy' class='lucide-icon'></i> 复制数据 (可粘贴到Excel)</button>
+      <button class="btn btn-sm" onclick="closeChartDetail()">关闭</button>
+    </div>
+  </div>
+</div>
 
 <!-- Hidden modal for sheet picker -->
 <div class="modal-overlay" id="modal-sheet-picker" style="display:none" onclick="if(event.target===this)closeSheetPicker()">
@@ -541,12 +813,12 @@ tr:hover{background:#fafbfc}
 <!-- Hidden modal for viewing history report -->
 <div class="modal-overlay" id="modal-history" style="display:none" onclick="if(event.target===this)closeHistoryModal()">
   <div class="modal" style="max-width:800px;max-height:80vh;overflow-y:auto">
-    <h4>📋 历史报告</h4>
+    <h4><i data-lucide='clock' class='lucide-icon' style='width:20px;height:20px'></i> 历史报告</h4>
     <div id="modal-report-content" style="white-space:pre-wrap;font-size:14px;line-height:1.8;max-height:60vh;overflow-y:auto;background:#fafbfc;padding:16px;border-radius:8px"></div>
     <div class="actions">
-      <button class="btn btn-sm" onclick="copyHistoryReport()">📋 复制</button>
-      <button class="btn btn-sm" onclick="downloadHistoryReport()">💾 下载</button>
-      <button class="btn btn-sm" onclick="closeHistoryModal()">关闭</button>
+      <button class="btn btn-sm" onclick="copyHistoryReport()"><i data-lucide="copy" class="lucide-icon"></i> 复制</button>
+      <button class="btn btn-sm" onclick="downloadHistoryReport()"><i data-lucide="file-down" class="lucide-icon"></i> 下载</button>
+      <button class="btn btn-sm" onclick="closeHistoryModal()"><i data-lucide="x" class="lucide-icon"></i> 关闭</button>
     </div>
   </div>
 </div>
@@ -576,14 +848,15 @@ var SYSTEM_PROMPT = [
 '# Task / 任务目标',
 '请先自主完成上述8个维度的语义信息提取与归类统计。随后，综合你的"定量估算"（基于你提取出的标签频次和占比）和"定性分析"（基于原始评论的语义和情绪挖掘），生成一份结构化的《深度洞察分析报告》。',
 '',
-'# Strict Formatting Rules / 严格格式约束 (Crucial)',
-'为了保证报告的整洁性，请严格遵守以下格式要求：',
-'1. 禁止使用任何 Markdown 格式符号（如星号 *、井号 #、下划线 _ 等）。',
-'2. 禁止使用无意义的斜杠 / 作为分隔符。',
-'3. 标题不要用加粗或变大，请使用【 】符号包裹来表示层级（例如：【一、用户画像分析】）。',
-'4. 列表项请使用数字（1. 2. 3.）或简单的连字符（-）。',
-'5. 引用用户原话时，请使用双引号。',
-'6. 输出内容必须纯净、文本化，便于直接阅读和复制。',
+'# Markdown Formatting Rules',
+'使用GitHub风格的Markdown格式提升报告可读性：',
+'1. 章节标题用###开头（如### 一、核心用户画像与场景），独占一行。',
+'2. 子标题用**粗体**加冒号（如**人群维度：**），后接描述文字。',
+'3. 列表项用 - 开头，每项一行。',
+'4. 用户原话用引用块：> "打印速度很快"。',
+'5. 重要数据用**粗体**包裹，如**好评率92%**。',
+'6. 正面结论用 > [!TIP]，风险问题用 > [!WARNING]，关键建议用 > [!IMPORTANT]，各占一段。',
+'7. 段落之间空一行分隔。',
 '',
 '# Analysis Framework / 分析框架',
 '请严格按照以下章节进行输出：',
@@ -660,10 +933,13 @@ var state = {
 // INITIALIZATION
 // ============================================
 function init() {
+  // Init Lucide icons
+  if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+
   // Detect file:// protocol and warn user
   if (window.location.protocol === 'file:') {
     document.body.innerHTML = '<div style="max-width:600px;margin:80px auto;padding:32px;background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.1);text-align:center;font-family:sans-serif">' +
-      '<div style="font-size:48px;margin-bottom:16px">⚠</div>' +
+      '<div style="font-size:48px;margin-bottom:16px"><i data-lucide="alert-triangle" style="width:48px;height:48px;color:#F2A227"></i></div>' +
       '<h2 style="color:#d93025;margin-bottom:12px">请通过本地服务器打开</h2>' +
       '<p style="color:#666;line-height:1.8;margin-bottom:20px">浏览器安全策略禁止从 <code style="background:#f5f5f5;padding:2px 6px;border-radius:4px">file://</code> 协议向 API 发起请求，请使用以下方式启动：</p>' +
       '<div style="background:#f8f9fa;padding:16px;border-radius:8px;text-align:left;margin-bottom:16px;font-size:14px">' +
@@ -681,6 +957,7 @@ function init() {
 
   loadSettings();
   loadHistory();
+  loadStrategyHistory();
   setupNavigation();
   setupImportTabs();
   setupUploadZone();
@@ -692,7 +969,7 @@ function init() {
     var hintBanner = document.createElement('div');
     hintBanner.id = 'apikey-banner';
     hintBanner.className = 'alert alert-warning';
-    hintBanner.innerHTML = '<strong>⚠ 提示：</strong> 首次使用请先配置 <a href="#" onclick="switchPage(\'settings\');return false" style="color:#92400e;text-decoration:underline">Anthropic API Key</a>，或点击「加载示例数据」后按提示输入。';
+    hintBanner.innerHTML = '<strong><i data-lucide="alert-triangle" class="lucide-icon"></i> 提示：</strong> 首次使用请先配置 <a href="#" onclick="switchPage(\'settings\');return false" style="color:#92400e;text-decoration:underline">Anthropic API Key</a>，或点击「加载示例数据」后按提示输入。';
     var firstCard = importPage.querySelector('.card');
     if (firstCard) {
       importPage.insertBefore(hintBanner, firstCard);
@@ -753,6 +1030,14 @@ function switchPage(page) {
   if (page === 'history') renderHistory();
   if (page === 'settings') loadSettingsToForm();
   if (page === 'strategy-report') renderStrategyReport();
+  // Re-init Lucide icons for newly shown content
+  setTimeout(function(){ if(typeof lucide!=='undefined') lucide.createIcons(); }, 100);
+  if (page === 'sku-detail') renderSkuDetail();
+  if (page === 'strategy-history') renderStrategyHistory();
+  if (page === 'review-detail') renderReviewDetail();
+  if (page === 'trend-report') renderTrendReport();
+  if (page === 'trend-detail') renderTrendDetail();
+  if (page === 'trend-history') renderTrendHistory();
 }
 
 // ============================================
@@ -763,15 +1048,18 @@ function loadSettings() {
     var saved = JSON.parse(localStorage.getItem('review-insight-settings') || '{}');
     state.apiKey = sanitizeApiKey(saved.apiKey || '');
     state.model = saved.model || 'deepseek-chat';
+    state.apifyToken = saved.apifyToken || '';
   } catch(e) {
     state.apiKey = '';
     state.model = 'deepseek-chat';
+    state.apifyToken = '';
   }
 }
 
 function loadSettingsToForm() {
   document.getElementById('api-key-input').value = state.apiKey;
   document.getElementById('model-select').value = state.model;
+  document.getElementById('apify-token-input').value = state.apifyToken || '';
 }
 
 // Strip non-ASCII / non-ISO-8859-1 characters from API key
@@ -784,10 +1072,12 @@ function sanitizeApiKey(key) {
 function saveSettings() {
   state.apiKey = sanitizeApiKey(document.getElementById('api-key-input').value.trim());
   state.model = document.getElementById('model-select').value;
+  state.apifyToken = document.getElementById('apify-token-input').value.trim();
   try {
     localStorage.setItem('review-insight-settings', JSON.stringify({
       apiKey: state.apiKey,
-      model: state.model
+      model: state.model,
+      apifyToken: state.apifyToken
     }));
     document.getElementById('settings-msg').innerHTML = '<div class="alert alert-success">设置已保存</div>';
   } catch(e) {
@@ -845,7 +1135,7 @@ async function testApiKey() {
     document.getElementById('settings-msg').innerHTML = '<div class="alert alert-danger">网络错误: ' + e.message + '</div>';
   }
   btn.disabled = false;
-  btn.textContent = '🔍 测试连接';
+  btn.textContent = '测试连接';
 }
 
 // ============================================
@@ -997,6 +1287,8 @@ async function startOnlineFetch() {
       }
       showAlert('import', '成功获取 ' + allReviews.productName + '：' + allReviews.totalReviews + ' 条评论', 'success');
     } else {
+      document.getElementById('fetch-progress').style.display = 'none';
+      document.getElementById('fetch-progress-fill').style.width = '0%';
       showAlert('import', '未获取到评论数据，请检查 SKU ID 是否正确', 'danger');
     }
 
@@ -1087,7 +1379,7 @@ function showSheetPicker(sheetNames) {
     var json = XLSX.utils.sheet_to_json(_pendingWorkbook.Sheets[name], { header: 1, defval: '' });
     var rowCount = Math.max(0, json.length - 1); // minus header
     return '<div onclick="selectSheet(\'' + escAttr(name) + '\')" style="cursor:pointer;padding:14px 16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:8px;transition:all .15s;display:flex;justify-content:space-between;align-items:center"' +
-      ' onmouseover="this.style.borderColor=\'var(--primary)\';this.style.background=\'#f5f3ff\'"' +
+      ' onmouseover="this.style.borderColor=\'#3370FF\';this.style.background=\'#f5f3ff\'"' +
       ' onmouseout="this.style.borderColor=\'#e5e7eb\';this.style.background=\'#fff\'">' +
       '<div><strong>' + escHtml(name) + '</strong></div>' +
       '<div><span class="badge badge-primary">约 ' + rowCount + ' 行</span></div>' +
@@ -1210,9 +1502,9 @@ function renderMapping() {
   var container = document.getElementById('mapping-rows');
 
   var fields = [
-    { key: 'star', label: '星级/评分 (可选)', icon: '⭐' },
-    { key: 'title', label: '评论标题 (可选)', icon: '📝' },
-    { key: 'content', label: '评论正文 (必选)', icon: '💬' }
+    { key: 'star', label: '星级/评分 (可选)', icon: '' },
+    { key: 'title', label: '评论标题 (可选)', icon: '' },
+    { key: 'content', label: '评论正文 (必选)', icon: '' }
   ];
 
   container.innerHTML = fields.map(function(f) {
@@ -1446,8 +1738,13 @@ async function streamResponse(resp) {
         // OpenAI SSE format: choices[0].delta.content
         if (json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content) {
           fullText += json.choices[0].delta.content;
-          state.report = fullText;
-          updateReportTextThrottled();
+          // Update appropriate state: strategy analysis vs review analysis
+          if (_activeReportTarget === 'strategy') {
+            state.strategyReport = fullText;
+          } else {
+            state.report = fullText;
+            updateReportTextThrottled();
+          }
         }
       } catch(e) {
         // Skip malformed JSON lines
@@ -1461,17 +1758,28 @@ async function streamResponse(resp) {
 // STRATEGY MODULE STATE & FUNCTIONS
 // ============================================
 var _storeFetchAbort = null;
+function toggleShopIdField() {
+  var plat = document.getElementById('strategy-platform').value;
+  document.getElementById('shop-id-group').style.display = (plat === 'douyin') ? 'none' : 'block';
+}
+var _activeReportTarget = 'review'; // 'review' or 'strategy' — which report is currently streaming
+
 // Strategy properties on existing state object (declared earlier)
 state.strategySkus = state.strategySkus || null;
 state.strategyReport = state.strategyReport || '';
 state.strategyMeta = state.strategyMeta || {};
 
 async function startStoreFetch() {
+  var platform = document.getElementById('strategy-platform').value;
   var shopId = document.getElementById('strategy-shop-id').value.trim();
   var keyword = document.getElementById('strategy-keyword').value.trim();
   var targetShop = document.getElementById('strategy-target-shop').value.trim();
 
-  if (!shopId || !keyword) { alert('请输入店铺ID和搜索关键词'); return; }
+  if (platform === 'jd' && !shopId) { alert('请输入店铺ID'); return; }
+  if (platform !== 'jd' && !keyword) { alert('请输入搜索关键词'); return; }
+  if (platform === 'jd' && !keyword) { alert('请输入搜索关键词'); return; }
+  if (platform !== 'jd' && platform !== 'douyin' && platform !== 'tmall') { alert('请选择电商平台'); return; }
+  if ((platform === 'douyin' || platform === 'tmall') && !state.apifyToken) { alert('请先在设置页面配置 Apify API Token'); return; }
 
   _storeFetchAbort = new AbortController();
   document.getElementById('store-fetch-progress').style.display = 'block';
@@ -1480,10 +1788,16 @@ async function startStoreFetch() {
   document.getElementById('btn-store-fetch').disabled = true;
 
   try {
-    var resp = await fetch(window.location.origin + '/api/fetch-store-skus', {
+    var apiUrl = platform === 'douyin' ? '/api/fetch-douyin-skus' : (platform === 'tmall' ? '/api/fetch-tmall-skus' : '/api/fetch-store-skus');
+    var maxPages = platform === 'tmall' ? 2 : 10;
+    var body = (platform === 'douyin' || platform === 'tmall')
+      ? JSON.stringify({ keyword: keyword, apifyToken: state.apifyToken, maxPages: maxPages, shopId: shopId || '' })
+      : JSON.stringify({ platform: platform, shopId: shopId, keyword: keyword, targetShop: targetShop || '' });
+
+    var resp = await fetch(window.location.origin + apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ shopId: shopId, keyword: keyword, targetShop: targetShop || '' }),
+      body: body,
       signal: _storeFetchAbort.signal
     });
 
@@ -1508,17 +1822,30 @@ async function startStoreFetch() {
 
         if (data.type === 'result') { resultData = data; rv = { done: true }; break; }
 
-        // Progress
-        var pct = 0;
-        if (data.phase === 'search') pct = 10;
-        else if (data.phase === 'download') pct = 10 + Math.round(data.current / Math.max(1, data.total) * 25);
-        else if (data.phase === 'extract') pct = 35;
-        else if (data.phase === 'reviews') pct = 40 + Math.round(data.current / Math.max(1, data.total) * 40);
-        else if (data.phase === 'filter' || data.phase === 'family') pct = 85;
-        else if (data.phase === 'output') pct = 95;
+        // Progress with phase labels
+        var pct = 0; var phaseLabel = '';
+        if (data.phase === 'search') { pct = 5; phaseLabel = '搜索中'; }
+        else if (data.phase === 'download') { pct = 5 + Math.round(data.current / Math.max(1, data.total) * 20); phaseLabel = '下载页面'; }
+        else if (data.phase === 'extract') { pct = 25; phaseLabel = '提取SKU'; }
+        else if (data.phase === 'filter' && !data.total) { pct = 30; phaseLabel = '店铺过滤'; }
+        else if (data.phase === 'reviews') { pct = 30 + Math.round(data.current / Math.max(1, data.total) * 35); phaseLabel = '抓取评论'; }
+        else if (data.phase === 'parse') { pct = 65; phaseLabel = '解析规格'; }
+        else if (data.phase === 'family') { pct = 70 + Math.round(data.current / Math.max(1, data.total) * 25); phaseLabel = '产品族分组'; }
+        else if (data.phase === 'search') { pct = 20; phaseLabel = '外部平台搜索中...'; }
+        else if (data.phase === 'catalog') { pct = 50; phaseLabel = '获取商品目录...'; }
+        else if (data.phase === 'filter') { pct = 80; phaseLabel = '数据整理中'; }
+        else if (data.phase === 'output') { pct = 97; phaseLabel = '生成结果'; }
 
         document.getElementById('store-progress-fill').style.width = Math.min(pct, 95) + '%';
-        document.getElementById('store-progress-status').textContent = data.message || '';
+        // Pulse animation for long-running external API calls
+        var fill = document.getElementById('store-progress-fill');
+        if (data.phase === 'search' || data.phase === 'catalog') {
+          fill.classList.add('indeterminate');
+        } else {
+          fill.classList.remove('indeterminate');
+        }
+        var label = '[' + (phaseLabel || data.phase || '处理中') + '] ';
+        document.getElementById('store-progress-status').textContent = label + (data.message || '');
         if (data.current && data.total) {
           document.getElementById('store-progress-detail').textContent = data.current + ' / ' + data.total;
         }
@@ -1527,20 +1854,39 @@ async function startStoreFetch() {
     }
 
     if (resultData && resultData.skus && resultData.skus.length > 0) {
-      state.strategySkus = resultData;
-      state.strategyMeta = { shopName: resultData.shopName, shopId: resultData.shopId, totalSkus: resultData.totalSkus, familyCount: resultData.familyCount };
+      try {
+        state.strategySkus = resultData;
+        state.strategyMeta = { shopName: resultData.shopName||'', shopId: resultData.shopId||'', totalSkus: resultData.totalSkus||0, familyCount: resultData.familyCount||0 };
+        state.strategyReport = '';
+        saveStrategyHistory(resultData);
 
-      // Render SKU preview table
+        // Render SKU preview table with ALL extracted fields
       var skus = resultData.skus.slice(0, 100);
-      var html = '<table><thead><tr><th>#</th><th>型号</th><th>名称</th><th>配置</th><th>价格</th><th>评论</th><th>评分</th><th>好评率</th></tr></thead><tbody>';
+      var html = '<table style="font-size:10px;white-space:nowrap;table-layout:auto"><thead><tr>' +
+        '<th>#</th><th>SKU ID</th><th>型号</th><th>类型</th><th>名称</th><th>规格(color)</th>' +
+        '<th>CPU</th><th>内存</th><th>硬盘</th><th>屏幕数量</th><th>屏幕类型</th><th>系统</th><th>AI</th><th>配件类型</th>' +
+        '<th>价格</th><th>评论</th><th>好评率</th><th>评分</th></tr></thead><tbody>';
       skus.forEach(function(s, idx) {
-        html += '<tr><td>' + (idx+1) + '</td><td><span class="badge badge-primary">' + escHtml(s.model||'-') + '</span></td>' +
-          '<td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escHtml(s.name||'') + '</td>' +
-          '<td style="font-size:11px">' + escHtml((s.cpu||'')+' '+(s.ram||'')+' '+(s.disk||'')+' '+(s.screen||'')+' '+(s.system||'')).trim() + '</td>' +
-          '<td class="text-end">' + (s.price||0).toFixed(0) + '</td>' +
+        var cpuLabel = s.cpuModel || s.cpu || '-';
+        html += '<tr>' +
+          '<td>' + (idx+1) + '</td>' +
+          '<td style="font-family:monospace;font-size:10px">' + escHtml(String(s.skuId||'')) + '</td>' +
+          '<td><span class="badge badge-primary">' + escHtml(s.model||'-') + '</span></td>' +
+          '<td>' + escHtml(s.productType||'-') + '</td>' +
+          '<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + escAttr(s.name||'') + '">' + escHtml(s.name||'') + '</td>' +
+          '<td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px" title="' + escAttr(s.color||'') + '">' + escHtml(s.color||'-') + '</td>' +
+          '<td>' + escHtml(cpuLabel) + '</td>' +
+          '<td>' + escHtml(s.ram||'-') + '</td>' +
+          '<td>' + escHtml(s.disk||'-') + '</td>' +
+          '<td>' + escHtml(s.screenCount||'-') + '</td>' +
+          '<td>' + escHtml(s.screenType||'-') + '</td>' +
+          '<td>' + escHtml(s.systemDetail||s.system||'-') + '</td>' +
+          '<td>' + (s.ai === '是' ? '<span class="badge badge-success">AI</span>' : '-') + '</td>' +
+          '<td>' + escHtml(s.accessoryType||'-') + '</td>' +
+          '<td class="text-end">' + (Number(s.price)||0).toFixed(0) + '</td>' +
           '<td class="text-end">' + escHtml(s.commentCount||'0') + '</td>' +
-          '<td class="text-end">' + (s.avgScore||0) + '</td>' +
-          '<td class="text-end">' + escHtml(s.goodRate||'') + '%</td></tr>';
+          '<td class="text-end">' + escHtml(s.goodRate||'') + '%</td>' +
+          '<td class="text-end">' + (s.avgScore||0) + '</td></tr>';
       });
       html += '</tbody></table>';
       document.getElementById('store-sku-table').innerHTML = html;
@@ -1548,6 +1894,7 @@ async function startStoreFetch() {
       document.getElementById('store-sku-summary').style.display = 'block';
       document.getElementById('store-progress-fill').style.width = '100%';
       document.getElementById('store-progress-status').textContent = '获取完成：' + resultData.totalSkus + ' 个SKU';
+    } catch(e) { console.error('Render SKU preview error:', e); alert('渲染错误: ' + e.message); }
     }
   } catch(err) {
     if (err.name !== 'AbortError') { alert('获取失败: ' + err.message); }
@@ -1560,6 +1907,248 @@ async function startStoreFetch() {
 function cancelStoreFetch() {
   if (_storeFetchAbort) { _storeFetchAbort.abort(); _storeFetchAbort = null; }
   document.getElementById('btn-store-fetch').disabled = false;
+}
+
+// ===== XHS TREND MODULE =====
+var _trendAbort = null;
+state.trendNotes = state.trendNotes || null;
+state.trendReport = state.trendReport || '';
+state.trendMeta = state.trendMeta || {};
+state.trendHistory = state.trendHistory || [];
+
+var TREND_PROMPT = [
+  '# Role', '你是一位拥有15年经验的品类趋势分析师。请基于小红书笔记数据，分析该品类的市场趋势。',
+  '# Analysis Dimensions',
+  '1. 内容热度：笔记数量、点赞/评论/收藏总量及分布、高互动笔记特征',
+  '2. 博主分析：博主类型分布、头部博主特征、KOL/KOC比例。重点列出Top5高互动博主的昵称/ID、粉丝量级、内容风格、合作价值评估。',
+  '3. 内容特征：高频关键词、话题标签趋势、内容形式偏好',
+  '4. 情感词云：从笔记正文和标题中提取高频正面词汇（如"好用""推荐""方便"）和负面词汇（如"难用""鸡肋""后悔"），各列Top10，标注词频。分析用户心态和核心痛点。总结对品牌/商家的营销启示。',
+  '5. 品类趋势：新兴需求、价格敏感度、场景偏好、竞品提及',
+  '6. 重点品牌策略：从笔记中识别该品类下的主要品牌（Top5），分析各品牌的内容策略：内容形式、选题方向、人设定位、常用话术、转化路径。横向对比优劣势。',
+  '7. 用户画像：定量统计人群性别、年龄段、职业标签分布比例。交叉洞察职业与使用场景的强相关性。描绘品类核心典型用户形象（User Avatar）。',
+  '8. 核心需求：分析用户表层需求（功能诉求）、深层需求（情绪/社交/自我认同）。列举高频使用场景。分析从小红书种草到购买的关键决策因素（真实测评、效果对比、素人反馈、痛点可视化等）。挖掘现有内容/产品中未被满足的用户抱怨和期待。',
+  '',
+  '# Markdown Formatting Rules', '使用### 章节标题。必须按顺序输出：热度总览、内容特征、用户画像、核心需求、情感词云、品类趋势洞察、重点品牌策略、博主分析、总结建议。情感词云含正面/负面Top10表格。重点品牌策略含品牌对比表格。用户画像含定量统计。核心需求含表层/深层需求、决策因素、未满足需求。博主分析含Top5博主推荐。使用**粗体**、- 列表、> 引用。✅⚠️🚀标记结论。'
+].join('\n');
+
+async function startTrendFetch() {
+  var keyword = document.getElementById('trend-keyword').value.trim();
+  var limit = parseInt(document.getElementById('trend-limit').value) || 20;
+  var profile = document.getElementById('trend-profile').value.trim() || 'hkzg2bpx';
+  if (!keyword) { alert('请输入搜索关键词'); return; }
+
+  _trendAbort = new AbortController();
+  document.getElementById('trend-fetch-progress').style.display = 'block';
+  document.getElementById('trend-progress-fill').style.width = '0%';
+  document.getElementById('trend-progress-status').textContent = '正在搜索小红书笔记...';
+  document.getElementById('btn-trend-fetch').disabled = true;
+
+  try {
+    var resp = await fetch(window.location.origin + '/api/fetch-xhs-notes', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keyword: keyword, limit: limit, profile: profile }),
+      signal: _trendAbort.signal
+    });
+    var reader = resp.body.getReader(); var decoder = new TextDecoder(); var buffer = ''; var resultData = null;
+
+    while (true) {
+      var rv = await reader.read(); if (rv.done) break;
+      buffer += decoder.decode(rv.value, { stream: true });
+      var lines = buffer.split('\n'); buffer = lines.pop() || '';
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim(); if (!line || !line.startsWith('data: ')) continue;
+        var data; try { data = JSON.parse(line.slice(6)); } catch(e) { continue; }
+        if (data.type === 'result') { resultData = data; rv = { done: true }; break; }
+        var pct = data.phase === 'search' ? 30 : 30 + Math.round((data.current||0) / Math.max(1,data.total||1) * 60);
+        document.getElementById('trend-progress-fill').style.width = Math.min(pct, 95) + '%';
+        document.getElementById('trend-progress-status').textContent = data.message || '';
+      }
+    }
+
+    if (resultData && resultData.notes && resultData.notes.length > 0) {
+      state.trendNotes = resultData.notes;
+      state.trendMeta = { keyword: resultData.keyword, totalNotes: resultData.notes.length, date: new Date().toLocaleString('zh-CN') };
+      state.trendReport = '';
+      saveTrendHistory(resultData);
+      // Render preview
+      var h = '<table style="font-size:11px;white-space:nowrap"><thead><tr><th>#</th><th>标题</th><th>作者</th><th>点赞</th><th>评论</th><th>收藏</th><th>发布时间</th></tr></thead><tbody>';
+      resultData.notes.forEach(function(n, i) {
+        h += '<tr><td>'+(i+1)+'</td><td style="max-width:300px;overflow:hidden;text-overflow:ellipsis">'+skuLink(n.noteId, n.title)+'</td><td>'+escHtml(n.author||'')+'</td><td>'+escHtml(n.likes||'0')+'</td><td>'+escHtml(n.comments||'0')+'</td><td>'+escHtml(n.collects||'0')+'</td><td>'+escHtml(n.publishedAt||'')+'</td></tr>';
+      });
+      h += '</tbody></table>';
+      document.getElementById('trend-note-table').innerHTML = h;
+      document.getElementById('trend-note-count').textContent = '共 ' + resultData.notes.length + ' 条笔记';
+      document.getElementById('trend-note-summary').style.display = 'block';
+      document.getElementById('trend-progress-fill').style.width = '100%';
+      document.getElementById('trend-progress-status').textContent = '获取完成：' + resultData.notes.length + ' 条笔记';
+    }
+  } catch(err) {
+    if (err.name !== 'AbortError') alert('获取失败: ' + err.message);
+  }
+  document.getElementById('trend-fetch-progress').style.display = 'none';
+  document.getElementById('btn-trend-fetch').disabled = false;
+}
+
+function cancelTrendFetch() { if (_trendAbort) { _trendAbort.abort(); _trendAbort = null; } document.getElementById('btn-trend-fetch').disabled = false; }
+
+function startTrendAnalysis() {
+  if (!state.trendNotes || state.trendNotes.length === 0) return;
+  if (state.isAnalyzing) return;
+  state.isAnalyzing = true;
+  document.getElementById('trend-analysis-text').innerHTML = '<p class="text-muted">AI正在分析品类趋势...</p>';
+
+  var summary = '## XHS笔记数据：' + state.trendMeta.keyword + '\n共' + state.trendNotes.length + '条笔记\n\n```json\n' + JSON.stringify(state.trendNotes.slice(0,50), null, 1) + '\n```\n\n请基于以上数据生成品类趋势分析报告。';
+
+  callClaudeAPI(TREND_PROMPT, summary, { stream: true, maxTokens: 8192 }).then(function(report) {
+    _activeReportTarget = 'trend';
+    state.trendReport = report;
+    updateTrendHistoryReport(report);
+    document.getElementById('trend-analysis-text').innerHTML = renderInteractiveReport(report, false, true);
+    state.isAnalyzing = false;
+  }).catch(function(err) {
+    document.getElementById('trend-analysis-text').innerHTML = '<div class="alert alert-danger">分析失败：' + escHtml(err.message) + '</div>';
+    state.isAnalyzing = false;
+  });
+}
+
+function renderTrendReport() {
+  if (!state.trendNotes || state.trendNotes.length === 0) {
+    document.getElementById('trend-report-empty').style.display = 'block';
+    document.getElementById('trend-report-content').style.display = 'none'; return;
+  }
+  document.getElementById('trend-report-empty').style.display = 'none';
+  document.getElementById('trend-report-content').style.display = 'block';
+  if (state.trendReport) {
+    document.getElementById('trend-analysis-text').innerHTML = renderInteractiveReport(state.trendReport, false, true);
+  } else { startTrendAnalysis(); }
+}
+
+function renderTrendDetail() {
+  if (!state.trendNotes || state.trendNotes.length === 0) {
+    document.getElementById('trend-detail-table').innerHTML = '<p class="text-muted" style="padding:20px;text-align:center">暂无笔记数据</p>'; return;
+  }
+  document.getElementById('trend-detail-count').textContent = '共 ' + state.trendNotes.length + ' 条笔记';
+  var h = '<table style="font-size:11px"><thead><tr><th>#</th><th>标题</th><th>作者</th><th>内容</th><th>点赞</th><th>评论</th><th>收藏</th><th>时间</th></tr></thead><tbody>';
+  state.trendNotes.forEach(function(n, i) {
+    h += '<tr><td>'+(i+1)+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">'+skuLink(n.noteId, n.title)+'</td><td>'+escHtml(n.author||'')+'</td><td style="max-width:300px;overflow:hidden;text-overflow:ellipsis">'+escHtml(n.content||'')+'</td><td>'+escHtml(n.likes||'0')+'</td><td>'+escHtml(n.comments||'0')+'</td><td>'+escHtml(n.collects||'0')+'</td><td>'+escHtml(n.publishedAt||'')+'</td></tr>';
+  });
+  h += '</tbody></table>';
+  document.getElementById('trend-detail-table').innerHTML = h;
+}
+
+function downloadTrendCsv() {
+  if (!state.trendNotes) return;
+  var rows = [['#','标题','作者','内容','点赞','评论','收藏','发布时间'].join(',')];
+  state.trendNotes.forEach(function(n, i) {
+    rows.push([i+1, '"'+(n.title||'').replace(/"/g,'""')+'"', n.author||'', '"'+(n.content||'').replace(/"/g,'""')+'"', n.likes||'0', n.comments||'0', n.collects||'0', n.publishedAt||''].join(','));
+  });
+  var blob = new Blob(['﻿' + rows.join('\n')], { type: 'text/csv;charset=utf-8' });
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'XHS_' + (state.trendMeta.keyword||'notes') + '_' + new Date().toISOString().slice(0,10) + '.csv'; a.click();
+}
+
+// Trend history
+function saveTrendHistory(data) {
+  try { state.trendHistory = JSON.parse(localStorage.getItem('review-insight-trend-history') || '[]'); } catch(e) { state.trendHistory = []; }
+  state.trendHistory.unshift({ id: Date.now(), keyword: data.keyword, totalNotes: data.totalNotes, notes: data.notes.slice(0,200), report: '', date: new Date().toLocaleString('zh-CN') });
+  if (state.trendHistory.length > 20) state.trendHistory = state.trendHistory.slice(0, 20);
+  try { localStorage.setItem('review-insight-trend-history', JSON.stringify(state.trendHistory)); } catch(e) {}
+}
+function updateTrendHistoryReport(report) {
+  if (state.trendHistory.length > 0) { state.trendHistory[0].report = report; try { localStorage.setItem('review-insight-trend-history', JSON.stringify(state.trendHistory)); } catch(e) {} }
+}
+function renderTrendHistory() {
+  try { state.trendHistory = JSON.parse(localStorage.getItem('review-insight-trend-history') || '[]'); } catch(e) { state.trendHistory = []; }
+  var c = document.getElementById('trend-history-list'); var b = document.getElementById('btn-clear-trend-history');
+  if (state.trendHistory.length === 0) { c.innerHTML = '<div class="report-empty"><div class="icon"><i data-lucide="clock" style="width:48px;height:48px;opacity:.25"></i></div><p>暂无历史记录</p></div>'; b.style.display='none'; return; }
+  b.style.display='inline-flex';
+  c.innerHTML = state.trendHistory.map(function(h,i){
+    return '<div class="history-item"><div class="flex-1"><div class="hi-title">'+escHtml(h.keyword)+' — '+h.date+'</div><div class="hi-meta">'+h.totalNotes+' 条笔记'+(h.report?' | 报告已生成':'')+'</div></div><div class="hi-actions"><button class="btn btn-sm btn-primary" onclick="loadTrendNotes('+i+')"><i data-lucide="list" class="lucide-icon"></i> 笔记明细</button>'+(h.report?'<button class="btn btn-sm btn-success" onclick="loadTrendReport('+i+')"><i data-lucide="bar-chart-3" class="lucide-icon"></i> 分析报告</button>':'')+'<button class="btn btn-sm" onclick="deleteTrendHistory('+i+')"><i data-lucide="trash-2" class="lucide-icon"></i></button></div></div>';
+  }).join('');
+}
+function loadTrendNotes(i) { var h = state.trendHistory[i]; if (!h) return; state.trendNotes = h.notes; state.trendMeta = { keyword: h.keyword, totalNotes: h.notes.length, date: h.date }; state.trendReport = h.report||''; switchPage('trend-detail'); }
+function loadTrendReport(i) { var h = state.trendHistory[i]; if (!h) return; state.trendNotes = h.notes; state.trendMeta = { keyword: h.keyword, totalNotes: h.notes.length, date: h.date }; state.trendReport = h.report||''; switchPage('trend-report'); }
+function deleteTrendHistory(i) { if (confirm('确定删除？')) { state.trendHistory.splice(i,1); try { localStorage.setItem('review-insight-trend-history', JSON.stringify(state.trendHistory)); } catch(e){} renderTrendHistory(); } }
+function clearTrendHistory() { if (confirm('清空所有？')) { state.trendHistory=[]; localStorage.removeItem('review-insight-trend-history'); renderTrendHistory(); } }
+
+// ===== Strategy History =====
+function loadStrategyHistory() {
+  try { state.strategyHistory = JSON.parse(localStorage.getItem('review-insight-strategy-history') || '[]'); } catch(e) { state.strategyHistory = []; }
+}
+function saveStrategyHistory(skuData) {
+  loadStrategyHistory();
+  var entry = {
+    id: Date.now(),
+    date: new Date().toLocaleString('zh-CN'),
+    shopName: skuData.shopName,
+    shopId: skuData.shopId,
+    totalSkus: skuData.totalSkus,
+    familyCount: skuData.familyCount,
+    // Save only essential fields to avoid localStorage overflow
+    skus: skuData.skus.slice(0, 200).map(function(s) { return { skuId:s.skuId, name:s.name, model:s.model, price:s.price, productType:s.productType, commentCount:s.commentCount, avgScore:s.avgScore, goodRate:s.goodRate, cpu:s.cpu, cpuModel:s.cpuModel, ram:s.ram, disk:s.disk, screenCount:s.screenCount, screenType:s.screenType, system:s.system, ai:s.ai, accessoryType:s.accessoryType, color:s.color }; }),
+    totalSkus: skuData.skus.length,
+    report: ''
+  };
+  state.strategyHistory.unshift(entry);
+  if (state.strategyHistory.length > 20) state.strategyHistory = state.strategyHistory.slice(0, 20);
+  try { localStorage.setItem('review-insight-strategy-history', JSON.stringify(state.strategyHistory)); } catch(e) {
+    // Storage full, trim
+    state.strategyHistory = state.strategyHistory.slice(0, 10);
+    try { localStorage.setItem('review-insight-strategy-history', JSON.stringify(state.strategyHistory)); } catch(e2) {}
+  }
+}
+function updateStrategyHistoryReport(report) {
+  if (state.strategyHistory.length > 0) {
+    state.strategyHistory[0].report = report;
+    try { localStorage.setItem('review-insight-strategy-history', JSON.stringify(state.strategyHistory)); } catch(e) {}
+  }
+}
+function renderStrategyHistory() {
+  loadStrategyHistory();
+  var container = document.getElementById('strategy-history-list');
+  var btn = document.getElementById('btn-clear-strategy-history');
+  if (state.strategyHistory.length === 0) {
+    container.innerHTML = '<div class="report-empty"><div class="icon"><i data-lucide="clock" style="width:48px;height:48px;opacity:.25"></i></div><p>暂无历史记录</p><p class="text-muted">获取店铺SKU后，数据会自动保存</p></div>';
+    btn.style.display = 'none'; return;
+  }
+  btn.style.display = 'inline-flex';
+  container.innerHTML = state.strategyHistory.map(function(h, i) {
+    return '<div class="history-item">' +
+      '<div class="flex-1"><div class="hi-title">' + escHtml(h.shopName) + ' — ' + h.date + '</div>' +
+      '<div class="hi-meta">' + (h.totalSkus || h.skus.length) + ' SKU / ' + h.familyCount + ' 族' + (h.report ? ' | <i data-lucide="check-circle" style="width:12px;height:12px;display:inline;color:#1BAC6B"></i> 报告已生成' : ' | <i data-lucide="clock" style="width:12px;height:12px;display:inline;color:#8F959E"></i> 待分析') + '</div></div>' +
+      '<div class="hi-actions">' +
+      '<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();loadStrategySkus(' + i + ')"><i data-lucide="info" class="lucide-icon"></i> SKU明细</button>' +
+      (h.report ? '<button class="btn btn-sm btn-success" onclick="event.stopPropagation();loadStrategyReport(' + i + ')"><i data-lucide="bar-chart-3" class="lucide-icon"></i> 分析报告</button>' : '') +
+      '<button class="btn btn-sm" onclick="event.stopPropagation();deleteStrategyHistory(' + i + ')"><i data-lucide="trash-2" class="lucide-icon"></i></button></div></div>';
+  }).join('');
+}
+function loadStrategySkus(i) {
+  var h = state.strategyHistory[i]; if (!h) return;
+  state.strategySkus = { shopName: h.shopName, shopId: h.shopId, totalSkus: h.totalSkus || h.skus.length, familyCount: h.familyCount, skus: h.skus };
+  state.strategyMeta = { shopName: h.shopName, shopId: h.shopId, totalSkus: h.totalSkus || h.skus.length, familyCount: h.familyCount };
+  state.strategyReport = h.report || '';
+  switchPage('sku-detail');
+}
+function loadStrategyReport(i) {
+  var h = state.strategyHistory[i]; if (!h) return;
+  state.strategySkus = { shopName: h.shopName, shopId: h.shopId, totalSkus: h.totalSkus || h.skus.length, familyCount: h.familyCount, skus: h.skus };
+  state.strategyMeta = { shopName: h.shopName, shopId: h.shopId, totalSkus: h.totalSkus || h.skus.length, familyCount: h.familyCount };
+  state.strategyReport = h.report || '';
+  switchPage('strategy-report');
+}
+function deleteStrategyHistory(i) {
+  if (confirm('确定删除此记录？')) {
+    state.strategyHistory.splice(i, 1);
+    try { localStorage.setItem('review-insight-strategy-history', JSON.stringify(state.strategyHistory)); } catch(e) {}
+    renderStrategyHistory();
+  }
+}
+function clearStrategyHistory() {
+  if (confirm('确定清空所有<i data-lucide="clock" class="lucide-icon" style="width:20px;height:20px"></i> 策略分析历史？')) {
+    state.strategyHistory = [];
+    localStorage.removeItem('review-insight-strategy-history');
+    renderStrategyHistory();
+  }
 }
 
 // Strategy analysis system prompt
@@ -1576,8 +2165,10 @@ var STRATEGY_PROMPT = [
   '6. 配件与组套协同：配件生态、组套策略、剃刀模式判断',
   '',
   '# Output Format',
-  '请输出结构化产品策略分析报告。使用【】标记章节标题。引用具体SKU数据时标注数量和占比。每个维度给出明确的策略判断。',
-  '结尾给出3-5条具体的策略建议（机会点和风险点）。',
+  '使用### 章节标题格式输出。章节顺序：产品矩阵与组合、定价策略、产品力分析、生命周期与迭代、用户画像与细分、配件与组套协同、策略总结。',
+  '每个章节内用**粗体**标注子标题，用 - 列表呈现关键数据，用 > 引用块标注重要发现。',
+  '正面结论行首加✅，风险点加⚠️，机会/建议加🚀。',
+  '引用具体SKU数据时标注数量和占比。每个维度给出明确的策略判断。',
   '',
   '# Notes',
   '- 基于数据说话，不要凭空推断',
@@ -1587,14 +2178,11 @@ var STRATEGY_PROMPT = [
 ].join('\n');
 
 async function startStrategyAnalysis() {
-  if (!state.strategySkus || !state.strategySkus.skus || state.strategySkus.skus.length === 0) {
-    alert('请先在「SKU数据获取」中提取店铺SKU数据'); return;
-  }
-  if (state.isAnalyzing) return;
+  if (!state.strategySkus || !state.strategySkus.skus || state.strategySkus.skus.length === 0) return;
+  if (state.isStrategyAnalyzing) return;
 
-  state.isAnalyzing = true;
-  document.getElementById('btn-strategy-analyze').disabled = true;
-  document.getElementById('strategy-analysis-text').innerHTML = '<p class="text-muted">⏳ AI正在分析品牌产品策略...</p>';
+  state.isStrategyAnalyzing = true;
+  document.getElementById('strategy-analysis-text').innerHTML = '<p class="text-muted"><i data-lucide=\"loader-2\" class=\"lucide-icon\" style=\"animation:spin 1s linear infinite\"></i> AI正在分析品牌产品策略...</p>'; if(typeof lucide!=='undefined') lucide.createIcons();
 
   // Build data summary for the AI
   var skus = state.strategySkus.skus;
@@ -1619,15 +2207,17 @@ async function startStrategyAnalysis() {
   userMsg += '请基于以上数据生成品牌产品策略分析报告。';
 
   try {
+    _activeReportTarget = 'strategy';
     var report = await callClaudeAPI(STRATEGY_PROMPT, userMsg, { stream: true, maxTokens: 8192 });
     state.strategyReport = report;
-    document.getElementById('strategy-analysis-text').innerHTML = '<pre class="rpt-pre">' + styleReportText(report) + '</pre>';
+    if (state.strategySkus && state.strategySkus.skus) { saveStrategyHistory(state.strategySkus); updateStrategyHistoryReport(report); }
+    document.getElementById('strategy-analysis-text').innerHTML = renderInteractiveReport(report, true);
+    setTimeout(function(){ if(typeof lucide!=='undefined') lucide.createIcons(); }, 100);
   } catch(err) {
     document.getElementById('strategy-analysis-text').innerHTML = '<div class="alert alert-danger">分析失败：' + escHtml(err.message) + '</div>';
   }
 
-  state.isAnalyzing = false;
-  document.getElementById('btn-strategy-analyze').disabled = false;
+  state.isStrategyAnalyzing = false;
 }
 
 function renderStrategyReport() {
@@ -1640,13 +2230,190 @@ function renderStrategyReport() {
   document.getElementById('strategy-report-content').style.display = 'block';
   renderCharts();
   if (state.strategyReport) {
-    document.getElementById('strategy-analysis-text').innerHTML = '<pre class="rpt-pre">' + styleReportText(state.strategyReport) + '</pre>';
+    document.getElementById('strategy-analysis-text').innerHTML = renderInteractiveReport(state.strategyReport, true);
+    setTimeout(function(){ if(typeof lucide!=='undefined') lucide.createIcons(); }, 100);
+  } else {
+    // Auto-trigger analysis on first view
+    document.getElementById('strategy-analysis-text').innerHTML = '<p class="text-muted">⏳ 正在自动生成策略分析报告...</p>';
+    startStrategyAnalysis();
   }
 }
+
+// ===== SKU Detail Save, View, Download =====
+function saveAndViewAllSkus() {
+  if (!state.strategySkus || !state.strategySkus.skus) return;
+  switchPage('sku-detail');
+}
+
+var _skuSortCol = null, _skuSortAsc = true, _skuPage = 1, _skuPageSize = 50;
+
+function renderSkuDetail() {
+  if (!state.strategySkus || !state.strategySkus.skus) {
+    document.getElementById('sku-detail-table').innerHTML = '<p class="text-muted" style="padding:20px;text-align:center">暂无SKU数据</p>';
+    return;
+  }
+  var skus = state.strategySkus.skus.slice();
+  document.getElementById('sku-detail-shop').textContent = state.strategyMeta.shopName || '';
+  document.getElementById('sku-detail-count').textContent = '共 ' + skus.length + ' 个SKU';
+
+  // Sort
+  if (_skuSortCol) {
+    skus.sort(function(a, b) {
+      var va = a[_skuSortCol], vb = b[_skuSortCol];
+      if (typeof va === 'number' && typeof vb === 'number') return _skuSortAsc ? va - vb : vb - va;
+      va = String(va || ''); vb = String(vb || '');
+      return _skuSortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+    });
+  }
+
+  // Paginate
+  var totalPages = Math.ceil(skus.length / _skuPageSize);
+  if (_skuPage > totalPages) _skuPage = totalPages;
+  if (_skuPage < 1) _skuPage = 1;
+  var pageSkus = skus.slice((_skuPage-1) * _skuPageSize, _skuPage * _skuPageSize);
+
+  var cols = [
+    { key: null, label: '#', render: function(s, i) { return (_skuPage-1)*_skuPageSize + i + 1; } },
+    { key: 'skuId', label: 'SKU ID', render: function(s) { return escHtml(String(s.skuId||'')); } },
+    { key: 'model', label: '型号', render: function(s) { return escHtml(s.model||'-'); } },
+    { key: 'productType', label: '类型', render: function(s) { return escHtml(s.productType||'-'); } },
+    { key: 'name', label: '名称', render: function(s) { return skuLink(s.skuId, s.name); }, cls: 'style="max-width:180px;overflow:hidden;text-overflow:ellipsis"' },
+    { key: 'color', label: '规格', render: function(s) { return escHtml(s.color||'-'); }, cls: 'style="max-width:100px;overflow:hidden;text-overflow:ellipsis"' },
+    { key: 'cpu', label: 'CPU', render: function(s) { return escHtml(s.cpuModel||s.cpu||'-'); } },
+    { key: 'ram', label: '内存', render: function(s) { return escHtml(s.ram||'-'); } },
+    { key: 'disk', label: '硬盘', render: function(s) { return escHtml(s.disk||'-'); } },
+    { key: 'screenCount', label: '屏幕', render: function(s) { return escHtml((s.screenCount||'')+(s.screenType?'/'+s.screenType:'')); } },
+    { key: 'system', label: '系统', render: function(s) { return escHtml(s.systemDetail||s.system||'-'); } },
+    { key: 'ai', label: 'AI', render: function(s) { return s.ai==='是'?'AI':''; } },
+    { key: 'accessoryType', label: '配件', render: function(s) { return escHtml(s.accessoryType||'-'); } },
+    { key: 'price', label: '价格', render: function(s) { return (s.price||0).toFixed(0); }, num: true },
+    { key: 'commentCount', label: '评论', render: function(s) { return escHtml(s.commentCount||'0'); } },
+    { key: 'goodRate', label: '好评率', render: function(s) { return escHtml(s.goodRate||'')+'%'; } },
+    { key: 'avgScore', label: '评分', render: function(s) { return (s.avgScore||0); }, num: true }
+  ];
+
+  var html = '<table style="font-size:10px;white-space:nowrap"><thead><tr>';
+  cols.forEach(function(c) {
+    var arrow = '';
+    if (_skuSortCol === c.key) arrow = _skuSortAsc ? ' ▲' : ' ▼';
+    html += '<th style="cursor:pointer" onclick="sortSkuTable(\'' + (c.key||'') + '\')">' + c.label + arrow + '</th>';
+  });
+  html += '</tr></thead><tbody>';
+  pageSkus.forEach(function(s, i) {
+    html += '<tr>' + cols.map(function(c) {
+      return '<td '+(c.cls||'')+'>' + c.render(s, i) + '</td>';
+    }).join('') + '</tr>';
+  });
+  html += '</tbody></table>';
+
+  // Pagination controls
+  html += '<div style="display:flex;justify-content:center;align-items:center;gap:8px;padding:12px;font-size:13px">' +
+    '<button class="btn btn-sm" onclick="goSkuPage(1)" ' + (_skuPage<=1?'disabled':'') + '>首页</button>' +
+    '<button class="btn btn-sm" onclick="goSkuPage(' + (_skuPage-1) + ')" ' + (_skuPage<=1?'disabled':'') + '>上一页</button>' +
+    '<span style="color:#646A73">第 ' + _skuPage + ' / ' + totalPages + ' 页</span>' +
+    '<button class="btn btn-sm" onclick="goSkuPage(' + (_skuPage+1) + ')" ' + (_skuPage>=totalPages?'disabled':'') + '>下一页</button>' +
+    '<button class="btn btn-sm" onclick="goSkuPage(' + totalPages + ')" ' + (_skuPage>=totalPages?'disabled':'') + '>末页</button>' +
+    '<span style="color:#8F959E;margin-left:12px">共 ' + skus.length + ' 条</span></div>';
+
+  document.getElementById('sku-detail-table').innerHTML = html;
+}
+
+function sortSkuTable(col) {
+  if (_skuSortCol === col) { _skuSortAsc = !_skuSortAsc; } else { _skuSortCol = col; _skuSortAsc = true; }
+  _skuPage = 1;
+  renderSkuDetail();
+}
+
+function goSkuPage(p) {
+  _skuPage = p;
+  renderSkuDetail();
+}
+
+function renderReviewDetail() {
+  if (!state.reviews || state.reviews.length === 0) {
+    document.getElementById('review-detail-table').innerHTML = '<p class="text-muted" style="padding:20px;text-align:center">暂无评论数据，请先导入或获取评论</p>';
+    return;
+  }
+  document.getElementById('review-detail-count').textContent = '共 ' + state.reviews.length + ' 条评论';
+  var sc = state.mapping.star, cc = state.mapping.content;
+  var html = '<table style="font-size:12px;white-space:nowrap"><thead><tr><th>#</th><th>星级</th><th>评论内容</th></tr></thead><tbody>';
+  state.reviews.forEach(function(r, i) {
+    html += '<tr><td>' + (i+1) + '</td><td>' + (r[sc]||'') + '</td><td style="max-width:600px;white-space:normal">' + escHtml(r[cc]||'') + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('review-detail-table').innerHTML = html;
+}
+
+function downloadReviewCsv() {
+  if (!state.reviews || state.reviews.length === 0) return;
+  var sc = state.mapping.star, cc = state.mapping.content;
+  var rows = [['#','星级','评论内容'].join(',')];
+  state.reviews.forEach(function(r, i) {
+    rows.push([i+1, r[sc]||'', '"'+(r[cc]||'').replace(/"/g,'""')+'"'].join(','));
+  });
+  var blob = new Blob(['﻿' + rows.join('\n')], { type: 'text/csv;charset=utf-8' });
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = '评论明细_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+function downloadSkuCsv() {
+  if (!state.strategySkus || !state.strategySkus.skus) return;
+  var skus = state.strategySkus.skus;
+  var rows = [['#','SKUID','型号','类型','名称','规格','CPU','内存','硬盘','屏幕数量','屏幕类型','系统','AI','配件类型','价格','评论数','好评率','评分'].join(',')];
+  skus.forEach(function(s, idx) {
+    rows.push([idx+1,s.skuId||'',s.model||'',s.productType||'', '"'+(s.name||'').replace(/"/g,'""')+'"', '"'+(s.color||'').replace(/"/g,'""')+'"', s.cpuModel||s.cpu||'',s.ram||'',s.disk||'',s.screenCount||'',s.screenType||'',s.systemDetail||s.system||'',s.ai||'',s.accessoryType||'',(s.price||0).toFixed(0),s.commentCount||'0',s.goodRate||'',s.avgScore||0].join(','));
+  });
+  var blob = new Blob(['﻿' + rows.join('\n')], { type: 'text/csv;charset=utf-8' });
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = (state.strategyMeta.shopName||'skus') + '_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+// ===== Chart drill-down =====
+function closeChartDetail() { document.getElementById('modal-chart-detail').style.display = 'none'; }
+var _chartDetailData = null;
+
+function skuLink(skuId, name) {
+  var id = String(skuId || ''); var display = name || id;
+  if (!id) return escHtml(display);
+  var title = (name && name.length > 10) ? escAttr(name) + ' (在京东打开)' : '在京东打开';
+  return '<a href="https://item.jd.com/' + id + '.html" target="_blank" style="color:#3370FF;text-decoration:none" title="' + title + '">' + escHtml(display) + '</a>';
+}
+
+function showChartDetail(title, filterFn) {
+  var filtered = state.strategySkus.skus.filter(filterFn);
+  _chartDetailData = filtered;
+  document.getElementById('chart-detail-title').textContent = title + ' (' + filtered.length + ' SKU)';
+  var h = '<table style="font-size:10px;white-space:nowrap"><thead><tr><th>SKU ID</th><th>型号</th><th>名称</th><th>规格</th><th>CPU</th><th>内存</th><th>硬盘</th><th>屏幕</th><th>系统</th><th>AI</th><th>价格</th><th>评论</th><th>好评率</th></tr></thead><tbody>';
+  filtered.forEach(function(s) {
+    h += '<tr><td>'+escHtml(String(s.skuId||''))+'</td><td>'+escHtml(s.model||'-')+'</td><td style="max-width:140px;overflow:hidden;text-overflow:ellipsis">'+skuLink(s.skuId, s.name)+'</td><td style="max-width:80px;overflow:hidden;text-overflow:ellipsis">'+escHtml(s.color||'-')+'</td><td>'+escHtml(s.cpuModel||s.cpu||'-')+'</td><td>'+escHtml(s.ram||'-')+'</td><td>'+escHtml(s.disk||'-')+'</td><td>'+escHtml(s.screenCount||'-')+'</td><td>'+escHtml(s.system||'-')+'</td><td>'+(s.ai==='是'?'AI':'')+'</td><td>'+(s.price||0).toFixed(0)+'</td><td>'+escHtml(s.commentCount||'0')+'</td><td>'+escHtml(s.goodRate||'')+'%</td></tr>';
+  });
+  h += '</tbody></table>';
+  document.getElementById('chart-detail-table').innerHTML = h;
+  document.getElementById('modal-chart-detail').style.display = 'flex';
+}
+
+function copyChartDetail() {
+  if (!_chartDetailData || _chartDetailData.length === 0) return;
+  var headers = ['SKU ID','型号','名称','规格','CPU','内存','硬盘','屏幕','系统','AI','价格','评论','好评率'];
+  var rows = [headers.join('\t')];
+  _chartDetailData.forEach(function(s) {
+    rows.push([s.skuId||'',s.model||'',s.name||'',s.color||'',s.cpuModel||s.cpu||'',s.ram||'',s.disk||'',s.screenCount||'',s.systemDetail||s.system||'',s.ai||'',(s.price||0).toFixed(0),s.commentCount||'',(s.goodRate||'')+'%'].join('\t'));
+  });
+  navigator.clipboard.writeText(rows.join('\n')).then(function(){showToast('已复制 '+_chartDetailData.length+' 条 SKU 数据，可直接粘贴到 Excel')});
+}
+
+var _modelData = {};
 
 function renderCharts() {
   if (!state.strategySkus || !state.strategySkus.skus) return;
   var skus = state.strategySkus.skus;
+  _modelData = {};
+
+  // Clear model selector
+  var sel = document.getElementById('model-selector');
+  if (sel) { sel.innerHTML = '<option value="">-- 选择型号 --</option>'; }
 
   // Chart 1: Price band distribution
   var bands = [0, 500, 1000, 2000, 3500, 5000, 6500, 99999];
@@ -1659,6 +2426,12 @@ function renderCharts() {
   tryRenderChart('chart-price-bands', 'bar', {
     labels: bandLabels,
     datasets: [{ label: 'SKU 数量', data: bandCounts, backgroundColor: bandColors, borderRadius: 6 }]
+  }, null, function(evt, elements) {
+    if (elements.length > 0) {
+      var idx = elements[0].index;
+      var lo = bands[idx], hi = bands[idx+1];
+      showChartDetail('价格: ' + bandLabels[idx], function(s) { return (s.price||0) >= lo && (s.price||0) < hi; });
+    }
   });
 
   // Chart 2: Model pie
@@ -1670,42 +2443,144 @@ function renderCharts() {
   tryRenderChart('chart-model-pie', 'doughnut', {
     labels: modelKeys,
     datasets: [{ data: modelData, backgroundColor: bandColors.slice(0, modelKeys.length) }]
+  }, null, function(evt, elements) {
+    if (elements.length > 0) {
+      var idx = elements[0].index;
+      var mdl = modelKeys[idx];
+      showChartDetail('型号: ' + mdl, function(s) { return (s.model||'') === mdl; });
+    }
   });
 
-  // Chart 3: Price vs Comments bubble
-  var bubbleData = skus.filter(function(s){return (s.price||0)>0&&s.commentCount;}).slice(0, 100).map(function(s){
+  // Chart 3: Product Matrix (Price × Comments bubble)
+  var bubbleData = skus.filter(function(s){return (s.price||0)>0&&s.commentCount;}).map(function(s){
     var cc = 0; var cs = String(s.commentCount||'').replace(/[^0-9]/g,'');
     if (cs) cc = parseInt(cs); if (cs && s.commentCount.indexOf('万')!==-1) cc*=10000; if (!cc&&cs) cc=parseInt(cs);
-    return { x: s.price||0, y: Math.max(0, cc), r: Math.max(3, Math.min(20, cc/500)) };
+    return { x: s.price||0, y: Math.max(0, cc), r: Math.max(3, Math.min(20, cc/500)), model: s.model||'?', name: s.name, skuId: s.skuId };
   });
 
   tryRenderChart('chart-matrix-bubble', 'bubble', {
     datasets: [{
       label: 'SKU', data: bubbleData,
-      backgroundColor: bubbleData.map(function(_,i){return 'rgba(99,102,241,'+(0.3+0.5*i/bubbleData.length)+')';})
+      backgroundColor: bubbleData.map(function(_,i){return 'rgba(51,112,255,'+(0.3+0.5*i/bubbleData.length)+')';})
     }]
-  }, { scales: { x: { title: { display: true, text: '价格 (¥)' } }, y: { title: { display: true, text: '评论数' } } } });
-
-  // Chart 4: Score vs Price scatter
-  var scatterData = skus.filter(function(s){return (s.price||0)>0&&(s.avgScore||0)>0;}).slice(0, 100).map(function(s){
-    return { x: s.price||0, y: s.avgScore||0 };
+  }, { scales: { x: { title: { display: true, text: '价格 (¥)' } }, y: { title: { display: true, text: '评论数' } } },
+    plugins: { tooltip: { callbacks: { label: function(ctx){ var d = bubbleData[ctx.dataIndex]; return d.model+' ¥'+d.x+' '+d.y+'评论'; } } } } },
+  function(evt, elements) {
+    if (elements.length > 0) {
+      var ds = bubbleData[elements[0].index];
+      showChartDetail('气泡: ¥'+(ds.x||0)+' / '+ds.y+'评论', function(s){ return (s.price||0)===ds.x; });
+    }
   });
 
-  tryRenderChart('chart-score-scatter', 'scatter', {
-    datasets: [{
-      label: 'SKU', data: scatterData,
-      backgroundColor: 'rgba(16,185,129,0.6)', pointRadius: 4
-    }]
-  }, { scales: { x: { title: { display: true, text: '价格 (¥)' } }, y: { title: { display: true, text: '评分' }, min: 3, max: 5 } } });
+  // Product type distribution pie
+  var typeMap = {};
+  skus.forEach(function(s) { var t = s.productType || '未知'; typeMap[t] = (typeMap[t]||0)+1; });
+  var typeKeys = Object.keys(typeMap);
+  var typeData = typeKeys.map(function(k){return typeMap[k];});
+
+  tryRenderChart('chart-type-pie', 'doughnut', {
+    labels: typeKeys,
+    datasets: [{ data: typeData, backgroundColor: ['#10b981','#6366f1','#f59e0b','#ef4444','#06b6d4','#84cc16'] }]
+  }, null, function(evt, elements) {
+    if (elements.length > 0) {
+      var tp = typeKeys[elements[0].index];
+      showChartDetail('类型: '+tp, function(s){ return (s.productType||'未知')===tp; });
+    }
+  });
+
+  // Populate model selector and pre-compute model data
+  skus.forEach(function(s) {
+    var m = s.model || '无型号';
+    if (!_modelData[m]) _modelData[m] = [];
+    var cc = 0; var cs = String(s.commentCount||'').replace(/[^0-9]/g,'');
+    if (cs) { cc = parseInt(cs); if (s.commentCount.indexOf('万')!==-1) cc*=10000; if (!cc&&cs) cc=parseInt(cs); }
+    _modelData[m].push({
+      cfg: (s.ram||'?') + '+' + (s.disk||'?'),
+      screen: s.screenCount||'?',
+      cpu: s.cpuModel||s.cpu||'?',
+      system: s.system||'?',
+      price: s.price||0,
+      comments: cc,
+      commentStr: s.commentCount||'0',
+      skuId: s.skuId,
+      name: s.name
+    });
+  });
+  var modelsSorted = Object.keys(_modelData).sort(function(a,b){ return _modelData[b].length - _modelData[a].length; });
+  var modelSel = document.getElementById('model-selector');
+  modelsSorted.forEach(function(m) {
+    var opt = document.createElement('option');
+    opt.value = m; opt.textContent = m + ' (' + _modelData[m].length + ' SKU)';
+    if (modelSel) modelSel.appendChild(opt);
+  });
 }
 
-function tryRenderChart(canvasId, type, data, extraOpts) {
+function renderModelAnalysis() {
+  var m = document.getElementById('model-selector').value;
+  var panel = document.getElementById('model-analysis-panel');
+  if (!m) { panel.innerHTML = '<p class="text-muted" style="text-align:center;padding:20px">请先选择一个型号进行分析</p>'; return; }
+  var data = _modelData[m];
+  if (!data) return;
+
+  // Group by config
+  var configMap = {};
+  data.forEach(function(d) {
+    var k = d.cfg;
+    if (!configMap[k]) configMap[k] = { prices: [], comments: [], total: 0 };
+    configMap[k].prices.push(d.price);
+    configMap[k].comments.push(d.comments);
+    configMap[k].total++;
+  });
+  var configs = Object.keys(configMap).sort();
+
+  // Chart 1: Config vs Price (horizontal bar)
+  panel.innerHTML = '<div class="row"><div class="col-lg-4"><div class="card"><div class="card-header">配置 vs 价格 (均价)</div><div class="card-body"><div class="chart-wrap"><canvas id="chart-m-cfg-price"></canvas></div></div></div></div>' +
+    '<div class="col-lg-4"><div class="card"><div class="card-header">配置 vs 评论量</div><div class="card-body"><div class="chart-wrap"><canvas id="chart-m-cfg-comments"></canvas></div></div></div></div>' +
+    '<div class="col-lg-4"><div class="card"><div class="card-header">价格 vs 评论量 (气泡)</div><div class="card-body"><div class="chart-wrap"><canvas id="chart-m-price-comments"></canvas></div></div></div></div></div>';
+
+  setTimeout(function(){
+    // Config vs Price
+    tryRenderChart('chart-m-cfg-price', 'bar', {
+      labels: configs,
+      datasets: [{ label: '均价 (¥)', data: configs.map(function(c){ var ps=configMap[c].prices; return Math.round(ps.reduce(function(a,b){return a+b;},0)/ps.length); }), backgroundColor: '#6366f1', borderRadius: 4 }]
+    }, { indexAxis: 'y', scales: { x: { title: { display: true, text: '均价 (¥)' } } },
+         plugins: { legend: { display: false } } }, function(evt, el) {
+      if (el.length > 0) { var c = configs[el[0].index]; showChartDetail(m+' '+c, function(s){ return (s.model||'无型号')===m && ((s.ram||'?')+'+'+(s.disk||'?'))===c; }); }
+    });
+
+    // Config vs Comments
+    tryRenderChart('chart-m-cfg-comments', 'bar', {
+      labels: configs,
+      datasets: [{ label: '总评论', data: configs.map(function(c){ var cs=configMap[c].comments; return cs.reduce(function(a,b){return a+b;},0); }), backgroundColor: '#10b981', borderRadius: 4 }]
+    }, { indexAxis: 'y', scales: { x: { title: { display: true, text: '评论总量' } } },
+         plugins: { legend: { display: false } } }, function(evt, el) {
+      if (el.length > 0) { var c = configs[el[0].index]; showChartDetail(m+' '+c, function(s){ return (s.model||'无型号')===m && ((s.ram||'?')+'+'+(s.disk||'?'))===c; }); }
+    });
+
+    // Price vs Comments bubble
+    var bubbles = data.map(function(d) { return { x: d.price, y: d.comments, r: Math.max(4, Math.min(18, d.comments/100)), cfg: d.cfg }; });
+    tryRenderChart('chart-m-price-comments', 'bubble', {
+      datasets: [{ label: 'SKU', data: bubbles, backgroundColor: bubbles.map(function(_,i){return 'rgba(99,102,241,'+(0.3+0.6*i/bubbles.length)+')';}) }]
+    }, { scales: { x: { title: { display: true, text: '价格 (¥)' } }, y: { title: { display: true, text: '评论量' } } },
+         plugins: { tooltip: { callbacks: { label: function(ctx){ var b=bubbles[ctx.dataIndex]; return b.cfg+' ¥'+b.x+' '+b.y+'评'; } } } } },
+    function(evt, el) {
+      if (el.length > 0) { var b = bubbles[el[0].index]; showChartDetail(m+' ¥'+b.x, function(s){ return (s.model||'无型号')===m && (s.price||0)===b.x; }); }
+    });
+  }, 200);
+
+}
+
+function tryRenderChart(canvasId, type, data, extraOpts, onClick) {
   try {
     var canvas = document.getElementById(canvasId);
     if (!canvas) return;
     if (window['_chart_' + canvasId]) window['_chart_' + canvasId].destroy();
     if (typeof Chart === 'undefined') { console.warn('Chart.js not loaded'); return; }
-    var opts = Object.assign({ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } } }, extraOpts || {});
+    var opts = Object.assign({
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+      onClick: onClick || null
+    }, extraOpts || {});
     window['_chart_' + canvasId] = new Chart(canvas.getContext('2d'), { type: type, data: data, options: opts });
   } catch(e) { console.warn('Chart render failed:', canvasId, e.message); }
 }
@@ -1830,6 +2705,7 @@ async function runAnalysis() {
   // Single call for smaller datasets
   updateProgress(20, '正在对 ' + reviews.length + ' 条评论进行 8 维度深度分析...', '单次分析模式');
 
+  _activeReportTarget = 'review';
   var report = await callClaudeAPI(SYSTEM_PROMPT, userMessage, {
     stream: true,
     maxTokens: 8192
@@ -1978,9 +2854,9 @@ function renderReport() {
   if (!state.report) {
     document.getElementById('report-content').innerHTML =
       '<div class="report-empty">' +
-      '<div class="icon">📋</div>' +
+      '<div class="icon"><i data-lucide="file-text" style="width:48px;height:48px;opacity:.25"></i></div>' +
       '<p>暂无分析报告</p>' +
-      '<p class="text-muted">请先在「数据导入」页面上传评论数据并开始分析</p>' +
+      '<p class="text-muted">请先在「评论数据获取」页面获取或上传评论数据</p>' +
       '<button class="btn btn-primary" onclick="switchPage(\'import\')">前往导入数据</button>' +
       '</div>';
     return;
@@ -1989,9 +2865,9 @@ function renderReport() {
   if (state.isAnalyzing) {
     // Simple text display during streaming
     var html = '<div class="report-toolbar">' +
-      '<button class="btn btn-primary" onclick="copyReport()">📋 复制全文</button>' +
-      '<button class="btn btn-success" onclick="downloadReport()">💾 下载 TXT</button>' +
-      '<button class="btn btn-sm" onclick="switchPage(\'import\')">📥 导入新数据</button>' +
+      '<button class="btn btn-primary" onclick="copyReport()"><i data-lucide="copy" class="lucide-icon"></i> 复制全文</button>' +
+      '<button class="btn btn-success" onclick="downloadReport()"><i data-lucide="file-down" class="lucide-icon"></i> 下载 TXT</button>' +
+      '<button class="btn btn-sm" onclick="switchPage(\'import\')"><i data-lucide="plus" class="lucide-icon"></i> 导入新数据</button>' +
       '</div>' +
       '<div class="report-container" id="report-text-container">' + escHtml(state.report) + '</div>';
     document.getElementById('report-content').innerHTML = html;
@@ -2002,14 +2878,343 @@ function renderReport() {
 
 function renderReportContent() {
   var html = '<div class="report-toolbar">' +
-    '<button class="btn btn-primary" onclick="copyReport()">📋 复制全文</button>' +
-    '<button class="btn btn-success" onclick="downloadReport()">💾 下载 TXT</button>' +
-    '<button class="btn btn-sm" onclick="switchPage(\'import\')">📥 导入新数据</button>' +
+    '<button class="btn btn-primary" onclick="copyReport()"><i data-lucide="copy" class="lucide-icon"></i> 复制全文</button>' +
+    '<button class="btn btn-success" onclick="downloadReport()"><i data-lucide="file-down" class="lucide-icon"></i> 下载 TXT</button>' +
+    '<button class="btn btn-sm" onclick="switchPage(\'import\')"><i data-lucide="plus" class="lucide-icon"></i> 导入新数据</button>' +
     '</div>' +
-    '<div class="report-container styled-report" id="report-text-container">' +
-    '<pre class="rpt-pre">' + styleReportText(state.report) + '</pre>' +
+    '<div class="rpt-interactive" id="report-text-container">' +
+    renderInteractiveReport(state.report) +
     '</div>';
   document.getElementById('report-content').innerHTML = html;
+  setupReviewQuoteClicks();
+  setTimeout(function(){ if(typeof lucide!=='undefined') lucide.createIcons(); }, 100);
+}
+
+// Click on review quotes or "#N" references to show full original review
+function setupReviewQuoteClicks() {
+  var container = document.getElementById('report-content');
+  if (!container) return;
+  container.addEventListener('click', function(e) {
+    var target = e.target;
+
+    // Handle "评论#N" or "评论 #N" references
+    var text = target.textContent || '';
+    var refMatch = text.match(/评论\s*#\s*(\d+)/);
+    if (refMatch) {
+      if (state.reviews && state.reviews.length > 0) {
+        var idx = parseInt(refMatch[1]) - 1;
+        if (idx >= 0 && idx < state.reviews.length) {
+          showSingleReviewModal(idx);
+          return;
+        }
+      }
+      showToast('原始评论数据未保存，无法查看详情');
+      return;
+    }
+
+    // Handle blockquote clicks
+    var bq = target.closest('blockquote');
+    if (!bq) return;
+    var quoteText = bq.textContent.replace(/[""]/g, '').trim();
+    if (quoteText.length < 10) return;
+    var matches = [];
+    if (state.reviews && state.reviews.length > 0) {
+      var contentCol = state.mapping.content;
+      state.reviews.forEach(function(r) {
+        if ((r[contentCol]||'').indexOf(quoteText.substring(0, 20)) !== -1) matches.push(r);
+      });
+    }
+    showReviewDetailModal(quoteText, matches);
+  });
+}
+
+function showSingleReviewModal(index) {
+  var r = state.reviews[index];
+  if (!r) return;
+  var starCol = state.mapping.star;
+  var contentCol = state.mapping.content;
+  var overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.style.cssText = 'display:flex;z-index:3000';
+  overlay.onclick = function(ev) { if (ev.target === overlay) overlay.remove(); };
+  var modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.style.cssText = 'max-width:600px';
+  modal.innerHTML = '<h4>💬 评论 #' + (index+1) + '</h4>' +
+    (r[starCol] ? '<p style="color:#F2A227;font-size:16px">' + '★'.repeat(parseInt(r[starCol])||0) + '</p>' : '') +
+    '<div style="background:#F5F6F7;padding:16px;border-radius:8px;margin:12px 0;line-height:1.8;font-size:14px">' + escHtml(r[contentCol]||'') + '</div>' +
+    '<div class="actions"><button class="btn btn-sm" onclick="this.closest(\'.modal-overlay\').remove()">关闭</button></div>';
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+}
+
+function showReviewDetailModal(quote, matches) {
+  var overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.style.cssText = 'display:flex;z-index:3000';
+  overlay.onclick = function(ev) { if (ev.target === overlay) overlay.remove(); };
+
+  var modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.style.cssText = 'max-width:700px;max-height:80vh;overflow-y:auto';
+  modal.innerHTML = '<h4>💬 用户评论原文</h4>' +
+    '<blockquote style="background:#F5F6F7;padding:12px 16px;border-left:3px solid #3370FF;border-radius:0 6px 6px 0;margin:12px 0;font-style:italic">' + escHtml(quote) + '</blockquote>';
+
+  if (matches.length > 0) {
+    modal.innerHTML += '<p style="font-size:13px;color:#646A73">匹配到 ' + matches.length + ' 条原始评论：</p>';
+    matches.forEach(function(r, i) {
+      var starCol = state.mapping.star;
+      var contentCol = state.mapping.content;
+      modal.innerHTML += '<div style="background:#fff;border:1px solid #F2F3F5;border-radius:8px;padding:12px;margin:8px 0;font-size:13px;line-height:1.7">' +
+        (r[starCol] ? '<span style="color:#F2A227">' + ('★'.repeat(parseInt(r[starCol])||0)) + '</span><br>' : '') +
+        escHtml(r[contentCol] || '') +
+        '</div>';
+    });
+  } else {
+    modal.innerHTML += '<p class="text-muted" style="font-size:13px">未在原始评论数据中找到匹配的完整评论</p>';
+  }
+
+  modal.innerHTML += '<div class="actions"><button class="btn btn-sm" onclick="this.closest(\'.modal-overlay\').remove()">关闭</button></div>';
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+}
+
+// ===== Interactive Report Renderer =====
+function renderInteractiveReport(text, isStrategy, isTrend) {
+  if (!text) return '<div class="report-empty"><i data-lucide="file-text" style="width:48px;height:48px;opacity:.25"></i><p>暂无报告内容</p></div>';
+
+  var sections = parseReportSections(text);
+  if (sections.length === 0) return '<div class="report-container styled-report markdown-body" style="padding:28px 32px">' + renderMarkdown(text) + '</div>';
+
+  // Extract title (first section starting with 标题)
+  var titleSection = null;
+  var contentSections = [];
+  sections.forEach(function(sec) {
+    if (!titleSection && (sec.title.indexOf('标题') !== -1 || sec.title.indexOf('关于') !== -1)) {
+      titleSection = sec;
+    } else {
+      contentSections.push(sec);
+    }
+  });
+
+  // Build HTML: title + KPIs + tab bar + tab content
+  var html = '<div class="rpt-report-wrapper">';
+
+  // Title
+  var productName = document.getElementById('product-name-input');
+  var displayTitle = (productName && productName.value.trim()) ? productName.value.trim() : '';
+  if (!displayTitle && titleSection) {
+    displayTitle = titleSection.body.replace(/^###\s*/, '').replace(/【|】/g, '').trim();
+  }
+  if (displayTitle) {
+    html += '<div class="rpt-report-title">' + escHtml(displayTitle) + '</div>';
+    var subMeta = state.reportMeta ? state.reportMeta : (state.strategyMeta || {});
+    var subText = subMeta.reviewCount ? (subMeta.reviewCount + ' 条评论') : (subMeta.totalSkus ? (subMeta.totalSkus + ' SKU') : '');
+    html += '<div class="rpt-report-subtitle">' + subText + '</div>';
+  }
+
+  // KPI cards — context-driven: isTrend > isStrategy > review data > history stats
+  var kpiHtml = '';
+
+  if (isStrategy) {
+    // Strategy report KPIs
+    var skus = state.strategySkus.skus;
+    var prices = skus.map(function(s){return s.price||0;}).filter(function(p){return p>0;});
+    var avgPrice = prices.length > 0 ? Math.round(prices.reduce(function(a,b){return a+b;},0) / prices.length) : 0;
+    var minPrice = prices.length > 0 ? Math.min.apply(null, prices) : 0;
+    var maxPrice = prices.length > 0 ? Math.max.apply(null, prices) : 0;
+    var models = {}; skus.forEach(function(s){ if (s.model) models[s.model] = true; });
+    var modelCount = Object.keys(models).length || '—';
+    kpiHtml = '<div class="rpt-kpi-row">' +
+      '<div class="rpt-kpi-card kpi-neutral"><div class="kpi-num">' + skus.length + '</div><div class="kpi-label">SKU 总数</div></div>' +
+      '<div class="rpt-kpi-card kpi-neutral"><div class="kpi-num">' + modelCount + '</div><div class="kpi-label">型号总数</div></div>' +
+      '<div class="rpt-kpi-card kpi-neutral"><div class="kpi-num">¥' + avgPrice.toLocaleString() + '</div><div class="kpi-label">均价</div></div>' +
+      '<div class="rpt-kpi-card kpi-neutral"><div class="kpi-num">¥' + minPrice.toLocaleString() + ' ~ ¥' + maxPrice.toLocaleString() + '</div><div class="kpi-label">价格区间</div></div>' +
+      '</div>';
+  } else if (state.reviews && state.reviews.length > 0) {
+    kpiHtml = renderKpiCardsFromData();
+  } else if (state.reportMeta && state.reportMeta.stats) {
+    var s = state.reportMeta.stats;
+    kpiHtml = '<div class="rpt-kpi-row">' +
+      '<div class="rpt-kpi-card kpi-neutral"><div class="kpi-num">' + state.reportMeta.reviewCount + '</div><div class="kpi-label">评论总数</div></div>' +
+      '<div class="rpt-kpi-card ' + (s.avg >= 4 ? 'kpi-positive' : 'kpi-negative') + '"><div class="kpi-num">' + s.avg + '</div><div class="kpi-label">平均评分</div></div>' +
+      '<div class="rpt-kpi-card kpi-positive"><div class="kpi-num">' + s.posRate + '%</div><div class="kpi-label">好评率</div></div>' +
+      '<div class="rpt-kpi-card kpi-negative"><div class="kpi-num">' + s.negRate + '%</div><div class="kpi-label">差评率</div></div>' +
+      '</div>';
+  } else if (state.reportMeta && state.reportMeta.reviewCount) {
+    kpiHtml = '<div class="rpt-kpi-row"><div class="rpt-kpi-card kpi-neutral"><div class="kpi-num">' + state.reportMeta.reviewCount + '</div><div class="kpi-label">评论总数</div></div></div>';
+  }
+
+  // Trend KPIs — only when explicitly in trend context
+  if (isTrend && state.trendNotes && state.trendNotes.length > 0) {
+    var tl = 0, tcom = 0, tcol = 0;
+    state.trendNotes.forEach(function(n) { tl += parseInt(n.likes)||0; tcom += parseInt(n.comments)||0; tcol += parseInt(n.collects)||0; });
+    kpiHtml = '<div class="rpt-kpi-row">' +
+      '<div class="rpt-kpi-card kpi-neutral"><div class="kpi-num">' + state.trendNotes.length + '</div><div class="kpi-label">笔记总数</div></div>' +
+      '<div class="rpt-kpi-card kpi-neutral"><div class="kpi-num">' + Math.round(tl/state.trendNotes.length) + '</div><div class="kpi-label">平均点赞</div></div>' +
+      '<div class="rpt-kpi-card kpi-neutral"><div class="kpi-num">' + tl + '</div><div class="kpi-label">总互动量</div></div>' +
+      '<div class="rpt-kpi-card kpi-neutral"><div class="kpi-num">' + tcol + '</div><div class="kpi-label">总收藏</div></div>' +
+      '</div>';
+  }
+  html += kpiHtml;
+
+  // Tab bar — only show sections with meaningful content
+  var visibleSections = contentSections.filter(function(sec) {
+    return sec.body.replace(/\s/g, '').length > 20;
+  });
+  if (visibleSections.length === 0) visibleSections = contentSections;
+
+  html += '<div class="rpt-tab-bar">';
+  visibleSections.forEach(function(sec, idx) {
+    var label = getShortTabLabel(sec.title);
+    html += '<div class="rpt-tab-item' + (idx === 0 ? ' active' : '') + '" onclick="switchReportTab(this, ' + idx + ')" data-tab="' + idx + '">' +
+      '<span>' + escHtml(label) + '</span></div>';
+  });
+  html += '</div>';
+
+function getShortTabLabel(title) {
+  // Strip leading emoji
+  title = title.replace(/^[🔲💰⚡🔄👥🔧💡🎯📊⭐⚠📖📌✅🚀\s]+/, '');
+  var map = {
+    '洞察总览': '总览', '核心用户画像与场景': '用户画像', '核心卖点与价值验证': '核心卖点',
+    '主要痛点与负面归因': '主要痛点', '改进建议与优先级': '改进建议',
+    '潜在机会与差异化': '潜在机会', '典型用户深度解析': '典型用户', '关键洞察总结': '洞察总结',
+    '产品矩阵与组合': '产品矩阵', '定价策略': '定价策略', '产品力分析': '产品力',
+    '生命周期与迭代': '生命周期', '用户画像与细分': '用户分层', '配件与组套协同': '配件协同',
+    '策略总结': '策略总结', '情感词云': '情感词云', '内容热度总览': '热度总览', '博主分析': '博主分析', '内容特征': '内容特征', '品类趋势洞察': '品类趋势', '总结建议': '总结建议', '重点品牌策略': '品牌策略', '用户画像': '用户画像', '核心需求': '核心需求'
+  };
+  for (var k in map) {
+    if (title.indexOf(k) !== -1) return map[k];
+  }
+  return title.length > 10 ? title.substring(0, 8) + '...' : title;
+}
+
+  // Tab content — rendered with marked
+  html += '<div class="report-container styled-report rpt-tab-content" style="margin-top:0;border-radius:0 0 8px 8px">';
+  visibleSections.forEach(function(sec, idx) {
+    var cls = getSectionWrapClass(sec.title);
+    html += '<div class="rpt-tab-panel ' + cls + ' markdown-body" id="rpt-tab-panel-' + idx + '" style="' + (idx === 0 ? '' : 'display:none') + '">' +
+      renderMarkdown(sec.body) + '</div>';
+  });
+  html += '</div></div>';
+  return html;
+}
+
+function switchReportTab(el, idx) {
+  // Update active tab
+  var tabs = el.parentElement.querySelectorAll('.rpt-tab-item');
+  tabs.forEach(function(t) { t.classList.remove('active'); });
+  el.classList.add('active');
+  // Show matching panel
+  var container = el.closest('.rpt-report-wrapper');
+  var panels = container.querySelectorAll('.rpt-tab-panel');
+  panels.forEach(function(p) { p.style.display = 'none'; });
+  var panel = container.querySelector('#rpt-tab-panel-' + idx);
+  if (panel) panel.style.display = 'block';
+}
+
+function parseReportSections(text) {
+  var sections = [];
+  var lines = text.split('\n');
+  var currentTitle = '';
+  var currentBody = [];
+
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    var trimmed = line.trim();
+    // Match ### headers (new), 【】 headers (old), and emoji-prefixed 【】 headers
+    var stripped = trimmed.replace(/^[🔲💰⚡🔄👥🔧💡🎯📊⭐⚠📖📌✅🚀\s]+/, '');
+    var isNewHeader = trimmed.startsWith('### ') && trimmed.length < 50;
+    var isOldHeader = (trimmed.startsWith('【') || stripped.startsWith('【')) && trimmed.indexOf('】') > 1;
+
+    if (isNewHeader || isOldHeader) {
+      if (currentTitle) { sections.push({ title: currentTitle, body: currentBody.join('\n') }); }
+      currentTitle = isNewHeader ? trimmed.replace(/^###\s*/, '') : stripped.replace(/【|】/g, '');
+      currentBody = [];
+    } else {
+      currentBody.push(line);
+    }
+  }
+  if (currentTitle) { sections.push({ title: currentTitle, body: currentBody.join('\n') }); }
+  return sections;
+}
+
+function renderMarkdown(text) {
+  if (!text) return '';
+  if (typeof marked === 'undefined') return '<pre>' + escHtml(text) + '</pre>';
+  var html = marked.parse(text, { breaks: true });
+  // Make "评论#N" references clickable with visual hint
+  html = html.replace(/评论\s*#\s*(\d+)/g, '<span class="rpt-review-ref" title="点击查看原评论" style="cursor:pointer;color:#3370FF;text-decoration:underline;text-underline-offset:3px">评论#$1</span>');
+  return html;
+}
+
+function renderKpiCards(text) {
+  // More robust patterns for Chinese report text
+  var patterns = [
+    { re: /(\d+)\s*条评论/, label: '评论总数', cls: 'kpi-neutral' },
+    { re: /平均(?:评分|分)[：:\s]*(\d+\.?\d*)/, label: '平均评分', cls: 'kpi-positive' },
+    { re: /好[评率][：:\s]*(\d+\.?\d*)%/, label: '好评率', cls: 'kpi-positive' },
+    { re: /差评[率]?[：:\s]*(\d+\.?\d*)%/, label: '差评率', cls: 'kpi-negative' },
+    { re: /(?:5星|五星|好评)[^\d]*(\d+\.?\d*)%/, label: '正面评价', cls: 'kpi-positive' },
+    { re: /(?:1[-\s]*3星|差评|负面)[^\d]*(\d+\.?\d*)%/, label: '负面评价', cls: 'kpi-negative' },
+  ];
+
+  var cards = [];
+  patterns.forEach(function(p) {
+    var m = text.match(p.re);
+    if (m && m[1] && parseFloat(m[1]) > 0) {
+      var val = p.label.indexOf('%') !== -1 || p.label.indexOf('率') !== -1 ? m[1] + '%' : m[1];
+      // Fix scoring cls
+      var cls = p.cls;
+      if (p.label === '平均评分' && parseFloat(m[1]) < 4) cls = 'kpi-negative';
+      if (cards.filter(function(c){return c.label===p.label;}).length === 0) {
+        cards.push({ num: val, label: p.label, cls: cls });
+      }
+    }
+  });
+
+  // Also try to extract total SKU count for strategy reports
+  if (cards.length === 0) {
+    var skuMatch = text.match(/(\d+)\s*(?:个|款)\s*SKU/);
+    if (skuMatch) cards.push({ num: skuMatch[1], label: 'SKU 总数', cls: 'kpi-neutral' });
+    var priceMatch = text.match(/(?:均价|平均价格)[^\d]*¥?(\d+[\d,]*)/);
+    if (priceMatch) cards.push({ num: '¥' + priceMatch[1], label: '均价', cls: 'kpi-neutral' });
+  }
+
+  if (cards.length === 0) return '';
+  var html = '<div class="rpt-kpi-row">';
+  cards.forEach(function(c) { html += '<div class="rpt-kpi-card ' + c.cls + '"><div class="kpi-num">' + c.num + '</div><div class="kpi-label">' + c.label + '</div></div>'; });
+  html += '</div>';
+  return html;
+}
+
+function renderKpiCardsFromData() {
+  var reviews = state.reviews;
+  if (!reviews || reviews.length === 0) return '';
+  var starCol = state.mapping.star;
+  var total = reviews.length;
+  var sum = 0, count = 0, pos = 0, neg = 0;
+  reviews.forEach(function(r) {
+    var s = parseFloat(r[starCol]);
+    if (!isNaN(s)) { sum += s; count++; if (s >= 4) pos++; if (s <= 2) neg++; }
+  });
+  var avg = count > 0 ? (sum / count).toFixed(1) : '—';
+  var posRate = count > 0 ? Math.round(pos / count * 100) : 0;
+  var negRate = count > 0 ? Math.round(neg / count * 100) : 0;
+  return '<div class="rpt-kpi-row">' +
+    '<div class="rpt-kpi-card kpi-neutral"><div class="kpi-num">' + total + '</div><div class="kpi-label">评论总数</div></div>' +
+    '<div class="rpt-kpi-card ' + (avg >= 4 ? 'kpi-positive' : 'kpi-negative') + '"><div class="kpi-num">' + avg + '</div><div class="kpi-label">平均评分</div></div>' +
+    '<div class="rpt-kpi-card kpi-positive"><div class="kpi-num">' + posRate + '%</div><div class="kpi-label">好评率</div></div>' +
+    '<div class="rpt-kpi-card kpi-negative"><div class="kpi-num">' + negRate + '%</div><div class="kpi-label">差评率</div></div>' +
+    '</div>';
+}
+
+function getSectionWrapClass(title) {
+  if (title.indexOf('痛点') !== -1 || title.indexOf('负面') !== -1) return 'negative';
+  if (title.indexOf('卖点') !== -1 || title.indexOf('价值') !== -1) return 'positive';
+  if (title.indexOf('建议') !== -1 || title.indexOf('机会') !== -1) return 'insight';
+  if (title.indexOf('总结') !== -1 || title.indexOf('总览') !== -1) return 'summary';
+  return '';
 }
 
 // Lightweight inline styling — preserves ALL content, just highlights patterns
@@ -2017,51 +3222,67 @@ function styleReportText(text) {
   if (!text) return '<span class="text-muted">暂无报告内容</span>';
   var lines = text.split('\n');
   var out = '';
+  var inBlock = '';
+  var blockType = '';
+
   for (var i = 0; i < lines.length; i++) {
     var line = lines[i];
     var trimmed = line.trim();
-    if (trimmed === '') { out += '\n'; continue; }
+    if (trimmed === '') { if (inBlock) { out += '</div>'; inBlock = ''; blockType = ''; } out += '<br>'; continue; }
 
-    // Section headers: wrap entire line in styled span
+    // Section headers 【...】
     if (trimmed.startsWith('【') && trimmed.indexOf('】') !== -1) {
-      var title = trimmed.replace(/【|】/g, '');
-      var icon = getSectionIcon(title);
-      var cls = getSectionClass(title);
-      out += '<span class="rpt-hdr ' + cls + '">' + icon + ' ' + escHtml(trimmed) + '</span>\n';
+      if (inBlock) { out += '</div>'; inBlock = ''; blockType = ''; }
+      var t = trimmed.replace(/【|】/g, '');
+      out += '<span class="rpt-hdr ' + getSectionClass(t) + '">' + getSectionIcon(t) + ' ' + escHtml(trimmed) + '</span>\n';
       continue;
     }
 
-    // Inline pattern highlights for the rest
     var styled = highlightInline(line);
-    // Severity line coloring
-    if (/\b致命伤\b/.test(trimmed)) {
-      out += '<span class="rpt-sev-fatal">' + styled + '</span>\n';
-    } else if (/\b关注点\b/.test(trimmed)) {
-      out += '<span class="rpt-sev-warning">' + styled + '</span>\n';
-    } else if (/\b小瑕疵\b/.test(trimmed) && trimmed.length < 80) {
-      out += '<span class="rpt-sev-minor">' + styled + '</span>\n';
-    } else if (trimmed.startsWith('评价原文：') || trimmed.startsWith('评价原文:')) {
-      out += '<span class="rpt-quote">' + styled + '</span>\n';
-    } else if (trimmed.startsWith('典型画像：') || trimmed.startsWith('典型画像:')) {
-      out += '<span class="rpt-profile">' + styled + '</span>\n';
+
+    // Detect heading-style lines: "关键词：" or "关键词:" at line start
+    var isHeading = /^[^：:\n]{1,15}[：:]$/.test(trimmed);
+    // Detect conclusion markers
+    var isPos = /^✅/.test(trimmed);
+    var isNeg = /^⚠/.test(trimmed);
+    var isAct = /^🚀/.test(trimmed);
+    var isQuote = /^"|[「].*[」"]$/.test(trimmed) && trimmed.length > 10;
+
+    if (isPos || isNeg || isAct) {
+      var newType = isPos ? 'pos' : (isNeg ? 'neg' : 'info');
+      var newCls = 'rpt-callout rpt-callout-' + newType;
+      if (inBlock !== newType) { if (inBlock) out += '</div>'; out += '<div class="' + newCls + '">'; inBlock = newType; blockType = newType; }
+      out += styled + '\n';
+    } else if (isHeading) {
+      if (inBlock) { out += '</div>'; inBlock = ''; blockType = ''; }
+      // Bold sub-heading with colored left border and bg
+      var hdrCls = 'rpt-callout-info';
+      if (/痛点|负面|差评|问题|致命/.test(trimmed)) hdrCls = 'rpt-callout-neg';
+      else if (/卖点|优势|好评|价值|亮点/.test(trimmed)) hdrCls = 'rpt-callout-pos';
+      else if (/建议|改进|机会|优化/.test(trimmed)) hdrCls = 'rpt-callout-info';
+      out += '<div class="' + hdrCls + '"><strong>' + styled + '</strong></div>\n';
+    } else if (isQuote) {
+      if (inBlock) { out += '</div>'; inBlock = ''; blockType = ''; }
+      out += '<div class="rpt-quote-card"><span class="rpt-quote-text">' + styled + '</span></div>\n';
     } else {
       out += styled + '\n';
     }
   }
+  if (inBlock) out += '</div>';
   return out;
 }
 
 function getSectionIcon(title) {
-  if (title.indexOf('标题') !== -1) return '📊';
-  if (title.indexOf('洞察总览') !== -1) return '🔍';
-  if (title.indexOf('用户画像') !== -1) return '👥';
-  if (title.indexOf('卖点') !== -1) return '⭐';
-  if (title.indexOf('痛点') !== -1) return '⚠';
-  if (title.indexOf('改进建议') !== -1) return '🔧';
-  if (title.indexOf('潜在机会') !== -1) return '💡';
-  if (title.indexOf('典型用户') !== -1) return '📖';
-  if (title.indexOf('洞察总结') !== -1) return '🎯';
-  return '📌';
+  if (title.indexOf('标题') !== -1) return '<i data-lucide="file-text" style="width:18px;height:18px;opacity:.8"></i> ';
+  if (title.indexOf('洞察总览') !== -1) return '<i data-lucide="search" style="width:18px;height:18px;opacity:.8"></i> ';
+  if (title.indexOf('用户画像') !== -1) return '<i data-lucide="users" style="width:18px;height:18px;opacity:.8"></i> ';
+  if (title.indexOf('卖点') !== -1) return '<i data-lucide="star" style="width:18px;height:18px;opacity:.8"></i> ';
+  if (title.indexOf('痛点') !== -1) return '<i data-lucide="alert-triangle" style="width:18px;height:18px;opacity:.8"></i> ';
+  if (title.indexOf('改进建议') !== -1) return '<i data-lucide="wrench" style="width:18px;height:18px;opacity:.8"></i> ';
+  if (title.indexOf('潜在机会') !== -1) return '<i data-lucide="lightbulb" style="width:18px;height:18px;opacity:.8"></i> ';
+  if (title.indexOf('典型用户') !== -1) return '<i data-lucide="book-open" style="width:18px;height:18px;opacity:.8"></i> ';
+  if (title.indexOf('洞察总结') !== -1) return '<i data-lucide="target" style="width:18px;height:18px;opacity:.8"></i> ';
+  return '<i data-lucide="circle" style="width:18px;height:18px;opacity:.8"></i> ';
 }
 
 function getSectionClass(title) {
@@ -2076,12 +3297,8 @@ function getSectionClass(title) {
 
 function highlightInline(text) {
   var escaped = escHtml(text);
-  // Highlight percentages
+  // Subtle highlight for percentages
   escaped = escaped.replace(/(\d+\.?\d*%)/g, '<span class="rpt-metric">$1</span>');
-  // Highlight quoted short phrases
-  escaped = escaped.replace(/\x22([^\x22]{3,80})\x22/g, '<span class="rpt-quoted">\x22$1\x22</span>');
-  // Severity keywords
-  escaped = escaped.replace(/(致命伤|关注点|小瑕疵)/g, '<span class="rpt-badge-sev">$1</span>');
   return escaped;
 }
 
@@ -2146,12 +3363,24 @@ function loadHistory() {
 }
 
 function saveToHistory(report) {
+  // Compute KPI stats + save review data
+  var stats = null; var savedReviews = null;
+  if (state.reviews && state.reviews.length > 0) {
+    var sc = state.mapping.star; var cc = state.mapping.content; var sum = 0, cnt = 0, pos = 0, neg = 0;
+    savedReviews = state.reviews.slice(0, 500).map(function(r) {
+      var s = parseFloat(r[sc]); if (!isNaN(s)) { sum += s; cnt++; if (s >= 4) pos++; if (s <= 2) neg++; }
+      return [r[sc]||'', (r[cc]||'').substring(0, 300)];
+    });
+    stats = { avg: cnt>0 ? (sum/cnt).toFixed(1) : '—', posRate: cnt>0 ? Math.round(pos/cnt*100) : 0, negRate: cnt>0 ? Math.round(neg/cnt*100) : 0 };
+  }
   var entry = {
     id: Date.now(),
     date: new Date().toLocaleString('zh-CN'),
     productName: extractProductName(report),
     reviewCount: state.reviews.length,
     report: report,
+    stats: stats,
+    reviews: savedReviews,
     preview: report.substring(0, 200) + '...'
   };
   state.history.unshift(entry);
@@ -2179,7 +3408,7 @@ function renderHistory() {
   if (state.history.length === 0) {
     container.innerHTML =
       '<div class="report-empty">' +
-      '<div class="icon">🕒</div>' +
+      '<div class="icon"><i data-lucide="clock" style="width:48px;height:48px;opacity:.25"></i></div>' +
       '<p>暂无历史报告</p>' +
       '<p class="text-muted">完成分析后，报告将自动保存在这里</p>' +
       '</div>';
@@ -2190,13 +3419,15 @@ function renderHistory() {
   btnClear.style.display = 'inline-flex';
 
   container.innerHTML = state.history.map(function(h, i) {
-    return '<div class="history-item" onclick="viewHistoryReport(' + i + ')">' +
+    return '<div class="history-item">' +
       '<div class="flex-1">' +
-      '<div class="hi-title">' + escHtml(h.productName) + '</div>' +
-      '<div class="hi-meta">' + escHtml(h.date) + ' | ' + h.reviewCount + ' 条评论 | ' + escHtml(h.preview) + '</div>' +
+      '<div class="hi-title">' + escHtml(h.productName) + ' — ' + escHtml(h.date) + '</div>' +
+      '<div class="hi-meta">' + h.reviewCount + ' 条评论</div>' +
       '</div>' +
       '<div class="hi-actions">' +
-      '<button class="btn btn-sm" onclick="event.stopPropagation();deleteHistoryItem(' + i + ')" title="删除">🗑</button>' +
+      '<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();viewHistoryReport(' + i + ')"><i data-lucide="file-text" class="lucide-icon"></i> 分析报告</button>' +
+      (h.reviews ? '<button class="btn btn-sm" onclick="event.stopPropagation();viewHistoryReviews(' + i + ')"><i data-lucide="list" class="lucide-icon"></i> 评论明细</button>' : '') +
+      '<button class="btn btn-sm" onclick="event.stopPropagation();deleteHistoryItem(' + i + ')" title="删除"><i data-lucide="trash-2" class="lucide-icon"></i></button>' +
       '</div>' +
       '</div>';
   }).join('');
@@ -2209,12 +3440,28 @@ function viewHistoryReport(index) {
   state.reportMeta = {
     reviewCount: h.reviewCount,
     date: h.date,
-    productName: h.productName
+    productName: h.productName,
+    stats: h.stats || null
   };
+  // Restore review data if saved
+  if (h.reviews) {
+    var sc = state.mapping.star || '评分'; var cc = state.mapping.content || '评价内容';
+    state.reviews = h.reviews.map(function(r) { var o = {}; o[sc] = r[0]; o[cc] = r[1]; return o; });
+    state.mapping = state.mapping || {}; state.mapping.star = sc; state.mapping.content = cc;
+  }
+  switchPage('report');
+}
 
-  document.getElementById('modal-report-content').textContent = h.report;
-  document.getElementById('modal-history').style.display = 'flex';
-  document.getElementById('modal-history').dataset.index = index;
+function viewHistoryReviews(index) {
+  var h = state.history[index];
+  if (!h) return;
+  state.reportMeta = { reviewCount: h.reviewCount, date: h.date, productName: h.productName, stats: h.stats };
+  if (h.reviews) {
+    var sc = state.mapping.star || '评分'; var cc = state.mapping.content || '评价内容';
+    state.reviews = h.reviews.map(function(r) { var o = {}; o[sc] = r[0]; o[cc] = r[1]; return o; });
+    state.mapping = state.mapping || {}; state.mapping.star = sc; state.mapping.content = cc;
+  }
+  switchPage('review-detail');
 }
 
 function closeHistoryModal() {

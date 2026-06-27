@@ -12,6 +12,11 @@ Desktop.ini
 # Temp
 ~$*
 *.tmp
+temp_*.json
+temp_*.html
+temp_store_*.html
+temp_detail_*.html
+*.bak
 
 # Dependencies (if any added later)
 node_modules/

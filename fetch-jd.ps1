@@ -1,4 +1,4 @@
-# fetch-jd.ps1 - Fetch all reviews for a JD product (SPU-level, all SKUs)
+﻿# fetch-jd.ps1 - Fetch all reviews for a JD product (SPU-level, all SKUs)
 # Usage: powershell -ExecutionPolicy Bypass -File fetch-jd.ps1 -Sku "100191929771"
 
 param([string]$Sku)
@@ -30,15 +30,21 @@ try {
     $mContent = $m.Content
 
     $allSkuIds = @{}
+    $skuListIds = @()
     if ($mContent -match '"skuList"\s*:\s*(\[[^\]]+\])') {
         $skuListJson = $Matches[1] | ConvertFrom-Json
-        foreach ($s in $skuListJson) { $allSkuIds[$s.skuId] = $true }
+        foreach ($s in $skuListJson) {
+            $allSkuIds[$s.skuId] = $true
+            $skuListIds += $s.skuId
+        }
     }
-    # Also find all SKU-like IDs (10+ digit numbers in skuXXX keys)
-    $skuMatches = [regex]::Matches($mContent, '"sku\w*"\s*:\s*"?(\d{10,})"?')
-    foreach ($sm in $skuMatches) {
-        $sid = $sm.Groups[1].Value
-        if (-not $allSkuIds.ContainsKey($sid)) { $allSkuIds[$sid] = $true }
+    # Fallback: if no skuList, find all SKU-like IDs from the page
+    if ($skuListIds.Count -eq 0) {
+        $skuMatches = [regex]::Matches($mContent, '"sku\w*"\s*:\s*"?(\d{10,})"?')
+        foreach ($sm in $skuMatches) {
+            $sid = $sm.Groups[1].Value
+            if (-not $allSkuIds.ContainsKey($sid)) { $allSkuIds[$sid] = $true }
+        }
     }
 
     $allSkuIds[$Sku] = $true
@@ -49,6 +55,12 @@ try {
 }
 
 # ===== Step 2: Validate SKUs and get metadata =====
+# If skuList was found, use only those (authoritative); otherwise use all discovered IDs
+if ($skuListIds.Count -gt 0) {
+    $allSkuIds = @{}
+    foreach ($sid in $skuListIds) { $allSkuIds[$sid] = $true }
+    $allSkuIds[$Sku] = $true
+}
 Write-Status '{"phase":"validate","message":"Validating SKUs and getting metadata..."}'
 
 foreach ($sid in $allSkuIds.Keys) {
@@ -60,36 +72,20 @@ foreach ($sid in $allSkuIds.Keys) {
         if ($data.comments -and $data.comments.Count -gt 0) {
             $refName = $data.comments[0].referenceName
             $color = $data.comments[0].productColor
-            $maxPage = $data.maxPage
+            $maxPage = if ($data.maxPage -gt 0) { $data.maxPage } else { 1 }
             $summary = $data.productCommentSummary
 
             if (-not $productName) { $productName = $refName }
 
-            # Filter: only keep SKUs that are clearly the same product
-            $keep = ($sid -eq $Sku)
-            if (-not $keep -and $productName.Length -gt 0) {
-                # Extract meaningful keywords (2+ consecutive Chinese/ASCII chars, skip whitespace)
-                $targetWords = [regex]::Matches($productName, '[一-鿿\w]{2,}') | ForEach-Object { $_.Value }
-                $refWords = [regex]::Matches($refName, '[一-鿿\w]{2,}') | ForEach-Object { $_.Value }
-                $matchCount = 0
-                foreach ($tw in $targetWords) {
-                    if ($tw.Length -ge 3 -and $refName.Contains($tw)) { $matchCount += 2 }
-                    elseif ($tw.Length -ge 2 -and $refName.Contains($tw)) { $matchCount++ }
-                }
-                # Keep if significant keyword overlap (at least one long match or two short ones)
-                if ($matchCount -ge 2) { $keep = $true }
+            $vsku = [PSCustomObject]@{
+                SKU = $sid; Name = $refName; Color = $color
+                MaxPage = $maxPage; Total = $summary.commentCountStr
+                AvgScore = $summary.averageScore; GoodRate = $summary.goodRateShow
+                Score5 = $summary.score5Count; Score4 = $summary.score4Count
+                Score3 = $summary.score3Count; Score2 = $summary.score2Count; Score1 = $summary.score1Count
             }
-            if ($keep) {
-                $vsku = [PSCustomObject]@{
-                    SKU = $sid; Name = $refName; Color = $color
-                    MaxPage = $maxPage; Total = $summary.commentCountStr
-                    AvgScore = $summary.averageScore; GoodRate = $summary.goodRateShow
-                    Score5 = $summary.score5Count; Score4 = $summary.score4Count
-                    Score3 = $summary.score3Count; Score2 = $summary.score2Count; Score1 = $summary.score1Count
-                }
-                $validSkus += $vsku
-                Write-Status "{`"phase`":`"validate`",`"message`":`"SKU $sid ($color) - $($summary.commentCountStr) reviews, $maxPage pages`"}"
-            }
+            $validSkus += $vsku
+            Write-Status "{`"phase`":`"validate`",`"message`":`"SKU $sid ($color) - $($summary.commentCountStr) reviews, $maxPage pages`"}"
         }
     } catch {
         Write-Status "{`"phase`":`"validate`",`"message`":`"SKU $sid request failed, skipping`"}"
