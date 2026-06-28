@@ -4,8 +4,9 @@
   "description": "Product Insight Analysis System - Multi-platform e-commerce data analysis",
   "main": "server.js",
   "scripts": {
-    "start": "set HTTP_PROXY=http://localhost:1080 && set HTTPS_PROXY=http://localhost:1080 && node server.js",
-    "dev": "node server.js"
+    "start": "node server.js",
+    "dev": "node server.js",
+    "dev:proxy": "set HTTP_PROXY=http://localhost:1080 && set HTTPS_PROXY=http://localhost:1080 && node server.js"
   },
   "dependencies": {
     "better-sqlite3": "^12.11.1",

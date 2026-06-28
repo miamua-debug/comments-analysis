@@ -2,7 +2,7 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, 'data', 'review-insight.db');
+const DB_PATH = path.join(process.env.DATA_DIR || path.join(__dirname, 'data'), 'review-insight.db');
 
 // Ensure data directory exists
 require('fs').mkdirSync(path.dirname(DB_PATH), { recursive: true });

@@ -66,7 +66,7 @@ function spawnPython(script, args, res, envVars = {}) {
     res.flushHeaders();  // Ensure headers sent immediately
 
     const env = { ...process.env, PYTHONUNBUFFERED: '1', PYTHONIOENCODING: 'utf-8', ...envVars };
-    const py = spawn('python3', [script, ...args], { env });
+    const py = spawn(process.env.PYTHON_BIN || 'python', [script, ...args], { env });
 
     console.log(`[${path.basename(script)}] Started with args:`, args);
 
@@ -237,7 +237,7 @@ app.delete('/api/trend-reports/:id', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
     console.log(`  Data API: /api/reports, /api/strategy-reports, /api/trend-reports`);
     console.log(`  Data file: ${path.join(__dirname, 'data', 'review-insight.db')}`);
