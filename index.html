@@ -15,24 +15,42 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.8.1/github-markdown.min.css">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      corePlugins: { preflight: false },  // Keep project's own CSS reset
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: '#3370FF', hover: '#2860E1', light: '#ECF2FE', ring: 'rgba(51,112,255,0.1)' },
+            success: { DEFAULT: '#10B981', light: '#ECFDF5', text: '#065F46', border: '#A7F3D0' },
+            danger:  { DEFAULT: '#F54A45', light: '#FEF0EF', text: '#991B1B', border: '#FECACA' },
+            warning: { DEFAULT: '#F2A227', light: '#FEF6EC', text: '#92400E', border: '#FDE68A' },
+            info:    { DEFAULT: '#06B6D4', light: '#ECFEFF', text: '#0E7490' },
+            surface: { page: '#F5F6F7', card: '#FFFFFF', hover: '#F5F6F7', 'row-alt': '#FAFBFC', 'row-hover': '#F7F8FA' },
+            content: { DEFAULT: '#1F2329', secondary: '#646A73', muted: '#8F959E' },
+            border:  { light: '#F2F3F5', input: '#E5E6EB', btn: '#CFD1D7', 'btn-hover': '#B0B5BD' },
+            sidebar: { DEFAULT: '#F8F9FA', hover: '#ECF2FE' },
+          }
+        }
+      }
+    }
+  </script>
 <style>
-/* ===== Feishu-inspired Design System ===== */
+/* ===== Tailwind + Custom CSS Hybrid ===== */
+/* Base reset handled by Tailwind preflight */
 
-
-*,*::before,*::after{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;font-size:14px;color:#1F2329;background:#F5F6F7!important;-webkit-font-smoothing:antialiased}
-.test-visible{background:red!important;color:white!important;padding:20px!important;font-size:30px!important;text-align:center!important;display:block!important}
-h4,h5{margin:0 0 8px 0;font-weight:600;color:#1F2329}
-
-/* ===== Sidebar ===== */
-.sidebar{position:fixed;top:0;left:0;width:220px;height:100vh;background:#1F2329;color:#fff;z-index:1000;overflow-y:auto;display:flex;flex-direction:column}
-.sidebar .logo{padding:20px 20px 16px;font-size:15px;font-weight:600;color:#fff;display:flex;align-items:center;gap:8px;letter-spacing:-0.2px}
-.sidebar .nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;margin:1px 8px;color:rgba(255,255,255,.65);cursor:pointer;border-radius:6px;font-size:13px;transition:all .15s;user-select:none;line-height:1.5}
-.sidebar .nav-item:hover{color:#fff;background:#2B2F36}
+/* ===== Sidebar (light theme) ===== */
+.sidebar{position:fixed;top:0;left:0;width:220px;height:100vh;background:#F8F9FA;color:#1F2329;z-index:1000;overflow-y:auto;display:flex;flex-direction:column;border-right:1px solid #E5E6EB}
+.sidebar .logo{padding:20px 20px 16px;font-size:15px;font-weight:700;color:#1F2329;display:flex;align-items:center;gap:8px;letter-spacing:-0.2px}
+.sidebar .logo .version{font-size:10px;opacity:.4;margin-left:auto;font-weight:400}
+.sidebar .nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;margin:1px 8px;color:#646A73;cursor:pointer;border-radius:6px;font-size:13px;transition:all .15s;user-select:none;line-height:1.5}
+.sidebar .nav-item:hover{color:#1F2329;background:#ECF2FE}
 .sidebar .nav-item.active{color:#fff;background:#3370FF}
 .sidebar .nav-group{margin:4px 0}
-.sidebar .nav-group-header{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;margin:2px 8px;color:rgba(255,255,255,.55);cursor:pointer;font-size:13px;font-weight:500;text-transform:none;letter-spacing:0;transition:all .15s;user-select:none;border-radius:6px}
-.sidebar .nav-group-header:hover{color:rgba(255,255,255,.65);background:#2B2F36}
+.sidebar .nav-group-header{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;margin:2px 8px;color:#8F959E;cursor:pointer;font-size:13px;font-weight:500;text-transform:none;letter-spacing:0;transition:all .15s;user-select:none;border-radius:6px}
+.sidebar .nav-group-header:hover{color:#646A73;background:#ECF2FE}
 .sidebar .nav-group-header .nav-arrow{font-size:10px;margin-left:auto}
 .sidebar .nav-group-body{overflow:hidden;padding-bottom:4px}
 .sidebar .nav-group-body .nav-item{padding-left:32px;font-size:13px}
@@ -41,111 +59,57 @@ h4,h5{margin:0 0 8px 0;font-weight:600;color:#1F2329}
 .sidebar .nav-item.active .lucide-icon{opacity:1}
 .nav-group-header .lucide-icon{width:14px;height:14px;opacity:.5}
 
-/* ===== Main ===== */
-.main-content{margin-left:220px;padding:28px 32px;min-height:100vh;max-width:1400px}
+/* ===== Page switching ===== */
 .page{display:none}
 .page.active{display:block;animation:fadeIn .2s ease}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
-/* ===== Cards ===== */
-.card{background:#FFFFFF;border-radius:8px;box-shadow:0 1px 2px rgba(31,35,41,.04);margin-bottom:16px;border:1px solid #F2F3F5}
-.card-header{padding:14px 20px;font-weight:600;font-size:14px;border-bottom:1px solid #F2F3F5;display:flex;align-items:center;gap:6px;color:#1F2329}
-.card-header .header-right{margin-left:auto}
-.card-body{padding:20px}
-
-/* ===== KPI ===== */
-.kpi-cards{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap}
-.kpi-card{flex:1;min-width:180px;background:#FFFFFF;border-radius:8px;padding:18px 20px;border:1px solid #F2F3F5}
-.kpi-card .kpi-label{font-size:12px;color:#8F959E;margin-bottom:4px}
-.kpi-card .kpi-value{font-size:24px;font-weight:700;color:#1F2329}
-.kpi-card .kpi-sub{font-size:11px;color:#8F959E;margin-top:2px}
-
-/* ===== Buttons ===== */
-.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 15px;border-radius:6px;border:1px solid #CFD1D7;font-size:13px;cursor:pointer;background:#FFFFFF;color:#1F2329;text-decoration:none;transition:all .15s;font-weight:500;line-height:1.4;height:34px;box-sizing:border-box}
-.btn:hover{background:#F5F6F7;border-color:#B0B5BD}
-.btn-primary{background:#3370FF;color:#fff;border-color:#3370FF}
-.btn-primary:hover{background:#2860E1;border-color:#2860E1}
-.btn-success{background:#2860E1;color:#fff;border-color:#2860E1}
-.btn-success:hover{background:#1D4ED8;border-color:#1D4ED8}
-.btn-danger{background:#F54A45;color:#fff;border-color:#F54A45}
-.btn-danger:hover{background:#E0423E;border-color:#E0423E}
-.btn-sm{padding:5px 12px;font-size:13px;height:30px}
-.btn-lg{padding:10px 22px;font-size:15px;height:40px}
-.btn:disabled{opacity:.45;cursor:not-allowed;pointer-events:none}
-
-/* ===== Forms ===== */
-.form-group{margin-bottom:16px}
-.form-group label{display:block;font-size:13px;font-weight:500;color:#1F2329;margin-bottom:6px}
-.form-group input,.form-group select{width:100%;border:1px solid #E5E6EB;border-radius:6px;padding:8px 12px;font-size:13px;background:#FFFFFF;color:#1F2329;transition:border-color .15s}
-.form-group input:focus,.form-group select:focus{outline:none;border-color:#3370FF;box-shadow:0 0 0 3px rgba(51,112,255,.1)}
-.form-group input::placeholder{color:#8F959E}
-.form-group .hint{font-size:12px;color:#8F959E;margin-top:4px}
-
-/* ===== File Upload ===== */
+/* ===== Upload zone ===== */
 .upload-zone{border:2px dashed #E5E6EB;border-radius:8px;padding:48px 24px;text-align:center;cursor:pointer;transition:all .2s;background:#FAFBFC}
 .upload-zone:hover,.upload-zone.drag-over{border-color:#3370FF;background:#ECF2FE}
-.upload-zone .upload-icon{font-size:40px;margin-bottom:12px;opacity:.7}
-.upload-zone .upload-text{font-size:14px;color:#646A73;margin-bottom:4px}
-.upload-zone .upload-hint{font-size:12px;color:#8F959E}
 
-/* ===== Tables ===== */
-.table-container{overflow-x:auto;max-height:400px;overflow-y:auto}
-table{width:100%;border-collapse:collapse}
-th,td{padding:8px 12px;text-align:left;border-bottom:1px solid #F2F3F5;font-size:13px}
-th{font-size:12px;color:#646A73;font-weight:500;background:#FAFBFC;white-space:nowrap;position:sticky;top:0;z-index:1;text-transform:none;letter-spacing:0}
-tr:hover{background:#F7F8FA}
-tr:nth-child(even){background:#FAFBFC}
-tr:nth-child(even):hover{background:#F2F3F5}
-
-/* ===== Column Mapping ===== */
-.mapping-row{display:flex;gap:12px;align-items:center;margin-bottom:8px;padding:10px 14px;background:#F5F6F7;border-radius:6px}
-.mapping-row .source-col{flex:2;font-size:13px;font-weight:500;color:#646A73}
-.mapping-row select{flex:1;min-width:140px}
-.mapping-row .arrow{color:#8F959E;font-size:16px}
-
-/* ===== Progress ===== */
+/* ===== Progress bar ===== */
 .progress-bar-wrap{height:4px;background:#F2F3F5;border-radius:2px;margin:12px 0;overflow:hidden}
 .progress-bar-fill{height:100%;background:#3370FF;border-radius:2px;transition:width .4s ease;width:0%}
 .progress-bar-fill.indeterminate{width:40%!important;animation:progressPulse 1.8s ease-in-out infinite}
 @keyframes progressPulse{0%{width:20%}50%{width:70%}100%{width:20%}}
 .progress-status{font-size:13px;color:#646A73;text-align:center}
 
-/* ===== Report ===== */
-.report-container{background:#FFFFFF;border-radius:8px;padding:32px 40px;max-width:900px;margin:0 auto;font-size:15px;line-height:1.85;white-space:pre-wrap;border:1px solid #F2F3F5;color:#1F2329}
+/* ===== Animations ===== */
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+.skeleton{background:linear-gradient(90deg,#F2F3F5 25%,#E5E6EB 50%,#F2F3F5 75%);background-size:800px 100%;animation:shimmer 1.5s infinite;border-radius:6px;height:16px;margin:8px 0}
+.skeleton.h-sm{height:12px;width:60%}
+.skeleton.h-lg{height:20px;width:80%}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ===== Report System (kept - too complex for Tailwind utilities) ===== */
 .report-toolbar{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
 .report-empty{text-align:center;padding:60px 20px;color:#8F959E}
 .report-empty .icon{font-size:48px;margin-bottom:16px;opacity:.5}
-
-/* ===== Styled Report ===== */
 .styled-report{white-space:normal;line-height:1.85;color:#1F2329;padding:32px 40px}
 .rpt-pre{white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:14px;line-height:1.9;margin:0;padding:0;background:transparent;border:none;color:inherit}
-
-/* Section headers - Feishu style */
-.rpt-hdr{display:block;font-size:16px;font-weight:600;padding:12px 16px;margin:24px 0 12px 0;border-radius:6px;border-left:3px solid #3370FF;background:#ECF2FE;color:#1F2329}
+/* Section headers */
+.rpt-hdr{display:block;font-size:16px;font-weight:600;padding:12px 16px;margin:24px 0 12px;border-radius:6px;border-left:3px solid #3370FF;background:#ECF2FE;color:#1F2329}
 .rpt-hdr-title{background:#3370FF;color:#fff;font-size:18px;text-align:center;padding:20px;border:none;border-radius:8px;font-weight:600}
 .rpt-hdr-pos{border-left-color:#1BAC6B;background:#E8F8F2;color:#065F46}
 .rpt-hdr-neg{border-left-color:#F54A45;background:#FEF0EF;color:#991B1B}
 .rpt-hdr-act{border-left-color:#3370FF;background:#ECF2FE;color:#1D39C4}
 .rpt-hdr-sum{border-left-color:#F2A227;background:#FEF6EC;color:#92400E;font-size:17px}
 .rpt-hdr-pro{border-left-color:#06B6D4;background:#ECFEFF;color:#0E7490}
-
 /* Inline highlights */
 .rpt-metric{display:inline-block;background:#ECF2FE;color:#3370FF;font-weight:600;padding:1px 6px;border-radius:4px;font-size:.93em;margin:0 2px}
 .rpt-quoted{color:#3370FF;font-weight:500}
 .rpt-badge-sev{display:inline-block;padding:1px 6px;border-radius:3px;font-size:.85em;font-weight:600;margin:0 2px;background:#F54A45;color:#fff}
-
 /* Severity lines */
 .rpt-sev-fatal{display:block;padding:8px 14px;margin:4px 0;background:#FEF0EF;border:1px solid #FECACA;border-radius:6px;color:#991B1B;font-weight:500;font-size:13px}
 .rpt-sev-warning{display:block;padding:8px 14px;margin:4px 0;background:#FEF6EC;border:1px solid #FDE68A;border-radius:6px;color:#92400E;font-weight:500;font-size:13px}
 .rpt-sev-minor{display:block;padding:8px 14px;margin:4px 0;background:#F8FAFC;border:1px solid #E5E6EB;border-radius:6px;color:#646A73;font-size:13px}
 .rpt-sev-pos{display:block;padding:8px 14px;margin:4px 0;background:#E8F8F2;border:1px solid #A7F3D0;border-radius:6px;color:#065F46;font-weight:500;font-size:13px}
 .rpt-sev-act{display:block;padding:8px 14px;margin:4px 0;background:#ECF2FE;border:1px solid #C7D2FE;border-radius:6px;color:#3730A3;font-weight:500;font-size:13px}
-
 /* Quote & profile lines */
 .rpt-quote{display:block;padding:10px 16px;margin:6px 0;background:#F5F6F7;border-left:3px solid #E5E6EB;border-radius:0 6px 6px 0;color:#646A73;font-style:italic;font-size:13px}
 .rpt-profile{display:block;padding:12px 16px;margin:6px 0;background:#ECF2FE;border:1px solid #BAE6FD;border-radius:8px;color:#1F2329;font-weight:500;font-size:13px}
-
-/* ===== KPI Cards Row ===== */
+/* KPI Cards Row */
 .rpt-kpi-row{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
 .rpt-kpi-card{flex:1;min-width:140px;padding:18px 20px 14px;border-radius:8px;text-align:center;background:#fff;border:1px solid #F2F3F5;border-top:3px solid #E5E6EB;position:relative}
 .rpt-kpi-card .kpi-num{font-size:30px;font-weight:700;color:#1F2329;line-height:1.2}
@@ -159,8 +123,7 @@ tr:nth-child(even):hover{background:#F2F3F5}
 .rpt-kpi-card.kpi-neutral .kpi-num{color:#1D39C4}
 .rpt-kpi-card.kpi-warning{border-top-color:#F2A227}
 .rpt-kpi-card.kpi-warning .kpi-num{color:#92400E}
-
-/* ===== Collapsible Report Sections ===== */
+/* Collapsible Report Sections */
 .rpt-section-wrap{margin-bottom:10px;border:1px solid #F2F3F5;border-radius:8px;overflow:hidden;background:#fff}
 .rpt-section-hdr{padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;color:#1F2329;user-select:none;transition:background .15s}
 .rpt-section-hdr:hover{background:#F5F6F7}
@@ -172,48 +135,34 @@ tr:nth-child(even):hover{background:#F2F3F5}
 .rpt-section-wrap.negative{border-left:3px solid #F54A45}
 .rpt-section-wrap.insight{border-left:3px solid #3370FF}
 .rpt-section-wrap.summary{border-left:3px solid #F2A227;background:#FFFBEB}
-
-/* ===== Insight Callout ===== */
+/* Insight Callout */
 .rpt-callout{padding:14px 18px;border-radius:10px;margin:10px 0;font-size:14px;line-height:1.8}
 .rpt-callout-pos{background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46}
 .rpt-callout-neg{background:#FEF2F2;border:1px solid #FECACA;color:#991B1B}
 .rpt-callout-info{background:#EEF2FF;border:1px solid #C7D2FE;color:#3730A3}
-
 .rpt-quote-card{padding:14px 18px;background:#F5F6F7;border-left:3px solid #3370FF;border-radius:0 10px 10px 0;margin:10px 0;font-size:14px;line-height:1.8;color:#475569}
 .rpt-quote-card .rpt-quote-text{font-style:italic}
-
-/* ===== Quote Card ===== */
-.rpt-quote-card{padding:14px 18px;background:#F5F6F7;border-left:3px solid #3370FF;border-radius:0 6px 6px 0;margin:8px 0;font-size:13px;line-height:1.7;color:#475569}
-.rpt-quote-card .rpt-quote-text{font-style:italic}
 .rpt-quote-card .rpt-quote-meta{font-size:11px;color:#8F959E;margin-top:6px;font-style:normal}
-
-/* ===== Interactive Report Container ===== */
+/* Interactive Report Container */
 .rpt-interactive{max-width:900px;margin:0 auto}
-
-/* Report title */
 .rpt-report-title{text-align:center;padding:32px 20px 16px;font-size:22px;font-weight:700;color:#1F2329;line-height:1.4}
-.rpt-report-title .rpt-metric{font-size:inherit}
 .rpt-report-subtitle{text-align:center;font-size:13px;color:#8F959E;margin-bottom:20px}
 .rpt-report-wrapper{background:#fff;border-radius:8px;border:1px solid #F2F3F5;overflow:hidden}
-
 /* Tab bar */
-.rpt-tab-bar{display:flex;gap:0;overflow-x:auto;border-bottom:2px solid #E5E6EB;margin:24px 0 0 0;padding:0 4px;-webkit-overflow-scrolling:touch;background:#fff;border-radius:8px 8px 0 0}
+.rpt-tab-bar{display:flex;gap:0;overflow-x:auto;border-bottom:2px solid #E5E6EB;margin:24px 0 0;padding:0 4px;-webkit-overflow-scrolling:touch;background:#fff;border-radius:8px 8px 0 0}
 .rpt-tab-bar::-webkit-scrollbar{height:0}
 .rpt-tab-item{flex-shrink:0;padding:12px 20px;cursor:pointer;color:#646A73;font-size:13px;font-weight:500;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;display:flex;align-items:center;gap:6px;white-space:nowrap;user-select:none}
 .rpt-tab-item:hover{color:#1F2329}
 .rpt-tab-item.active{color:#3370FF;border-bottom-color:#3370FF;font-weight:600}
 .rpt-tab-content{min-height:200px;background:#fff;border:1px solid #F2F3F5;border-top:none;border-radius:0 0 8px 8px;padding:28px 32px}
-
 /* Tab panels */
 .rpt-tab-panel{padding:0}
 .rpt-tab-panel.negative .rpt-metric{background:#FEF2F2;color:#991B1B}
 .rpt-tab-panel.positive .rpt-metric{background:#ECFDF5;color:#065F46}
-
-/* Two-column layout inside tab panel */
+/* Two-column layout */
 .rpt-two-col{display:flex;gap:28px;flex-wrap:wrap}
 .rpt-two-col .rpt-col-main{flex:2;min-width:300px}
 .rpt-two-col .rpt-col-side{flex:1;min-width:220px}
-
 /* Score distribution bars */
 .rpt-score-bar-row{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:12px}
 .rpt-score-bar-label{width:28px;text-align:right;color:#646A73;flex-shrink:0}
@@ -223,73 +172,94 @@ tr:nth-child(even):hover{background:#F2F3F5}
 .rpt-score-bar-fill.mid{background:#F2A227}
 .rpt-score-bar-fill.low{background:#F54A45}
 .rpt-score-bar-count{width:36px;font-size:11px;color:#8F959E;flex-shrink:0}
-
 /* Profile card */
 .rpt-profile-card{display:flex;gap:12px;padding:14px;margin:10px 0;background:#F5F6F7;border-radius:8px;align-items:flex-start}
 .rpt-profile-avatar{width:40px;height:40px;border-radius:50%;background:#3370FF;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
 .rpt-profile-info{flex:1;font-size:13px;line-height:1.7}
 .rpt-profile-name{font-weight:600;color:#1F2329}
-
 /* Better typography in report body */
 .rpt-section-body{font-size:15px;line-height:2;color:#374151}
-.rpt-section-body p{margin:0 0 12px 0}
+.rpt-section-body p{margin:0 0 12px}
 .rpt-section-body strong,.rpt-section-body b{color:#1F2329}
-
-/* Colored bullet lists */
-.rpt-section-body ul,.rpt-section-body ol{margin:8px 0 16px 0;padding-left:20px}
-.rpt-section-body li{margin-bottom:8px;position:relative}
-
-/* Horizontal divider between major topics */
+.rpt-section-body ul,.rpt-section-body ol{margin:8px 0 16px;padding-left:20px}
+.rpt-section-body li{margin-bottom:8px}
 .rpt-divider{border:none;border-top:1px solid #F2F3F5;margin:20px 0}
-
-/* Highlight boxes for key data */
 .rpt-highlight-box{padding:12px 16px;margin:12px 0;border-radius:6px;font-weight:500}
 .rpt-highlight-box.green{background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46}
 .rpt-highlight-box.red{background:#FEF2F2;border:1px solid #FECACA;color:#991B1B}
 .rpt-highlight-box.blue{background:#EEF2FF;border:1px solid #C7D2FE;color:#3730A3}
-
-/* KPIs row wrapper */
-.rpt-kpi-row{margin:0 0 28px 0}
-
-/* ===== GitHub Markdown Overrides ===== */
+/* Markdown overrides */
 .markdown-body{font-size:15px;max-width:100%}
 .markdown-body h3{border-bottom:1px solid #d8dee4;padding-bottom:8px}
+/* Report container */
+.report-container{background:#FFFFFF;border-radius:8px;padding:32px 40px;max-width:900px;margin:0 auto;font-size:15px;line-height:1.85;white-space:pre-wrap;border:1px solid #F2F3F5;color:#1F2329}
 
-/* ===== Alerts ===== */
-.alert{padding:10px 16px;border-radius:6px;margin:12px 0;font-size:13px}
-.alert-info{background:#ECF2FE;color:#1D39C4;border:1px solid #C7D2FE}
-.alert-danger{background:#FEF0EF;color:#991B1B;border:1px solid #FECACA}
-.alert-success{background:#E8F8F2;color:#065F46;border:1px solid #A7F3D0}
-.alert-warning{background:#FEF6EC;color:#92400E;border:1px solid #FDE68A}
+/* ===== Chart wrappers ===== */
+.chart-wrap{position:relative;height:300px;width:100%}
+.chart-wrap-lg{height:360px}
 
-/* ===== Badges ===== */
-.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500}
-.badge-primary{background:#ECF2FE;color:#3370FF}
-.badge-success{background:#E8F8F2;color:#1BAC6B}
-.badge-warning{background:#FEF6EC;color:#F2A227}
-.badge-danger{background:#FEF0EF;color:#F54A45}
-.badge-secondary{background:#F5F6F7;color:#646A73}
+/* ===== Responsive ===== */
+@media(max-width:768px){
+  .sidebar{width:56px;background:#F8F9FA}
+  .sidebar .logo span,.sidebar .nav-item span:not(.nav-icon),.sidebar .nav-group-header span:first-child{display:none}
+  .sidebar .nav-group-header .nav-arrow{display:none}
+  .main-content{margin-left:56px;padding:24px 16px}
+  .mapping-row{flex-direction:column;align-items:stretch}
+  .report-container{padding:20px;font-size:14px}
+  .col-lg-6,.col-lg-4{min-width:100%}
+}
 
-/* ===== History ===== */
-.history-item{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid #F2F3F5;transition:background .15s}
-.history-item:hover{background:#F5F6F7}
-.history-item .hi-title{font-weight:500;font-size:14px;color:#1F2329}
-.history-item .hi-meta{font-size:12px;color:#8F959E;margin-top:3px}
-.history-item .hi-actions{display:flex;gap:6px}
+/* ===== Legacy Components (Tailwind bridge — keep existing HTML working) ===== */
+/* These are intentionally kept as named classes for JS compatibility */
 
-/* ===== Tabs ===== */
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 15px;border-radius:6px;border:1px solid #CFD1D7;font-size:13px;cursor:pointer;background:#FFFFFF;color:#1F2329;text-decoration:none;transition:all .15s;font-weight:500;line-height:1.4;height:34px;box-sizing:border-box}
+.btn:hover{background:#F5F6F7;border-color:#B0B5BD}
+.btn-primary{background:#3370FF;color:#fff;border-color:#3370FF}
+.btn-primary:hover{background:#2860E1;border-color:#2860E1}
+.btn-success{background:#2860E1;color:#fff;border-color:#2860E1}
+.btn-success:hover{background:#1D4ED8;border-color:#1D4ED8}
+.btn-danger{background:#F54A45;color:#fff;border-color:#F54A45}
+.btn-danger:hover{background:#E0423E;border-color:#E0423E}
+.btn-sm{padding:5px 12px;font-size:13px;height:30px}
+.btn-lg{padding:10px 22px;font-size:15px;height:40px}
+.btn:disabled{opacity:.45;cursor:not-allowed;pointer-events:none}
+
+/* Forms */
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:13px;font-weight:500;color:#1F2329;margin-bottom:6px}
+.form-group input,.form-group select{width:100%;border:1px solid #E5E6EB;border-radius:6px;padding:8px 12px;font-size:13px;background:#FFFFFF;color:#1F2329;transition:border-color .15s}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:#3370FF;box-shadow:0 0 0 3px rgba(51,112,255,.1)}
+.form-group input::placeholder{color:#8F959E}
+.form-group .hint{font-size:12px;color:#8F959E;margin-top:4px}
+
+/* Tables */
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 12px;text-align:left;border-bottom:1px solid #F2F3F5;font-size:13px}
+th{font-size:12px;color:#646A73;font-weight:500;background:#FAFBFC;white-space:nowrap;position:sticky;top:0;z-index:1;text-transform:none;letter-spacing:0}
+tr:hover{background:#F7F8FA}
+tr:nth-child(even){background:#FAFBFC}
+tr:nth-child(even):hover{background:#F2F3F5}
+
+/* Column Mapping */
+.mapping-row{display:flex;gap:12px;align-items:center;margin-bottom:8px;padding:10px 14px;background:#F5F6F7;border-radius:6px}
+
+/* Nav tabs */
 .nav-tabs{display:flex;gap:0;border-bottom:2px solid #F2F3F5;margin-bottom:24px;padding:0}
 .nav-tabs .nav-link{padding:10px 20px;cursor:pointer;color:#646A73;border-bottom:2px solid transparent;margin-bottom:-2px;font-size:14px;transition:all .15s;font-weight:500}
 .nav-tabs .nav-link.active{color:#3370FF;border-bottom-color:#3370FF;font-weight:600}
 .nav-tabs .nav-link:hover{color:#3370FF}
 
-/* ===== Modal ===== */
-.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(31,35,41,.5);z-index:2000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
-.modal{background:#FFFFFF;border-radius:12px;padding:24px 28px;max-width:500px;width:90%;box-shadow:0 8px 40px rgba(31,35,41,.15);border:1px solid #F2F3F5}
-.modal h4{margin-bottom:16px;font-size:16px}
-.modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+/* Skeleton loading */
+.skeleton{background:linear-gradient(90deg,#F2F3F5 25%,#E5E6EB 50%,#F2F3F5 75%);background-size:800px 100%;animation:shimmer 1.5s infinite;border-radius:6px;height:16px;margin:8px 0}
+.skeleton.h-sm{height:12px;width:60%}
+.skeleton.h-lg{height:20px;width:80%}
 
-/* ===== Utilities ===== */
+/* Typography */
+h4,h5{margin:0 0 8px;font-weight:600;color:#1F2329}
+h4{font-size:16px;margin-top:12px}
+
+/* Utilities */
 .text-muted{color:#8F959E}
 .text-primary{color:#3370FF}
 .text-danger{color:#F54A45}
@@ -306,36 +276,41 @@ tr:nth-child(even):hover{background:#F2F3F5}
 .col-lg-4{flex:1;min-width:240px}
 .col-12{flex:0 0 100%}
 
-/* ===== Skeleton Loading ===== */
-@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
-.skeleton{background:linear-gradient(90deg,#F2F3F5 25%,#E5E6EB 50%,#F2F3F5 75%);background-size:800px 100%;animation:shimmer 1.5s infinite;border-radius:6px;height:16px;margin:8px 0}
-.skeleton.h-sm{height:12px;width:60%}
-.skeleton.h-lg{height:20px;width:80%}
+/* History */
+.history-item{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid #F2F3F5;transition:background .15s}
+.history-item:hover{background:#F5F6F7}
+.history-item .hi-title{font-weight:500;font-size:14px;color:#1F2329}
+.history-item .hi-meta{font-size:12px;color:#8F959E;margin-top:3px}
+.history-item .hi-actions{display:flex;gap:6px}
 
-/* ===== Strategy Page Styles ===== */
+/* KPI cards */
+.kpi-cards{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.kpi-card{flex:1;min-width:180px;background:#FFFFFF;border-radius:8px;padding:18px 20px;border:1px solid #F2F3F5}
+.kpi-card .kpi-label{font-size:12px;color:#8F959E;margin-bottom:4px}
+.kpi-card .kpi-value{font-size:24px;font-weight:700;color:#1F2329}
+.kpi-card .kpi-sub{font-size:11px;color:#8F959E;margin-top:2px}
+
+/* Card system (minimal — keeps JS compatibility) */
+.card{background:#FFFFFF;border-radius:8px;box-shadow:0 1px 2px rgba(31,35,41,.04);margin-bottom:16px;border:1px solid #F2F3F5}
+.card-header{padding:14px 20px;font-weight:600;font-size:14px;border-bottom:1px solid #F2F3F5;display:flex;align-items:center;gap:6px;color:#1F2329}
+.card-header .header-right{margin-left:auto}
+.card-body{padding:20px}
+
+/* Modals */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(31,35,41,.5);z-index:2000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.modal{background:#FFFFFF;border-radius:12px;padding:24px 28px;max-width:500px;width:90%;box-shadow:0 8px 40px rgba(31,35,41,.15);border:1px solid #F2F3F5}
+.modal h4{margin-bottom:16px;font-size:16px}
+.modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+
+/* Strategy page */
 #store-sku-table{max-height:500px;overflow:auto}
 #store-sku-table table th,#store-sku-table table td{white-space:nowrap;padding:6px 10px;line-height:1.4}
 #store-sku-table table th{position:sticky;top:0;z-index:2}
 #sku-detail-table{max-height:70vh;overflow:auto}
 .strategy-metric{font-size:13px;color:#646A73;margin-left:8px}
-.chart-wrap{position:relative;height:300px;width:100%}
-.chart-wrap-lg{height:360px}
-
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* ===== Responsive ===== */
-@media(max-width:768px){
-  .sidebar{width:56px}
-  .sidebar .logo span,.sidebar .nav-item span:not(.nav-icon),.sidebar .nav-group-header span:first-child{display:none}
-  .sidebar .nav-group-header .nav-arrow{display:none}
-  .main-content{margin-left:56px;padding:16px}
-  .mapping-row{flex-direction:column;align-items:stretch}
-  .report-container{padding:20px;font-size:14px}
-  .col-lg-6,.col-lg-4{min-width:100%}
-}
 </style>
 </head>
-<body>
+<body class="bg-[#F5F6F7] text-sm text-[#1F2329] antialiased m-0">
 
 <!-- Sidebar -->
 <nav class="sidebar">
@@ -411,9 +386,7 @@ tr:nth-child(even):hover{background:#F2F3F5}
 </nav>
 
 <!-- Main Content -->
-<div class="main-content">
-  <div style="background:#EEF2FF;color:#3730A3;padding:4px 12px;border-radius:4px;margin-bottom:12px;font-size:11px;display:inline-block">UI v3.0 — marked + github-markdown-css</div>
-
+<div class="main-content ml-[220px] pt-10 pb-7 px-8 min-h-screen max-w-[1400px]">
 
   <!-- Page: Import -->
   <div class="page active" id="page-import">
@@ -621,6 +594,17 @@ tr:nth-child(even):hover{background:#F2F3F5}
     </div>
   </div>
 
+  <!-- Page: Strategy History -->
+  <div class="page" id="page-strategy-history">
+    <div class="d-flex gap-2 mb-3" style="justify-content:space-between;align-items:center">
+      <h4 style="margin:0"><i data-lucide="clock" class="lucide-icon" style="width:20px;height:20px"></i> 历史记录</h4>
+      <button class="btn btn-danger btn-sm" id="btn-clear-strategy-history" onclick="clearStrategyHistory()" style="display:none"><i data-lucide="trash-2" class="lucide-icon"></i> 清空全部</button>
+    </div>
+    <div class="card"><div class="card-body" id="strategy-history-list">
+      <div class="report-empty"><div class="icon"><i data-lucide="clock" style="width:48px;height:48px;opacity:.25"></i></div><p>暂无历史记录</p><p class="text-muted">获取店铺SKU后，数据会自动保存</p></div>
+    </div></div>
+  </div>
+
   <!-- Page: SKU Detail View -->
   <div class="page" id="page-sku-detail">
     <div class="d-flex gap-2 mb-3" style="justify-content:space-between;align-items:center">
@@ -648,6 +632,8 @@ tr:nth-child(even):hover{background:#F2F3F5}
     <div id="strategy-report-content" style="display:none">
       <div class="d-flex gap-2 mb-3">
         <button class="btn btn-sm" onclick="renderCharts()"><i data-lucide="refresh-cw" class="lucide-icon"></i> 刷新图表</button>
+        <button class="btn btn-sm btn-primary copy-strategy-btn" style="display:none"><i data-lucide="copy" class="lucide-icon"></i> 复制全文</button>
+        <button class="btn btn-sm btn-success download-strategy-btn" style="display:none"><i data-lucide="file-down" class="lucide-icon"></i> 下载 TXT</button>
       </div>
       <div id="strategy-charts">
         <div class="row">
@@ -930,11 +916,61 @@ var state = {
 };
 
 // ============================================
+// DATA SERVICE (SQLite via REST API)
+// ============================================
+var api = {
+  // Settings
+  loadSettings: async function() {
+    try { var r = await fetch('/api/settings'); return await r.json(); } catch(e) { return {}; }
+  },
+  saveSettings: async function(data) {
+    await fetch('/api/settings', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+  },
+  // Review reports
+  loadReviewHistory: async function() {
+    try { var r = await fetch('/api/reports'); var items = await r.json(); return items.map(function(i){ return { id:i.id, productName:i.product_name, reviewCount:i.review_count, report:i.report_text, reviews:JSON.parse(i.reviews_json||'[]'), stats:JSON.parse(i.stats_json||'{}'), date:i.created_at }; }); } catch(e) { return []; }
+  },
+  saveReviewReport: async function(data) {
+    var payload = { productName:data.productName, reviewCount:data.reviewCount, report:data.report, reviews:data.reviews, stats:data.stats };
+    var r = await fetch('/api/reports', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    return (await r.json()).id;
+  },
+  deleteReviewReport: async function(id) { await fetch('/api/reports/'+id, { method:'DELETE' }); },
+  // Strategy reports
+  loadStrategyHistory: async function() {
+    try { var r = await fetch('/api/strategy-reports'); var items = await r.json(); return items.map(function(i){ return { id:i.id, platform:i.platform, shopName:i.shop_name, shopId:i.shop_id, totalSkus:i.total_skus, familyCount:i.family_count, report:i.report_text, skus:JSON.parse(i.skus_json||'[]'), platformKey:i.platform_key, date:i.created_at }; }); } catch(e) { return []; }
+  },
+  saveStrategyReport: async function(data) {
+    var payload = { platform:data.platform, shopName:data.shopName, shopId:data.shopId, totalSkus:data.totalSkus, familyCount:data.familyCount, report:data.report||'', skus:data.skus, platformKey:data.platformKey||'jd' };
+    var r = await fetch('/api/strategy-reports', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    return (await r.json()).id;
+  },
+  deleteStrategyReport: async function(id) { await fetch('/api/strategy-reports/'+id, { method:'DELETE' }); },
+  // Trend reports
+  loadTrendHistory: async function() {
+    try { var r = await fetch('/api/trend-reports'); var items = await r.json(); return items.map(function(i){ return { id:i.id, keyword:i.keyword, totalNotes:i.total_notes, report:i.report_text, notes:JSON.parse(i.notes_json||'[]'), date:i.created_at }; }); } catch(e) { return []; }
+  },
+  saveTrendReport: async function(data) {
+    var payload = { keyword:data.keyword, totalNotes:data.totalNotes, report:data.report||'', notes:data.notes };
+    var r = await fetch('/api/trend-reports', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    return (await r.json()).id;
+  },
+  deleteTrendReport: async function(id) { await fetch('/api/trend-reports/'+id, { method:'DELETE' }); },
+};
+
+// ============================================
 // INITIALIZATION
 // ============================================
 function init() {
   // Init Lucide icons
   if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+  // Share button delegation
+  document.body.addEventListener('click', function(e) {
+    var btn = e.target.closest('.share-btn');
+    if (!btn) return;
+    e.stopPropagation();
+    shareReportHTML(btn.dataset.report, btn.dataset.title, btn.dataset.meta);
+  });
 
   // Detect file:// protocol and warn user
   if (window.location.protocol === 'file:') {
@@ -956,8 +992,7 @@ function init() {
   }
 
   loadSettings();
-  loadHistory();
-  loadStrategyHistory();
+  reloadAllHistory();
   setupNavigation();
   setupImportTabs();
   setupUploadZone();
@@ -1043,12 +1078,13 @@ function switchPage(page) {
 // ============================================
 // SETTINGS
 // ============================================
-function loadSettings() {
+async function loadSettings() {
   try {
-    var saved = JSON.parse(localStorage.getItem('review-insight-settings') || '{}');
-    state.apiKey = sanitizeApiKey(saved.apiKey || '');
+    var resp = await fetch('/api/settings');
+    var saved = await resp.json();
+    state.apiKey = sanitizeApiKey(saved.api_key || '');
     state.model = saved.model || 'deepseek-chat';
-    state.apifyToken = saved.apifyToken || '';
+    state.apifyToken = saved.apify_token || '';
   } catch(e) {
     state.apiKey = '';
     state.model = 'deepseek-chat';
@@ -1062,30 +1098,26 @@ function loadSettingsToForm() {
   document.getElementById('apify-token-input').value = state.apifyToken || '';
 }
 
-// Strip non-ASCII / non-ISO-8859-1 characters from API key
-// (copy-paste can introduce invisible Unicode chars that break HTTP headers)
 function sanitizeApiKey(key) {
   if (!key) return '';
   return key.replace(/[^\x00-\xFF]/g, '').trim();
 }
 
-function saveSettings() {
+async function saveSettings() {
   state.apiKey = sanitizeApiKey(document.getElementById('api-key-input').value.trim());
   state.model = document.getElementById('model-select').value;
   state.apifyToken = document.getElementById('apify-token-input').value.trim();
   try {
-    localStorage.setItem('review-insight-settings', JSON.stringify({
-      apiKey: state.apiKey,
-      model: state.model,
-      apifyToken: state.apifyToken
-    }));
-    document.getElementById('settings-msg').innerHTML = '<div class="alert alert-success">设置已保存</div>';
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey: state.apiKey, model: state.model, apifyToken: state.apifyToken })
+    });
+    document.getElementById('settings-msg').innerHTML = '<div class="alert alert-success">设置已保存 (服务端)</div>';
   } catch(e) {
     document.getElementById('settings-msg').innerHTML = '<div class="alert alert-danger">保存失败: ' + e.message + '</div>';
   }
-  setTimeout(function() {
-    document.getElementById('settings-msg').innerHTML = '';
-  }, 3000);
+  setTimeout(function() { document.getElementById('settings-msg').innerHTML = ''; }, 3000);
 }
 
 function toggleApiKeyVisibility() {
@@ -1822,30 +1854,12 @@ async function startStoreFetch() {
 
         if (data.type === 'result') { resultData = data; rv = { done: true }; break; }
 
-        // Progress with phase labels
-        var pct = 0; var phaseLabel = '';
-        if (data.phase === 'search') { pct = 5; phaseLabel = '搜索中'; }
-        else if (data.phase === 'download') { pct = 5 + Math.round(data.current / Math.max(1, data.total) * 20); phaseLabel = '下载页面'; }
-        else if (data.phase === 'extract') { pct = 25; phaseLabel = '提取SKU'; }
-        else if (data.phase === 'filter' && !data.total) { pct = 30; phaseLabel = '店铺过滤'; }
-        else if (data.phase === 'reviews') { pct = 30 + Math.round(data.current / Math.max(1, data.total) * 35); phaseLabel = '抓取评论'; }
-        else if (data.phase === 'parse') { pct = 65; phaseLabel = '解析规格'; }
-        else if (data.phase === 'family') { pct = 70 + Math.round(data.current / Math.max(1, data.total) * 25); phaseLabel = '产品族分组'; }
-        else if (data.phase === 'search') { pct = 20; phaseLabel = '外部平台搜索中...'; }
-        else if (data.phase === 'catalog') { pct = 50; phaseLabel = '获取商品目录...'; }
-        else if (data.phase === 'filter') { pct = 80; phaseLabel = '数据整理中'; }
-        else if (data.phase === 'output') { pct = 97; phaseLabel = '生成结果'; }
+        // Progress: unified handler for all platforms
+        var pct = 5; var phaseLabel = data.message || data.phase || '处理中';
+        document.getElementById('store-progress-status').textContent = data.message || data.phase || '处理中';
+        document.getElementById('store-progress-fill').style.width = '30%';
+        document.getElementById('store-progress-fill').classList.add('indeterminate');
 
-        document.getElementById('store-progress-fill').style.width = Math.min(pct, 95) + '%';
-        // Pulse animation for long-running external API calls
-        var fill = document.getElementById('store-progress-fill');
-        if (data.phase === 'search' || data.phase === 'catalog') {
-          fill.classList.add('indeterminate');
-        } else {
-          fill.classList.remove('indeterminate');
-        }
-        var label = '[' + (phaseLabel || data.phase || '处理中') + '] ';
-        document.getElementById('store-progress-status').textContent = label + (data.message || '');
         if (data.current && data.total) {
           document.getElementById('store-progress-detail').textContent = data.current + ' / ' + data.total;
         }
@@ -1859,6 +1873,11 @@ async function startStoreFetch() {
         state.strategyMeta = { shopName: resultData.shopName||'', shopId: resultData.shopId||'', totalSkus: resultData.totalSkus||0, familyCount: resultData.familyCount||0 };
         state.strategyReport = '';
         saveStrategyHistory(resultData);
+        // Reload to verify save worked
+        loadStrategyHistory();
+        if (state.strategyHistory.length > 0) {
+          document.getElementById('store-progress-detail').textContent = '已保存到历史记录';
+        }
 
         // Render SKU preview table with ALL extracted fields
       var skus = resultData.skus.slice(0, 100);
@@ -1973,7 +1992,7 @@ async function startTrendFetch() {
       // Render preview
       var h = '<table style="font-size:11px;white-space:nowrap"><thead><tr><th>#</th><th>标题</th><th>作者</th><th>点赞</th><th>评论</th><th>收藏</th><th>发布时间</th></tr></thead><tbody>';
       resultData.notes.forEach(function(n, i) {
-        h += '<tr><td>'+(i+1)+'</td><td style="max-width:300px;overflow:hidden;text-overflow:ellipsis">'+skuLink(n.noteId, n.title)+'</td><td>'+escHtml(n.author||'')+'</td><td>'+escHtml(n.likes||'0')+'</td><td>'+escHtml(n.comments||'0')+'</td><td>'+escHtml(n.collects||'0')+'</td><td>'+escHtml(n.publishedAt||'')+'</td></tr>';
+        h += '<tr><td>'+(i+1)+'</td><td style="max-width:300px;overflow:hidden;text-overflow:ellipsis">'+noteLink(n.noteId, n.title)+'</td><td>'+escHtml(n.author||'')+'</td><td>'+escHtml(n.likes||'0')+'</td><td>'+escHtml(n.comments||'0')+'</td><td>'+escHtml(n.collects||'0')+'</td><td>'+escHtml(n.publishedAt||'')+'</td></tr>';
       });
       h += '</tbody></table>';
       document.getElementById('trend-note-table').innerHTML = h;
@@ -2030,7 +2049,7 @@ function renderTrendDetail() {
   document.getElementById('trend-detail-count').textContent = '共 ' + state.trendNotes.length + ' 条笔记';
   var h = '<table style="font-size:11px"><thead><tr><th>#</th><th>标题</th><th>作者</th><th>内容</th><th>点赞</th><th>评论</th><th>收藏</th><th>时间</th></tr></thead><tbody>';
   state.trendNotes.forEach(function(n, i) {
-    h += '<tr><td>'+(i+1)+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">'+skuLink(n.noteId, n.title)+'</td><td>'+escHtml(n.author||'')+'</td><td style="max-width:300px;overflow:hidden;text-overflow:ellipsis">'+escHtml(n.content||'')+'</td><td>'+escHtml(n.likes||'0')+'</td><td>'+escHtml(n.comments||'0')+'</td><td>'+escHtml(n.collects||'0')+'</td><td>'+escHtml(n.publishedAt||'')+'</td></tr>';
+    h += '<tr><td>'+(i+1)+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">'+noteLink(n.noteId, n.title)+'</td><td>'+escHtml(n.author||'')+'</td><td style="max-width:300px;overflow:hidden;text-overflow:ellipsis">'+escHtml(n.content||'')+'</td><td>'+escHtml(n.likes||'0')+'</td><td>'+escHtml(n.comments||'0')+'</td><td>'+escHtml(n.collects||'0')+'</td><td>'+escHtml(n.publishedAt||'')+'</td></tr>';
   });
   h += '</tbody></table>';
   document.getElementById('trend-detail-table').innerHTML = h;
@@ -2048,17 +2067,18 @@ function downloadTrendCsv() {
 }
 
 // Trend history
-function saveTrendHistory(data) {
-  try { state.trendHistory = JSON.parse(localStorage.getItem('review-insight-trend-history') || '[]'); } catch(e) { state.trendHistory = []; }
-  state.trendHistory.unshift({ id: Date.now(), keyword: data.keyword, totalNotes: data.totalNotes, notes: data.notes.slice(0,200), report: '', date: new Date().toLocaleString('zh-CN') });
-  if (state.trendHistory.length > 20) state.trendHistory = state.trendHistory.slice(0, 20);
-  try { localStorage.setItem('review-insight-trend-history', JSON.stringify(state.trendHistory)); } catch(e) {}
+async function saveTrendHistory(data) {
+  var id = await api.saveTrendReport({ keyword: data.keyword, totalNotes: data.totalNotes, report: '', notes: data.notes.slice(0,200) });
+  state.trendHistory.unshift({ id: id, keyword: data.keyword, totalNotes: data.totalNotes, notes: data.notes.slice(0,200), report: '', date: new Date().toLocaleString('zh-CN') });
 }
-function updateTrendHistoryReport(report) {
-  if (state.trendHistory.length > 0) { state.trendHistory[0].report = report; try { localStorage.setItem('review-insight-trend-history', JSON.stringify(state.trendHistory)); } catch(e) {} }
+async function updateTrendHistoryReport(report) {
+  if (state.trendHistory.length > 0 && state.trendHistory[0].id) {
+    state.trendHistory[0].report = report;
+    await api.saveTrendReport({ keyword: state.trendHistory[0].keyword, totalNotes: state.trendHistory[0].totalNotes, report: report, notes: state.trendHistory[0].notes });
+  }
 }
 function renderTrendHistory() {
-  try { state.trendHistory = JSON.parse(localStorage.getItem('review-insight-trend-history') || '[]'); } catch(e) { state.trendHistory = []; }
+  // Data already loaded via reloadAllHistory — just render
   var c = document.getElementById('trend-history-list'); var b = document.getElementById('btn-clear-trend-history');
   if (state.trendHistory.length === 0) { c.innerHTML = '<div class="report-empty"><div class="icon"><i data-lucide="clock" style="width:48px;height:48px;opacity:.25"></i></div><p>暂无历史记录</p></div>'; b.style.display='none'; return; }
   b.style.display='inline-flex';
@@ -2068,39 +2088,32 @@ function renderTrendHistory() {
 }
 function loadTrendNotes(i) { var h = state.trendHistory[i]; if (!h) return; state.trendNotes = h.notes; state.trendMeta = { keyword: h.keyword, totalNotes: h.notes.length, date: h.date }; state.trendReport = h.report||''; switchPage('trend-detail'); }
 function loadTrendReport(i) { var h = state.trendHistory[i]; if (!h) return; state.trendNotes = h.notes; state.trendMeta = { keyword: h.keyword, totalNotes: h.notes.length, date: h.date }; state.trendReport = h.report||''; switchPage('trend-report'); }
-function deleteTrendHistory(i) { if (confirm('确定删除？')) { state.trendHistory.splice(i,1); try { localStorage.setItem('review-insight-trend-history', JSON.stringify(state.trendHistory)); } catch(e){} renderTrendHistory(); } }
-function clearTrendHistory() { if (confirm('清空所有？')) { state.trendHistory=[]; localStorage.removeItem('review-insight-trend-history'); renderTrendHistory(); } }
+async function deleteTrendHistory(i) { if (confirm('确定删除？')) { var h = state.trendHistory[i]; if (h && h.id) await api.deleteTrendReport(h.id); state.trendHistory.splice(i,1); renderTrendHistory(); } }
+async function clearTrendHistory() { if (confirm('清空所有？')) { for (var i=0;i<state.trendHistory.length;i++){ if(state.trendHistory[i].id) await api.deleteTrendReport(state.trendHistory[i].id); } state.trendHistory=[]; renderTrendHistory(); } }
 
 // ===== Strategy History =====
-function loadStrategyHistory() {
-  try { state.strategyHistory = JSON.parse(localStorage.getItem('review-insight-strategy-history') || '[]'); } catch(e) { state.strategyHistory = []; }
+function loadStrategyHistory() { /* compat — data loaded via reloadAllHistory */ }
+
+async function saveStrategyHistory(skuData) {
+  var platformMap = { jd: '京东', douyin: '抖音', tmall: '天猫' };
+  var platformLabel = platformMap[skuData.platform] || skuData.platform || '京东';
+  var id = await api.saveStrategyReport({
+    platform: platformLabel, shopName: skuData.shopName, shopId: skuData.shopId,
+    totalSkus: skuData.totalSkus, familyCount: skuData.familyCount,
+    report: '', skus: skuData.skus, platformKey: skuData.platform || 'jd',
+  });
+  state.strategyHistory.unshift({ id: id, platform: platformLabel, shopName: skuData.shopName, platformKey: skuData.platform||'jd', shopId: skuData.shopId, totalSkus: skuData.totalSkus, familyCount: skuData.familyCount, skus: skuData.skus, report: '', date: new Date().toLocaleString('zh-CN') });
 }
-function saveStrategyHistory(skuData) {
-  loadStrategyHistory();
-  var entry = {
-    id: Date.now(),
-    date: new Date().toLocaleString('zh-CN'),
-    shopName: skuData.shopName,
-    shopId: skuData.shopId,
-    totalSkus: skuData.totalSkus,
-    familyCount: skuData.familyCount,
-    // Save only essential fields to avoid localStorage overflow
-    skus: skuData.skus.slice(0, 200).map(function(s) { return { skuId:s.skuId, name:s.name, model:s.model, price:s.price, productType:s.productType, commentCount:s.commentCount, avgScore:s.avgScore, goodRate:s.goodRate, cpu:s.cpu, cpuModel:s.cpuModel, ram:s.ram, disk:s.disk, screenCount:s.screenCount, screenType:s.screenType, system:s.system, ai:s.ai, accessoryType:s.accessoryType, color:s.color }; }),
-    totalSkus: skuData.skus.length,
-    report: ''
-  };
-  state.strategyHistory.unshift(entry);
-  if (state.strategyHistory.length > 20) state.strategyHistory = state.strategyHistory.slice(0, 20);
-  try { localStorage.setItem('review-insight-strategy-history', JSON.stringify(state.strategyHistory)); } catch(e) {
-    // Storage full, trim
-    state.strategyHistory = state.strategyHistory.slice(0, 10);
-    try { localStorage.setItem('review-insight-strategy-history', JSON.stringify(state.strategyHistory)); } catch(e2) {}
-  }
-}
-function updateStrategyHistoryReport(report) {
-  if (state.strategyHistory.length > 0) {
+
+async function updateStrategyHistoryReport(report) {
+  if (state.strategyHistory.length > 0 && state.strategyHistory[0].id) {
     state.strategyHistory[0].report = report;
-    try { localStorage.setItem('review-insight-strategy-history', JSON.stringify(state.strategyHistory)); } catch(e) {}
+    await api.saveStrategyReport({
+      platform: state.strategyHistory[0].platform, shopName: state.strategyHistory[0].shopName,
+      shopId: state.strategyHistory[0].shopId, totalSkus: state.strategyHistory[0].totalSkus,
+      familyCount: state.strategyHistory[0].familyCount, report: report,
+      skus: state.strategyHistory[0].skus, platformKey: state.strategyHistory[0].platformKey||'jd',
+    });
   }
 }
 function renderStrategyHistory() {
@@ -2114,7 +2127,7 @@ function renderStrategyHistory() {
   btn.style.display = 'inline-flex';
   container.innerHTML = state.strategyHistory.map(function(h, i) {
     return '<div class="history-item">' +
-      '<div class="flex-1"><div class="hi-title">' + escHtml(h.shopName) + ' — ' + h.date + '</div>' +
+      '<div class="flex-1"><div class="hi-title">' + (h.platform ? escHtml(h.platform) + ' · ' : '') + escHtml(h.shopName) + ' — ' + h.date + '</div>' +
       '<div class="hi-meta">' + (h.totalSkus || h.skus.length) + ' SKU / ' + h.familyCount + ' 族' + (h.report ? ' | <i data-lucide="check-circle" style="width:12px;height:12px;display:inline;color:#1BAC6B"></i> 报告已生成' : ' | <i data-lucide="clock" style="width:12px;height:12px;display:inline;color:#8F959E"></i> 待分析') + '</div></div>' +
       '<div class="hi-actions">' +
       '<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();loadStrategySkus(' + i + ')"><i data-lucide="info" class="lucide-icon"></i> SKU明细</button>' +
@@ -2124,29 +2137,32 @@ function renderStrategyHistory() {
 }
 function loadStrategySkus(i) {
   var h = state.strategyHistory[i]; if (!h) return;
-  state.strategySkus = { shopName: h.shopName, shopId: h.shopId, totalSkus: h.totalSkus || h.skus.length, familyCount: h.familyCount, skus: h.skus };
+  state.strategySkus = { shopName: h.shopName, shopId: h.shopId, totalSkus: h.totalSkus || h.skus.length, familyCount: h.familyCount, skus: h.skus, platform: h.platformKey || 'jd' };
   state.strategyMeta = { shopName: h.shopName, shopId: h.shopId, totalSkus: h.totalSkus || h.skus.length, familyCount: h.familyCount };
   state.strategyReport = h.report || '';
   switchPage('sku-detail');
 }
 function loadStrategyReport(i) {
   var h = state.strategyHistory[i]; if (!h) return;
-  state.strategySkus = { shopName: h.shopName, shopId: h.shopId, totalSkus: h.totalSkus || h.skus.length, familyCount: h.familyCount, skus: h.skus };
+  state.strategySkus = { shopName: h.shopName, shopId: h.shopId, totalSkus: h.totalSkus || h.skus.length, familyCount: h.familyCount, skus: h.skus, platform: h.platformKey || 'jd' };
   state.strategyMeta = { shopName: h.shopName, shopId: h.shopId, totalSkus: h.totalSkus || h.skus.length, familyCount: h.familyCount };
   state.strategyReport = h.report || '';
   switchPage('strategy-report');
 }
-function deleteStrategyHistory(i) {
+async function deleteStrategyHistory(i) {
   if (confirm('确定删除此记录？')) {
+    var h = state.strategyHistory[i];
+    if (h && h.id) await api.deleteStrategyReport(h.id);
     state.strategyHistory.splice(i, 1);
-    try { localStorage.setItem('review-insight-strategy-history', JSON.stringify(state.strategyHistory)); } catch(e) {}
     renderStrategyHistory();
   }
 }
-function clearStrategyHistory() {
+async function clearStrategyHistory() {
   if (confirm('确定清空所有<i data-lucide="clock" class="lucide-icon" style="width:20px;height:20px"></i> 策略分析历史？')) {
+    for (var i = 0; i < state.strategyHistory.length; i++) {
+      if (state.strategyHistory[i].id) await api.deleteStrategyReport(state.strategyHistory[i].id);
+    }
     state.strategyHistory = [];
-    localStorage.removeItem('review-insight-strategy-history');
     renderStrategyHistory();
   }
 }
@@ -2212,6 +2228,7 @@ async function startStrategyAnalysis() {
     state.strategyReport = report;
     if (state.strategySkus && state.strategySkus.skus) { saveStrategyHistory(state.strategySkus); updateStrategyHistoryReport(report); }
     document.getElementById('strategy-analysis-text').innerHTML = renderInteractiveReport(report, true);
+    setupStrategyToolbar(report);
     setTimeout(function(){ if(typeof lucide!=='undefined') lucide.createIcons(); }, 100);
   } catch(err) {
     document.getElementById('strategy-analysis-text').innerHTML = '<div class="alert alert-danger">分析失败：' + escHtml(err.message) + '</div>';
@@ -2231,11 +2248,16 @@ function renderStrategyReport() {
   renderCharts();
   if (state.strategyReport) {
     document.getElementById('strategy-analysis-text').innerHTML = renderInteractiveReport(state.strategyReport, true);
+    setupStrategyToolbar(state.strategyReport);
     setTimeout(function(){ if(typeof lucide!=='undefined') lucide.createIcons(); }, 100);
   } else {
-    // Auto-trigger analysis on first view
-    document.getElementById('strategy-analysis-text').innerHTML = '<p class="text-muted">⏳ 正在自动生成策略分析报告...</p>';
-    startStrategyAnalysis();
+    // Show button to manually trigger analysis
+    document.getElementById('strategy-analysis-text').innerHTML =
+      '<div style="text-align:center;padding:24px">' +
+      '<p class="text-muted">SKU数据已就绪，点击下方按钮生成AI策略分析报告</p>' +
+      '<button class="btn btn-primary btn-lg" onclick="startStrategyAnalysis()"><i data-lucide="sparkles" class="lucide-icon"></i> 生成策略分析报告</button>' +
+      '</div>';
+    setTimeout(function(){ if(typeof lucide!=='undefined') lucide.createIcons(); }, 50);
   }
 }
 
@@ -2344,6 +2366,87 @@ function renderReviewDetail() {
   document.getElementById('review-detail-table').innerHTML = html;
 }
 
+// ===== Share Report as HTML =====
+function shareReportHTML(reportText, title, meta) {
+  if (!reportText) { alert('暂无报告内容'); return; }
+  var content = typeof marked !== 'undefined' ? marked.parse(reportText, { breaks: true }) : '<pre>' + escHtml(reportText) + '</pre>';
+
+  // Capture chart data (use saved data if available)
+  var chartScripts = '';
+  var chartCanvases = '';
+  var charts = state._savedCharts || [];
+  if (!charts.length && typeof Chart !== 'undefined') {
+    Object.keys(window).forEach(function(k) {
+      if (k.startsWith('_chart_') && window[k] && window[k].data) {
+        charts.push({ id: k.replace('_chart_', ''), type: window[k].config.type, data: window[k].data, options: window[k].config.options });
+      }
+    });
+  }
+  if (charts.length > 0) {
+    if (charts.length > 0) {
+      chartCanvases = '<div style="max-width:900px;margin:20px auto;display:flex;flex-wrap:wrap;gap:16px">';
+      charts.forEach(function(c, i) {
+        var w = c.type === 'bubble' || c.type === 'scatter' ? '100%' : '48%';
+        chartCanvases += '<div style="width:' + w + ';min-width:300px;background:#fff;border-radius:8px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)"><canvas id="chart-' + c.id + '" style="max-height:300px"></canvas></div>';
+      });
+      chartCanvases += '</div>';
+      chartScripts = '<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><' + '/script><script>window.onload=function(){var charts=' + JSON.stringify(charts) + ';charts.forEach(function(c){var ctx=document.getElementById("chart-"+c.id);if(ctx)new Chart(ctx,{type:c.type,data:c.data,options:Object.assign({responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{boxWidth:12,font:{size:11}}}}},c.options||{})});})}<' + '/script>';
+    }
+  }
+
+  var html = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>' + escHtml(title) + '</title>' +
+    '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.8.1/github-markdown.min.css">' +
+    '<style>' +
+    'body{background:#F5F6F7;padding:40px 20px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}' +
+    '.rpt-interactive{max-width:900px;margin:0 auto}' +
+    '.rpt-report-wrapper{background:#fff;border-radius:8px;border:1px solid #F2F3F5;overflow:hidden}' +
+    '.rpt-report-title{text-align:center;padding:24px 16px 8px;font-size:20px;font-weight:700;color:#1F2329}' +
+    '.rpt-report-subtitle{text-align:center;font-size:13px;color:#8F959E;margin-bottom:16px}' +
+    '.rpt-kpi-row{display:flex;gap:12px;margin:0 20px 16px;flex-wrap:wrap}' +
+    '.rpt-kpi-card{flex:1;min-width:120px;padding:14px 16px;border-radius:8px;text-align:center;background:#fff;border:1px solid #F2F3F5;border-top:3px solid #E5E6EB}' +
+    '.rpt-kpi-card .kpi-num{font-size:24px;font-weight:700;color:#1F2329}' +
+    '.rpt-kpi-card .kpi-label{font-size:12px;color:#646A73;margin-top:4px}' +
+    '.rpt-kpi-card.kpi-positive{border-top-color:#10B981}' +
+    '.rpt-kpi-card.kpi-neutral{border-top-color:#3370FF}' +
+    '.rpt-kpi-card.kpi-negative{border-top-color:#F54A45}' +
+    '.rpt-tab-bar{display:flex;gap:0;overflow-x:auto;border-bottom:2px solid #E5E6EB;margin:12px 0 0;padding:0 4px}' +
+    '.rpt-tab-item{flex-shrink:0;padding:10px 16px;cursor:pointer;color:#646A73;font-size:13px;font-weight:500;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap}' +
+    '.rpt-tab-item.active{color:#3370FF;border-bottom-color:#3370FF;font-weight:600}' +
+    '.rpt-tab-content{min-height:200px;padding:24px 28px}' +
+    '.rpt-tab-panel{display:none}' +
+    '.rpt-tab-panel:first-child{display:block}' +
+    '.rpt-metric{display:inline-block;background:#EEF2FF;color:#3370FF;font-weight:600;padding:1px 6px;border-radius:4px;font-size:.93em;margin:0 2px}' +
+    '.rpt-callout{padding:12px 16px;border-radius:10px;margin:10px 0;font-size:14px;line-height:1.8;border:1px solid}' +
+    '.rpt-callout-pos{background:#ECFDF5;border-color:#A7F3D0;color:#065F46}' +
+    '.rpt-callout-neg{background:#FEF2F2;border-color:#FECACA;color:#991B1B}' +
+    '.rpt-callout-info{background:#EEF2FF;border-color:#C7D2FE;color:#3730A3}' +
+    '.markdown-body{max-width:100%;padding:0}' +
+    'h1{font-size:24px;margin:0 0 8px}p{color:#646A73}' +
+    '</style>' +
+    chartScripts + '</head><body>' +
+    '<div class="rpt-interactive"><div class="rpt-report-wrapper"><div class="rpt-report-title">' + escHtml(title) + '</div><div class="rpt-report-subtitle">' + escHtml(meta) + '</div>' + chartCanvases + '<div class="rpt-tab-content">' + content + '</div></div></div></body></html>';
+  var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+
+  // Show share modal
+  var overlay = document.createElement('div');
+  overlay.className = 'modal-overlay'; overlay.style.cssText = 'display:flex;z-index:3000';
+  overlay.onclick = function(ev) { if (ev.target === overlay) overlay.remove(); };
+  overlay.innerHTML = '<div class="modal" style="max-width:600px">' +
+    '<h4><i data-lucide="share-2" class="lucide-icon" style="width:20px;height:20px"></i> 分享报告</h4>' +
+    '<p class="text-muted" style="font-size:13px;margin-bottom:12px">' + escHtml(title) + ' — ' + escHtml(meta) + '</p>' +
+    '<div class="form-group"><label>报告链接（在当前设备打开）</label>' +
+    '<div class="d-flex gap-2"><input type="text" id="share-url-input" value="' + url + '" style="flex:1;font-size:12px;font-family:monospace" readonly>' +
+    '<button class="btn btn-sm btn-primary" onclick="var inp=document.getElementById(\'share-url-input\');inp.select();navigator.clipboard.writeText(inp.value);showToast(\'已复制链接\')"><i data-lucide="copy" class="lucide-icon"></i> 复制</button></div></div>' +
+    '<div class="hint">链接仅当前浏览器会话有效。如需跨设备分享，请下载HTML文件后发送。</div>' +
+    '<div class="actions">' +
+    '<button class="btn btn-success btn-sm" onclick="var a=document.createElement(\'a\');a.href=\'' + url + '\';a.download=\'' + (title||'report') + '.html\';a.click()"><i data-lucide="download" class="lucide-icon"></i> 下载HTML文件</button>' +
+    '<button class="btn btn-sm" onclick="window.open(\'' + url + '\')"><i data-lucide="external-link" class="lucide-icon"></i> 新窗口打开</button>' +
+    '<button class="btn btn-sm" onclick="this.closest(\'.modal-overlay\').remove()">关闭</button></div></div>';
+  document.body.appendChild(overlay);
+  setTimeout(function(){ if(typeof lucide!=='undefined') lucide.createIcons(); }, 50);
+}
+
 function downloadReviewCsv() {
   if (!state.reviews || state.reviews.length === 0) return;
   var sc = state.mapping.star, cc = state.mapping.content;
@@ -2374,11 +2477,38 @@ function downloadSkuCsv() {
 function closeChartDetail() { document.getElementById('modal-chart-detail').style.display = 'none'; }
 var _chartDetailData = null;
 
-function skuLink(skuId, name) {
+function skuLink(skuId, name, platform) {
+  // Auto-detect platform from state if not provided
+  if (!platform) {
+    platform = (state.strategySkus && state.strategySkus.platform) || 'jd';
+  }
   var id = String(skuId || ''); var display = name || id;
   if (!id) return escHtml(display);
-  var title = (name && name.length > 10) ? escAttr(name) + ' (在京东打开)' : '在京东打开';
-  return '<a href="https://item.jd.com/' + id + '.html" target="_blank" style="color:#3370FF;text-decoration:none" title="' + title + '">' + escHtml(display) + '</a>';
+
+  var url, platformLabel;
+  if (platform === 'tmall') {
+    url = 'https://detail.tmall.com/item.htm?id=' + id;
+    platformLabel = '在天猫打开';
+  } else if (platform === 'douyin') {
+    url = 'https://haohuo.jinritemai.com/views/product/item?id=' + id;
+    platformLabel = '在抖音打开';
+  } else {
+    // jd (default)
+    url = 'https://item.jd.com/' + id + '.html';
+    platformLabel = '在京东打开';
+  }
+
+  var title = (name && name.length > 10) ? escAttr(name) + ' (' + platformLabel + ')' : platformLabel;
+  return '<a href="' + url + '" target="_blank" style="color:#3370FF;text-decoration:none" title="' + title + '">' + escHtml(display) + '</a>';
+}
+
+function noteLink(noteId, title) {
+  // XHS (小红书) note link
+  var id = String(noteId || ''); var display = title || id;
+  if (!id) return escHtml(display);
+  var url = 'https://www.xiaohongshu.com/explore/' + id;
+  var tip = (title && title.length > 10) ? escAttr(title) + ' (在小红书打开)' : '在小红书打开';
+  return '<a href="' + url + '" target="_blank" style="color:#3370FF;text-decoration:none" title="' + tip + '">' + escHtml(display) + '</a>';
 }
 
 function showChartDetail(title, filterFn) {
@@ -2410,6 +2540,7 @@ function renderCharts() {
   if (!state.strategySkus || !state.strategySkus.skus) return;
   var skus = state.strategySkus.skus;
   _modelData = {};
+  state._savedCharts = [];  // Will be filled by tryRenderChart
 
   // Clear model selector
   var sel = document.getElementById('model-selector');
@@ -2497,8 +2628,11 @@ function renderCharts() {
     _modelData[m].push({
       cfg: (s.ram||'?') + '+' + (s.disk||'?'),
       screen: s.screenCount||'?',
+      screenType: s.screenType||'?',
       cpu: s.cpuModel||s.cpu||'?',
       system: s.system||'?',
+      systemDetail: s.systemDetail||'',
+      ai: s.ai||'否',
       price: s.price||0,
       comments: cc,
       commentStr: s.commentCount||'0',
@@ -2520,54 +2654,187 @@ function renderModelAnalysis() {
   var panel = document.getElementById('model-analysis-panel');
   if (!m) { panel.innerHTML = '<p class="text-muted" style="text-align:center;padding:20px">请先选择一个型号进行分析</p>'; return; }
   var data = _modelData[m];
-  if (!data) return;
+  if (!data || !data.length) return;
 
-  // Group by config
-  var configMap = {};
-  data.forEach(function(d) {
-    var k = d.cfg;
-    if (!configMap[k]) configMap[k] = { prices: [], comments: [], total: 0 };
-    configMap[k].prices.push(d.price);
-    configMap[k].comments.push(d.comments);
-    configMap[k].total++;
-  });
-  var configs = Object.keys(configMap).sort();
+  // --- Helper: group data by a key, return sorted labels + {prices, comments, total} ---
+  function groupBy(data, keyFn) {
+    var map = {};
+    data.forEach(function(d) {
+      var k = keyFn(d) || '未知';
+      if (!map[k]) map[k] = { prices: [], comments: [], total: 0 };
+      map[k].prices.push(d.price);
+      map[k].comments.push(d.comments);
+      map[k].total++;
+    });
+    var labels = Object.keys(map).sort(function(a,b) { return map[a].prices.reduce(function(x,y){return x+y;},0)/map[a].prices.length - map[b].prices.reduce(function(x,y){return x+y;},0)/map[b].prices.length; });
+    return { map: map, labels: labels };
+  }
 
-  // Chart 1: Config vs Price (horizontal bar)
-  panel.innerHTML = '<div class="row"><div class="col-lg-4"><div class="card"><div class="card-header">配置 vs 价格 (均价)</div><div class="card-body"><div class="chart-wrap"><canvas id="chart-m-cfg-price"></canvas></div></div></div></div>' +
-    '<div class="col-lg-4"><div class="card"><div class="card-header">配置 vs 评论量</div><div class="card-body"><div class="chart-wrap"><canvas id="chart-m-cfg-comments"></canvas></div></div></div></div>' +
-    '<div class="col-lg-4"><div class="card"><div class="card-header">价格 vs 评论量 (气泡)</div><div class="card-body"><div class="chart-wrap"><canvas id="chart-m-price-comments"></canvas></div></div></div></div></div>';
-
-  setTimeout(function(){
-    // Config vs Price
-    tryRenderChart('chart-m-cfg-price', 'bar', {
-      labels: configs,
-      datasets: [{ label: '均价 (¥)', data: configs.map(function(c){ var ps=configMap[c].prices; return Math.round(ps.reduce(function(a,b){return a+b;},0)/ps.length); }), backgroundColor: '#6366f1', borderRadius: 4 }]
+  // --- Helper: render a horizontal bar chart for a dimension ---
+  function renderDimChart(canvasId, dimLabel, groups, color, title, filterFnMaker) {
+    var labels = groups.labels;
+    var avgPrices = labels.map(function(l) {
+      var ps = groups.map[l].prices;
+      return Math.round(ps.reduce(function(a,b){return a+b;},0) / ps.length);
+    });
+    tryRenderChart(canvasId, 'bar', {
+      labels: labels,
+      datasets: [{ label: '均价 (¥)', data: avgPrices, backgroundColor: color || '#6366f1', borderRadius: 4 }]
     }, { indexAxis: 'y', scales: { x: { title: { display: true, text: '均价 (¥)' } } },
-         plugins: { legend: { display: false } } }, function(evt, el) {
-      if (el.length > 0) { var c = configs[el[0].index]; showChartDetail(m+' '+c, function(s){ return (s.model||'无型号')===m && ((s.ram||'?')+'+'+(s.disk||'?'))===c; }); }
+         plugins: { legend: { display: false }, title: { display: true, text: title || dimLabel, font: { size: 12 } } } },
+    function(evt, el) {
+      if (el.length > 0) { var v = labels[el[0].index]; showChartDetail(m+' '+v, filterFnMaker(v)); }
     });
+  }
 
-    // Config vs Comments
-    tryRenderChart('chart-m-cfg-comments', 'bar', {
-      labels: configs,
-      datasets: [{ label: '总评论', data: configs.map(function(c){ var cs=configMap[c].comments; return cs.reduce(function(a,b){return a+b;},0); }), backgroundColor: '#10b981', borderRadius: 4 }]
+  // --- Build grouped data for each dimension ---
+  var dims = {};
+  // Config (RAM+Disk)
+  dims.cfg = groupBy(data, function(d) { return d.cfg; });
+  // Screen count
+  var screenData = data.filter(function(d) { return d.screen && d.screen !== '?'; });
+  if (screenData.length > 1) dims.screen = groupBy(screenData, function(d) { return d.screen + '屏'; });
+
+  // --- Helper: render a horizontal bar chart for comments ---
+  function renderCommentChart(canvasId, dimLabel, groups, color, filterFnMaker) {
+    var labels = groups.labels;
+    var totalComments = labels.map(function(l) {
+      return groups.map[l].comments.reduce(function(a,b){return a+b;},0);
+    });
+    tryRenderChart(canvasId, 'bar', {
+      labels: labels,
+      datasets: [{ label: '总评论', data: totalComments, backgroundColor: color || '#10b981', borderRadius: 4 }]
     }, { indexAxis: 'y', scales: { x: { title: { display: true, text: '评论总量' } } },
-         plugins: { legend: { display: false } } }, function(evt, el) {
-      if (el.length > 0) { var c = configs[el[0].index]; showChartDetail(m+' '+c, function(s){ return (s.model||'无型号')===m && ((s.ram||'?')+'+'+(s.disk||'?'))===c; }); }
+         plugins: { legend: { display: false } } },
+    function(evt, el) {
+      if (el.length > 0) { var v = labels[el[0].index]; showChartDetail(m+' '+v, filterFnMaker(v)); }
+    });
+  }
+
+  // Build HTML panels
+  var chartsHtml = '';
+  var chartDefs = [];
+
+  // Row 1: Config vs Price, Config vs Comments, Screen vs Price
+  var row1Cols = [];
+  row1Cols.push({ type: 'price', id: 'chart-m-cfg-price', label: '配置', groups: dims.cfg, color: '#6366f1',
+    title: '配置 vs 均价 (RAM+存储)',
+    filter: function(v) { return function(s) { return (s.model||'无型号')===m && ((s.ram||'?')+'+'+(s.disk||'?'))===v; }; }
+  });
+  row1Cols.push({ type: 'comment', id: 'chart-m-cfg-comments', label: '配置', groups: dims.cfg, color: '#10b981',
+    title: '配置 vs 评论量',
+    filter: function(v) { return function(s) { return (s.model||'无型号')===m && ((s.ram||'?')+'+'+(s.disk||'?'))===v; }; }
+  });
+  if (dims.screen) {
+    row1Cols.push({ type: 'price', id: 'chart-m-screen-price', label: '屏幕', groups: dims.screen, color: '#06b6d4',
+      title: '屏幕数量 vs 均价',
+      filter: function(v) { var sc = v.replace('屏',''); return function(s) { return (s.model||'无型号')===m && (s.screenCount||'')===sc; }; }
+    });
+  }
+
+  // Row 2: Screen vs Comments, Price vs Comments bubble, Summary table
+  var row2Cols = [];
+  if (dims.screen) {
+    row2Cols.push({ type: 'comment', id: 'chart-m-screen-comments', label: '屏幕', groups: dims.screen, color: '#f59e0b',
+      title: '屏幕数量 vs 评论量',
+      filter: function(v) { var sc = v.replace('屏',''); return function(s) { return (s.model||'无型号')===m && (s.screenCount||'')===sc; }; }
+    });
+  } else {
+    row2Cols.push(null);
+  }
+  row2Cols.push({ type: 'bubble', id: 'chart-m-price-comments' });
+  row2Cols.push({ type: 'summary', id: 'summary-table' });
+
+  // Pad rows to 3 cols
+  while (row1Cols.length < 3) row1Cols.push(null);
+  while (row2Cols.length < 3) row2Cols.push(null);
+
+  function panelCard(col) {
+    if (!col) return '<div class="col-lg-4"></div>';
+    if (col.type === 'summary') return '<div class="col-lg-4"><div class="card"><div class="card-header">规格汇总</div><div class="card-body" id="model-summary-table" style="font-size:12px;max-height:300px;overflow-y:auto"></div></div></div>';
+    if (col.type === 'bubble') return '<div class="col-lg-4"><div class="card"><div class="card-header">价格 vs 评论量 (气泡)</div><div class="card-body"><div class="chart-wrap"><canvas id="chart-m-price-comments"></canvas></div></div></div></div>';
+    return '<div class="col-lg-4"><div class="card"><div class="card-header">' + escHtml(col.title||col.label) + '</div><div class="card-body"><div class="chart-wrap"><canvas id="' + col.id + '"></canvas></div></div></div></div>';
+  }
+
+  chartsHtml += '<div class="row">';
+  row1Cols.forEach(function(c) { chartsHtml += panelCard(c); });
+  chartsHtml += '</div><div class="row" style="margin-top:12px">';
+  row2Cols.forEach(function(c) { chartsHtml += panelCard(c); });
+  chartsHtml += '</div>';
+  panel.innerHTML = chartsHtml;
+
+  // Render charts after DOM update
+  setTimeout(function(){
+    // Row 1 charts
+    row1Cols.forEach(function(c) {
+      if (!c || !c.groups) return;
+      if (c.type === 'price') {
+        renderDimChart(c.id, c.label, c.groups, c.color, c.title, c.filter);
+      } else if (c.type === 'comment') {
+        renderCommentChart(c.id, c.label, c.groups, c.color, c.filter);
+      }
+    });
+    // Row 2 charts
+    row2Cols.forEach(function(c) {
+      if (!c || !c.groups) return;
+      if (c.type === 'comment') {
+        renderCommentChart(c.id, c.label, c.groups, c.color, c.filter);
+      }
     });
 
-    // Price vs Comments bubble
-    var bubbles = data.map(function(d) { return { x: d.price, y: d.comments, r: Math.max(4, Math.min(18, d.comments/100)), cfg: d.cfg }; });
+    // Bubble: color by screen count
+    var bubbles = data.map(function(d) {
+      var isDual = (d.screen === '双屏');
+      return { x: d.price, y: d.comments, r: Math.max(4, Math.min(18, d.comments/100)), cfg: d.cfg, screen: d.screen };
+    });
+    var bubbleColors = ['rgba(99,102,241,0.7)', 'rgba(16,185,129,0.7)', 'rgba(245,158,11,0.7)', 'rgba(239,68,68,0.7)', 'rgba(6,182,212,0.7)'];
     tryRenderChart('chart-m-price-comments', 'bubble', {
-      datasets: [{ label: 'SKU', data: bubbles, backgroundColor: bubbles.map(function(_,i){return 'rgba(99,102,241,'+(0.3+0.6*i/bubbles.length)+')';}) }]
+      datasets: [{
+        label: 'SKU', data: bubbles,
+        backgroundColor: bubbles.map(function(b, i){ return bubbleColors[i % bubbleColors.length]; })
+      }]
     }, { scales: { x: { title: { display: true, text: '价格 (¥)' } }, y: { title: { display: true, text: '评论量' } } },
-         plugins: { tooltip: { callbacks: { label: function(ctx){ var b=bubbles[ctx.dataIndex]; return b.cfg+' ¥'+b.x+' '+b.y+'评'; } } } } },
+         plugins: { tooltip: { callbacks: { label: function(ctx){
+           var b = bubbles[ctx.dataIndex];
+           return b.cfg + ' 屏幕:'+b.screen + ' ¥'+b.x+' '+b.y+'评';
+         } } } } },
     function(evt, el) {
       if (el.length > 0) { var b = bubbles[el[0].index]; showChartDetail(m+' ¥'+b.x, function(s){ return (s.model||'无型号')===m && (s.price||0)===b.x; }); }
     });
-  }, 200);
 
+    // Summary table
+    renderModelSummaryTable(m, data, dims);
+  }, 200);
+}
+
+function renderModelSummaryTable(m, data, dims) {
+  var container = document.getElementById('model-summary-table');
+  if (!container) return;
+  var rows = [];
+  // Build a summary row per dimension
+  function addDimRows(dimName, groups) {
+    if (!groups || groups.labels.length <= 1) return;
+    var first = true;
+    groups.labels.forEach(function(label) {
+      var g = groups.map[label];
+      var avg = Math.round(g.prices.reduce(function(a,b){return a+b;},0) / g.prices.length);
+      rows.push('<tr>' +
+        (first ? '<td rowspan="'+groups.labels.length+'" style="font-weight:600;color:#1F2329;vertical-align:top">'+dimName+'</td>' : '') +
+        '<td>'+escHtml(label)+'</td>' +
+        '<td class="text-end">'+g.total+'</td>' +
+        '<td class="text-end">¥'+avg.toLocaleString()+'</td></tr>');
+      first = false;
+    });
+  }
+  if (dims.cfg) addDimRows('内存+存储', dims.cfg);
+  if (dims.screen) addDimRows('屏幕数量', dims.screen);
+
+  if (rows.length === 0) {
+    container.innerHTML = '<p class="text-muted" style="text-align:center;padding:16px">该型号仅有一种配置</p>';
+    return;
+  }
+  container.innerHTML = '<table style="font-size:11px;width:100%"><thead><tr><th>维度</th><th>选项</th><th class="text-end">SKU数</th><th class="text-end">均价</th></tr></thead><tbody>' +
+    rows.join('') + '</tbody></table>';
 }
 
 function tryRenderChart(canvasId, type, data, extraOpts, onClick) {
@@ -2581,7 +2848,9 @@ function tryRenderChart(canvasId, type, data, extraOpts, onClick) {
       plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
       onClick: onClick || null
     }, extraOpts || {});
-    window['_chart_' + canvasId] = new Chart(canvas.getContext('2d'), { type: type, data: data, options: opts });
+    var c = new Chart(canvas.getContext('2d'), { type: type, data: data, options: opts });
+    window['_chart_' + canvasId] = c;
+    if (state._savedCharts) state._savedCharts.push({ id: canvasId, type: type, data: data, options: opts });
   } catch(e) { console.warn('Chart render failed:', canvasId, e.message); }
 }
 
@@ -2660,7 +2929,7 @@ async function startAnalysis() {
   document.getElementById('btn-analyze').disabled = false;
 }
 
-function saveApiKeyInline() {
+async function saveApiKeyInline() {
   var key = sanitizeApiKey(document.getElementById('apikey-inline-input').value.trim());
   if (!key) {
     showAlert('import', '请输入有效的 API Key', 'warning');
@@ -2668,17 +2937,12 @@ function saveApiKeyInline() {
   }
   state.apiKey = key;
   try {
-    localStorage.setItem('review-insight-settings', JSON.stringify({
-      apiKey: state.apiKey,
-      model: state.model
-    }));
+    await api.saveSettings({ apiKey: state.apiKey, model: state.model, apifyToken: state.apifyToken });
     document.getElementById('apikey-inline-prompt').style.display = 'none';
     document.getElementById('api-key-input').value = key;
-    // Remove the API key banner if present
     var banner = document.getElementById('apikey-banner');
     if (banner) banner.remove();
     showAlert('import', 'API Key 已保存，正在开始分析...', 'success');
-    // Auto-start analysis
     setTimeout(function() { startAnalysis(); }, 500);
   } catch(e) {
     showAlert('import', '保存失败: ' + e.message, 'danger');
@@ -3072,6 +3336,13 @@ function renderInteractiveReport(text, isStrategy, isTrend) {
   });
   html += '</div>';
 
+function setupStrategyToolbar(reportText) {
+  var copyBtn = document.querySelector('.copy-strategy-btn');
+  var downBtn = document.querySelector('.download-strategy-btn');
+  if (copyBtn) { copyBtn.style.display = 'inline-flex'; copyBtn.onclick = function() { navigator.clipboard.writeText(reportText||''); showToast('已复制全文'); }; }
+  if (downBtn) { downBtn.style.display = 'inline-flex'; downBtn.onclick = function() { var b = new Blob(['﻿'+(reportText||'')],{type:'text/plain;charset=utf-8'}); var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='策略报告_'+new Date().toISOString().slice(0,10)+'.txt';a.click(); }; }
+}
+
 function getShortTabLabel(title) {
   // Strip leading emoji
   title = title.replace(/^[🔲💰⚡🔄👥🔧💡🎯📊⭐⚠📖📌✅🚀\s]+/, '');
@@ -3354,16 +3625,16 @@ function downloadReport() {
 // ============================================
 // HISTORY MANAGEMENT
 // ============================================
-function loadHistory() {
-  try {
-    state.history = JSON.parse(localStorage.getItem('review-insight-history') || '[]');
-  } catch(e) {
-    state.history = [];
-  }
+async function reloadAllHistory() {
+  var p1 = api.loadReviewHistory().then(function(d){ state.history = d; });
+  var p2 = api.loadStrategyHistory().then(function(d){ state.strategyHistory = d; });
+  var p3 = api.loadTrendHistory().then(function(d){ state.trendHistory = d; });
+  await Promise.all([p1, p2, p3]);
 }
 
-function saveToHistory(report) {
-  // Compute KPI stats + save review data
+function loadHistory() { /* kept for compat — use reloadAllHistory */ }
+
+async function saveToHistory(report) {
   var stats = null; var savedReviews = null;
   if (state.reviews && state.reviews.length > 0) {
     var sc = state.mapping.star; var cc = state.mapping.content; var sum = 0, cnt = 0, pos = 0, neg = 0;
@@ -3373,32 +3644,11 @@ function saveToHistory(report) {
     });
     stats = { avg: cnt>0 ? (sum/cnt).toFixed(1) : '—', posRate: cnt>0 ? Math.round(pos/cnt*100) : 0, negRate: cnt>0 ? Math.round(neg/cnt*100) : 0 };
   }
-  var entry = {
-    id: Date.now(),
-    date: new Date().toLocaleString('zh-CN'),
-    productName: extractProductName(report),
-    reviewCount: state.reviews.length,
-    report: report,
-    stats: stats,
-    reviews: savedReviews,
-    preview: report.substring(0, 200) + '...'
-  };
-  state.history.unshift(entry);
-  // Keep only last 20
-  if (state.history.length > 20) {
-    state.history = state.history.slice(0, 20);
-  }
-  try {
-    localStorage.setItem('review-insight-history', JSON.stringify(state.history));
-  } catch(e) {
-    // Storage full, remove oldest
-    state.history.pop();
-    try {
-      localStorage.setItem('review-insight-history', JSON.stringify(state.history));
-    } catch(e2) {
-      // Give up
-    }
-  }
+  var id = await api.saveReviewReport({
+    productName: extractProductName(report), reviewCount: state.reviews.length,
+    report: report, reviews: savedReviews, stats: stats
+  });
+  state.history.unshift({ id: id, productName: extractProductName(report), reviewCount: state.reviews.length, report: report, stats: stats, reviews: savedReviews, date: new Date().toLocaleString('zh-CN') });
 }
 
 function renderHistory() {
@@ -3496,18 +3746,21 @@ function downloadHistoryReport() {
   URL.revokeObjectURL(url);
 }
 
-function deleteHistoryItem(index) {
+async function deleteHistoryItem(index) {
   if (confirm('确定要删除这份报告吗？')) {
+    var h = state.history[index];
+    if (h && h.id) await api.deleteReviewReport(h.id);
     state.history.splice(index, 1);
-    localStorage.setItem('review-insight-history', JSON.stringify(state.history));
     renderHistory();
   }
 }
 
-function clearHistory() {
+async function clearHistory() {
   if (confirm('确定要清空所有历史报告吗？此操作不可撤销。')) {
+    for (var i = 0; i < state.history.length; i++) {
+      if (state.history[i].id) await api.deleteReviewReport(state.history[i].id);
+    }
     state.history = [];
-    localStorage.removeItem('review-insight-history');
     renderHistory();
   }
 }

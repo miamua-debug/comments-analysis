@@ -2,6 +2,10 @@
 # Usage: python fetch-douyin-skus.py "品牌关键词" <ApifyToken> [maxPages]
 import sys, json, os, argparse
 from datetime import datetime
+# Import shared spec parser
+_sys_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _sys_path not in sys.path: sys.path.insert(0, _sys_path)
+from shared.parse_specs import parse_specs
 
 def main():
     parser = argparse.ArgumentParser()
@@ -92,22 +96,24 @@ def main():
             si = item.get('shop_info', {}) if isinstance(item.get('shop_info'), dict) else {}
             cat = f"{item.get('categoryFirst','')}/{item.get('categorySecond','')}".strip('/')
 
+            name = item.get('product_title', '')
+            sp = parse_specs(name, '', '')  # Douyin: no structured attrs or color, only name parsing
             skus.append({
                 "skuId": str(item.get('product_id', '')),
-                "name": item.get('product_title', ''),
+                "name": name,
                 "color": "",
                 "price": p.get('price', 0) or 0,
                 "commentCount": str(s.get('sales', 0)),
                 "avgScore": 0,
                 "goodRate": "",
-                "model": "",
-                "cpu": "", "cpuModel": "", "ram": "", "disk": "",
-                "screenCount": "", "screenType": "",
-                "system": "", "systemDetail": "",
-                "accessoryType": cat,
-                "productType": cat,
-                "ai": "",
-                "baseName": item.get('product_title', ''),
+                "model": sp['Model'],
+                "cpu": sp['CPU'], "cpuModel": sp['CPUModel'], "ram": sp['RAM'], "disk": sp['Disk'],
+                "screenCount": sp['ScreenCount'], "screenType": sp['ScreenType'],
+                "system": sp['System'], "systemDetail": sp['SystemDetail'],
+                "accessoryType": sp['AccessoryType'] or cat,
+                "productType": sp['ProductType'] or cat,
+                "ai": sp['AI'],
+                "baseName": name,
                 "attrs": "",
                 "extName": ""
             })

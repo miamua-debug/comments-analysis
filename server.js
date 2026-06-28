@@ -4,6 +4,7 @@ const express = require('express');
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const db = require('./db');
 const app = express();
 const PORT = process.env.PORT || 9876;
 
@@ -62,22 +63,39 @@ function spawnPython(script, args, res, envVars = {}) {
         'Connection': 'keep-alive',
         'X-Accel-Buffering': 'no',
     });
+    res.flushHeaders();  // Ensure headers sent immediately
 
     const env = { ...process.env, PYTHONUNBUFFERED: '1', PYTHONIOENCODING: 'utf-8', ...envVars };
     const py = spawn('python3', [script, ...args], { env });
 
+    console.log(`[${path.basename(script)}] Started with args:`, args);
+
+    let _stdoutBuffer = '';
     py.stdout.on('data', (data) => {
-        const lines = data.toString().split('\n');
+        _stdoutBuffer += data.toString().replace(/\r/g, '');
+        const lines = _stdoutBuffer.split('\n');
+        _stdoutBuffer = lines.pop() || '';  // Keep incomplete last line in buffer
         for (const line of lines) {
+            if (!line.trim()) continue;
             if (line.startsWith('STATUS:')) {
-                const json = line.substring(7);
-                res.write(`data: {"type":"progress",${json.substring(1)}}\n\n`);
+                try {
+                    const obj = JSON.parse(line.substring(7));
+                    obj.type = 'progress';
+                    const sse = `data: ${JSON.stringify(obj)}\n\n`;
+                    console.log(`[SSE] STATUS: ${line.substring(7, 80)}`);
+                    res.write(sse);
+                } catch(e) { console.log('[SSE] Parse error:', e.message); }
             } else if (line.startsWith('DATA:')) {
-                const json = line.substring(5);
-                res.write(`data: {"type":"result",${json.substring(1)}}\n\n`);
-                res.end();
-                py.kill();
-                return;
+                try {
+                    const obj = JSON.parse(line.substring(5));
+                    obj.type = 'result';
+                    const sse = `data: ${JSON.stringify(obj)}\n\n`;
+                    console.log(`[SSE] DATA (${line.length} chars)`);
+                    res.write(sse);
+                    res.end();
+                    py.kill();
+                    return;
+                } catch(e) { console.log('[SSE] DATA parse error:', e.message); }
             }
         }
     });
@@ -140,8 +158,87 @@ app.post('/api/fetch-xhs-notes', (req, res) => {
     spawnPython(script, args, res);
 });
 
+// ===== Data API (SQLite replaces browser localStorage) =====
+
+// Settings
+app.get('/api/settings', (req, res) => res.json(db.getSettings()));
+app.post('/api/settings', (req, res) => {
+    const updated = db.saveSettings({
+        api_key: req.body.apiKey || '',
+        apify_token: req.body.apifyToken || '',
+        model: req.body.model || 'deepseek-chat',
+    });
+    res.json(updated);
+});
+
+// Review reports
+app.get('/api/reports', (req, res) => res.json(db.listReviewReports()));
+app.get('/api/reports/:id', (req, res) => {
+    const r = db.getReviewReport(req.params.id);
+    r ? res.json(r) : res.status(404).json({ error: 'Not found' });
+});
+app.post('/api/reports', (req, res) => {
+    const result = db.saveReviewReport({
+        product_name: req.body.productName || '',
+        review_count: req.body.reviewCount || 0,
+        report_text: req.body.report || '',
+        reviews_json: JSON.stringify(req.body.reviews || []),
+        stats_json: JSON.stringify(req.body.stats || null),
+    });
+    res.json(result);
+});
+app.delete('/api/reports/:id', (req, res) => {
+    db.deleteReviewReport(req.params.id);
+    res.json({ ok: true });
+});
+
+// Strategy reports
+app.get('/api/strategy-reports', (req, res) => res.json(db.listStrategyReports()));
+app.get('/api/strategy-reports/:id', (req, res) => {
+    const r = db.getStrategyReport(req.params.id);
+    r ? res.json(r) : res.status(404).json({ error: 'Not found' });
+});
+app.post('/api/strategy-reports', (req, res) => {
+    const result = db.saveStrategyReport({
+        platform: req.body.platform || '',
+        shop_name: req.body.shopName || '',
+        shop_id: req.body.shopId || '',
+        total_skus: req.body.totalSkus || 0,
+        family_count: req.body.familyCount || 0,
+        report_text: req.body.report || '',
+        skus_json: JSON.stringify(req.body.skus || []),
+        platform_key: req.body.platformKey || 'jd',
+    });
+    res.json(result);
+});
+app.delete('/api/strategy-reports/:id', (req, res) => {
+    db.deleteStrategyReport(req.params.id);
+    res.json({ ok: true });
+});
+
+// Trend reports
+app.get('/api/trend-reports', (req, res) => res.json(db.listTrendReports()));
+app.get('/api/trend-reports/:id', (req, res) => {
+    const r = db.getTrendReport(req.params.id);
+    r ? res.json(r) : res.status(404).json({ error: 'Not found' });
+});
+app.post('/api/trend-reports', (req, res) => {
+    const result = db.saveTrendReport({
+        keyword: req.body.keyword || '',
+        total_notes: req.body.totalNotes || 0,
+        report_text: req.body.report || '',
+        notes_json: JSON.stringify(req.body.notes || []),
+    });
+    res.json(result);
+});
+app.delete('/api/trend-reports/:id', (req, res) => {
+    db.deleteTrendReport(req.params.id);
+    res.json({ ok: true });
+});
+
 // Start server
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`API Proxy: /api/proxy -> DeepSeek API`);
+    console.log(`  Data API: /api/reports, /api/strategy-reports, /api/trend-reports`);
+    console.log(`  Data file: ${path.join(__dirname, 'data', 'review-insight.db')}`);
 });

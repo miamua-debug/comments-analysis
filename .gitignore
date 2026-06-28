@@ -24,3 +24,12 @@ node_modules/
 # Build output
 /dist/
 /build/
+
+# Python cache
+__pycache__/
+
+# Data (SQLite database — may contain sensitive keys)
+data/
+
+# Debug scripts
+debug-*.py

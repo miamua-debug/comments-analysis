@@ -2,76 +2,14 @@
 import sys, json, re, time, os, argparse, tempfile, shutil
 from urllib.parse import quote
 import requests
+# Import shared spec parser (JD + Tmall unified)
+import os as _os
+_sys_path = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+if _sys_path not in sys.path: sys.path.insert(0, _sys_path)
+from shared.parse_specs import parse_specs
 
 def status(msg):
     print("STATUS:" + json.dumps(msg, ensure_ascii=False), flush=True)
-
-def parse_specs(name, color, attrs):
-    specs = {'RAM':'', 'Disk':'', 'CPU':'', 'CPUModel':'', 'Model':'', 'ScreenCount':'', 'ScreenType':'',
-             'System':'', 'SystemDetail':'', 'AccessoryType':'', 'ProductType':'', 'AI':''}
-    combined = f"{name} {color} {attrs}"
-
-    # Attrs parsing
-    if attrs:
-        for part in attrs.split('^'):
-            if m := re.match(r'^系统[:：](.+)', part):
-                sys_info = m.group(1).strip()
-                if re.search(r'Windows\s*(\d+)?', sys_info):
-                    specs['System'] = 'Windows'
-                    if v := re.search(r'(\d+)', sys_info): specs['SystemDetail'] = f"Windows {v.group(1)}"
-                elif re.search(r'Android|安卓', sys_info): specs['System'] = 'Android'
-            elif m := re.match(r'屏幕数量[:：](.+)', part):
-                sc = m.group(1).strip()
-                if re.search(r'双屏|单屏|无屏', sc): specs['ScreenCount'] = sc
-            elif m := re.match(r'屏幕类型[:：](.+)', part):
-                st = m.group(1).strip()
-                if re.search(r'电容|液晶|触摸|触控|高清|LED|LCD|IPS', st): specs['ScreenType'] = st
-
-    # Color parsing
-    if color:
-        if not specs['Model'] and (m := re.search(r'([A-Z]\d+)', color)): specs['Model'] = m.group(1)
-        if not specs['RAM'] and (m := re.search(r'(\d+)G?\s*\+\s*(\d+)G', color)):
-            specs['RAM'] = f"{m.group(1)}G"; specs['Disk'] = f"{m.group(2)}G"
-        if not specs['ScreenCount'] and re.search(r'双屏|单屏|无屏', color): specs['ScreenCount'] = re.search(r'双屏|单屏|无屏', color).group(0)
-        if re.search(r'酷睿\s*(i\d)', color): specs['CPU'] = 'Intel'; specs['CPUModel'] = f"酷睿{re.search(r'酷睿\s*(i\d)', color).group(1)}"
-        if re.search(r'AI识别|Ai识别|智能识物|商品识别|自动识物', color): specs['AI'] = '是'
-
-    # Name parsing (fallback)
-    if not specs['RAM'] and (m := re.search(r'(\d+)G?\s*\+\s*(\d+)G', name)):
-        specs['RAM'] = f"{m.group(1)}G"; specs['Disk'] = f"{m.group(2)}G"
-    elif not specs['RAM'] and re.search(r'(\d+)G\s*(?:内存|运存|RAM)', name):
-        specs['RAM'] = f"{re.search(r'(\d+)G\s*(?:内存|运存|RAM)', name).group(1)}G"
-    if not specs['Disk'] and re.search(r'(\d+)G\s*(?:硬盘|存储|固态|SSD|闪存|大存储)', name):
-        specs['Disk'] = f"{re.search(r'(\d+)G\s*(?:硬盘|存储|固态|SSD|闪存|大存储)', name).group(1)}G"
-    if (not specs['CPU']) and re.search(r'酷睿\s*(i\d)', name): specs['CPU'] = 'Intel'; specs['CPUModel'] = f"酷睿{re.search(r'酷睿\s*(i\d)', name).group(1)}"
-    elif not specs['CPU'] and re.search(r'\bIntel\b', name): specs['CPU'] = 'Intel'
-    elif not specs['CPU'] and re.search(r'四核', name): specs['CPU'] = '四核'
-    elif not specs['CPU'] and re.search(r'八核', name): specs['CPU'] = '八核'
-    elif not specs['CPU'] and re.search(r'疾速', name): specs['CPU'] = '疾速处理器'
-    if not specs['Model'] and (m := re.search(r'([A-Z]\d+)', name)): specs['Model'] = m.group(1)
-    if not specs['ScreenCount'] and re.search(r'双屏|单屏|无屏', name): specs['ScreenCount'] = re.search(r'双屏|单屏|无屏', name).group(0)
-    if not specs['ScreenType'] and re.search(r'电容屏|液晶|触摸屏|触屏|触控屏|高清屏|LED|LCD', name):
-        specs['ScreenType'] = re.search(r'电容屏|液晶|触摸屏|触屏|触控屏|高清屏|LED|LCD', name).group(0)
-    if not specs['System']:
-        if re.search(r'Windows\s*(\d+)?', name): specs['System'] = 'Windows'
-        elif re.search(r'Android|安卓', name): specs['System'] = 'Android'
-    if not specs['AI'] and re.search(r'AI识别|Ai识别|AI识物|智能识物|Ai商品识别|商品识别|自动识物|自动识别商品', name):
-        specs['AI'] = '是'
-
-    # Product type
-    if re.search(r'收银秤|称重收银|称重一体|收银称|电子称|条码秤|标签秤|智能称|称重秤', name): specs['ProductType'] = '收银秤'
-    elif re.search(r'收银机|收银系统|收款机|POS机|收银终端|收银一体|一体收银|零售收银', name): specs['ProductType'] = '收银机'
-
-    # Accessory type
-    if re.search(r'打印纸|标签纸|小票纸|收银纸|热敏纸|价签纸|碳带|色带|墨水', name): specs['AccessoryType'] = '耗材'
-    elif re.search(r'扫码枪|扫码平台|扫描枪|条码枪|扫描平台', name): specs['AccessoryType'] = '扫码设备'
-    elif re.search(r'标签机|打印机|小票机|票据打印机|热敏打印机|标签打印机|厨房打印机', name): specs['AccessoryType'] = '打印设备'
-    elif re.search(r'钱箱|收银箱|现金箱', name): specs['AccessoryType'] = '钱箱'
-    elif re.search(r'支架|壁挂|挂架|底座|立柱', name): specs['AccessoryType'] = '安装配件'
-    elif re.search(r'存储卡|内存卡|TF卡|SD卡', name): specs['AccessoryType'] = '存储卡'
-    if specs['AccessoryType']: specs['ProductType'] = f"配件/{specs['AccessoryType']}"
-
-    return specs
 
 def get_base_name(name):
     base = re.sub(r'\s+', ' ', name)
@@ -219,7 +157,8 @@ def main():
             })
 
         result = {'shopName': target_shop, 'shopId': shop_id, 'keyword': keyword,
-                  'totalSkus': len(skus), 'familyCount': len(families), 'skus': skus}
+                  'totalSkus': len(skus), 'familyCount': len(families), 'skus': skus,
+                  'platform': 'jd'}
         status({"phase": "complete", "totalSkus": len(skus), "familyCount": len(families)})
         print("DATA:" + json.dumps(result, ensure_ascii=False), flush=True)
     finally:
