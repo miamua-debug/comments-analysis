@@ -31,13 +31,22 @@ app.post('/api/proxy', async (req, res) => {
             headers['Authorization'] = `Bearer ${apiKey}`;
         }
 
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 600000); // 10 min timeout
+        console.log('[API] -> ' + provider + ' stream=' + (req.body.stream || false) + ' body=' + JSON.stringify(req.body).length + ' chars');
+
         const fetchResp = await fetch(apiUrl, {
             method: 'POST', headers,
             body: JSON.stringify(req.body),
+            signal: controller.signal,
         });
+        clearTimeout(timeoutId);
+
+        console.log('[API] <- ' + provider + ' status=' + fetchResp.status);
 
         if (!fetchResp.ok) {
             const err = await fetchResp.text();
+            console.log('[API] <- ERROR: ' + err.substring(0, 200));
             return res.status(fetchResp.status).send(err);
         }
 
@@ -51,8 +60,10 @@ app.post('/api/proxy', async (req, res) => {
             if (done) break;
             res.write(Buffer.from(value));
         }
+        console.log('[API] stream complete');
         res.end();
     } catch (e) {
+        console.log('[API] ERROR: ' + e.message);
         if (!res.headersSent) res.status(502).json({ error: e.message });
     }
 });
