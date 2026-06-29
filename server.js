@@ -52,8 +52,8 @@ app.post('/api/proxy', async (req, res) => {
 
         // Stream response back (disable timeout for long-running AI analysis)
         res.setTimeout(0);
-        res.flushHeaders();
         res.setHeader('Content-Type', fetchResp.headers.get('content-type') || 'application/json');
+        res.flushHeaders();
         const reader = fetchResp.body.getReader();
         while (true) {
             const { done, value } = await reader.read();
