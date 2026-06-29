@@ -1317,14 +1317,14 @@ async function startOnlineFetch() {
         if (shortName.length > 40) shortName = shortName.substring(0, 40);
         pnInput.value = shortName;
       }
-      showAlert('import', '成功获取 ' + allReviews.productName + '：' + allReviews.totalReviews + ' 条评论', 'success');
+      showAlert('import', '✓ 获取完成：' + allReviews.totalReviews + ' 条评论（' + allReviews.skuCount + ' 个 SKU）', 'success');
     } else {
       document.getElementById('fetch-progress').style.display = 'none';
-      document.getElementById('fetch-progress-fill').style.width = '0%';
       showAlert('import', '未获取到评论数据，请检查 SKU ID 是否正确', 'danger');
     }
 
   } catch(err) {
+    document.getElementById('fetch-progress').style.display = 'none';
     if (err.name === 'AbortError') {
       showAlert('import', '获取已取消', 'warning');
     } else {
@@ -1332,7 +1332,6 @@ async function startOnlineFetch() {
     }
   }
 
-  document.getElementById('fetch-progress').style.display = 'none';
   document.getElementById('btn-fetch-reviews').disabled = false;
   _fetchAbortController = null;
 }
