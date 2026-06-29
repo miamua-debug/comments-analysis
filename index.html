@@ -1284,6 +1284,14 @@ async function startOnlineFetch() {
       if (allReviews) break;
     }
 
+    // Flush remaining buffer (in case DATA was in the last chunk)
+    if (!allReviews && buffer.trim()) {
+      var lastLine = buffer.trim();
+      if (lastLine.startsWith('data: ')) {
+        try { var d = JSON.parse(lastLine.slice(6)); if (d.type==='result') allReviews = d; } catch(e) {}
+      }
+    }
+
     // Process the complete data
     if (allReviews && allReviews.reviews && allReviews.reviews.length > 0) {
       document.getElementById('fetch-progress-fill').style.width = '100%';
