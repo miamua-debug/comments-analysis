@@ -3026,21 +3026,24 @@ async function runBatchAnalysis(reviews) {
       '评论 ' + (start + 1) + '-' + end + ' / 共 ' + reviews.length + ' 条');
 
     var batchMessage = buildReviewDataMessage(batchReviews);
-    var result = await callClaudeAPI(extractionPrompt, batchMessage, {
-      maxTokens: 4096,
-      temperature: 0.1
-    });
-
     try {
+      console.log('[Analysis] batch ' + (batch+1) + '/' + totalBatches + ' calling API...');
+      var result = await callClaudeAPI(extractionPrompt, batchMessage, {
+        maxTokens: 4096,
+        temperature: 0.1
+      });
+      console.log('[Analysis] batch ' + (batch+1) + ' API returned, len:', result ? result.length : 0);
+
       // Parse JSON from response
       var jsonStr = result.trim();
-      // Handle possible markdown code block wrapping
       jsonStr = jsonStr.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/\s*```$/, '');
       var extracted = JSON.parse(jsonStr);
       allExtractions = allExtractions.concat(extracted);
+      console.log('[Analysis] batch ' + (batch+1) + ' parsed ' + extracted.length + ' items');
     } catch(e) {
-      console.warn('Batch ' + (batch + 1) + ' JSON parse error, using raw text', e.message);
-      allExtractions.push({ batch: batch, raw: result });
+      console.error('[Analysis] batch ' + (batch+1) + ' FAILED:', e.message);
+      updateProgress(progress, '批次 ' + (batch+1) + ' 出错，跳过继续...', e.message.substring(0, 50));
+      allExtractions.push({ batch: batch, raw: result, error: e.message });
     }
   }
 
