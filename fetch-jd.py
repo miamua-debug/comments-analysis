@@ -24,8 +24,10 @@ def main():
         if m:
             for s in json.loads(m.group(1)):
                 all_sku_ids[s['skuId']] = True
-        for m2 in re.finditer(r'"sku\w*"\s*:\s*"?(\d{10,})"?', content):
-            all_sku_ids[m2.group(1)] = True
+        # Only fallback to broad regex if skuList not found (some product pages lack it)
+        if not all_sku_ids:
+            for m2 in re.finditer(r'"sku\w*"\s*:\s*"?(\d{10,})"?', content):
+                all_sku_ids[m2.group(1)] = True
     except: pass
     all_sku_ids[sku] = True
     status({"phase": "discover", "message": f"Found {len(all_sku_ids)} candidate SKUs"})
