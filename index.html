@@ -1620,11 +1620,10 @@ function showAlert(pageId, message, type) {
   var alert = document.createElement('div');
   alert.className = 'alert alert-' + (type || 'info') + ' alert-dynamic';
   alert.textContent = message;
-  // Insert at the top of the page, before the first card or as first child
   var firstCard = page.querySelector('.card');
-  if (firstCard) {
-    page.insertBefore(alert, firstCard);
-  } else {
+  if (firstCard && firstCard.parentNode) {
+    firstCard.parentNode.insertBefore(alert, firstCard);
+  } else if (page.firstChild) {
     page.insertBefore(alert, page.firstChild);
   }
   setTimeout(function() {
