@@ -3336,30 +3336,6 @@ function renderInteractiveReport(text, isStrategy, isTrend) {
   });
   html += '</div>';
 
-function setupStrategyToolbar(reportText) {
-  var copyBtn = document.querySelector('.copy-strategy-btn');
-  var downBtn = document.querySelector('.download-strategy-btn');
-  if (copyBtn) { copyBtn.style.display = 'inline-flex'; copyBtn.onclick = function() { navigator.clipboard.writeText(reportText||''); showToast('已复制全文'); }; }
-  if (downBtn) { downBtn.style.display = 'inline-flex'; downBtn.onclick = function() { var b = new Blob(['﻿'+(reportText||'')],{type:'text/plain;charset=utf-8'}); var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='策略报告_'+new Date().toISOString().slice(0,10)+'.txt';a.click(); }; }
-}
-
-function getShortTabLabel(title) {
-  // Strip leading emoji
-  title = title.replace(/^[🔲💰⚡🔄👥🔧💡🎯📊⭐⚠📖📌✅🚀\s]+/, '');
-  var map = {
-    '洞察总览': '总览', '核心用户画像与场景': '用户画像', '核心卖点与价值验证': '核心卖点',
-    '主要痛点与负面归因': '主要痛点', '改进建议与优先级': '改进建议',
-    '潜在机会与差异化': '潜在机会', '典型用户深度解析': '典型用户', '关键洞察总结': '洞察总结',
-    '产品矩阵与组合': '产品矩阵', '定价策略': '定价策略', '产品力分析': '产品力',
-    '生命周期与迭代': '生命周期', '用户画像与细分': '用户分层', '配件与组套协同': '配件协同',
-    '策略总结': '策略总结', '情感词云': '情感词云', '内容热度总览': '热度总览', '博主分析': '博主分析', '内容特征': '内容特征', '品类趋势洞察': '品类趋势', '总结建议': '总结建议', '重点品牌策略': '品牌策略', '用户画像': '用户画像', '核心需求': '核心需求'
-  };
-  for (var k in map) {
-    if (title.indexOf(k) !== -1) return map[k];
-  }
-  return title.length > 10 ? title.substring(0, 8) + '...' : title;
-}
-
   // Tab content — rendered with marked
   html += '<div class="report-container styled-report rpt-tab-content" style="margin-top:0;border-radius:0 0 8px 8px">';
   visibleSections.forEach(function(sec, idx) {
@@ -3369,6 +3345,27 @@ function getShortTabLabel(title) {
   });
   html += '</div></div>';
   return html;
+}
+
+function setupStrategyToolbar(reportText) {
+  var copyBtn = document.querySelector('.copy-strategy-btn');
+  var downBtn = document.querySelector('.download-strategy-btn');
+  if (copyBtn) { copyBtn.style.display = 'inline-flex'; copyBtn.onclick = function() { navigator.clipboard.writeText(reportText||''); showToast('已复制全文'); }; }
+  if (downBtn) { downBtn.style.display = 'inline-flex'; downBtn.onclick = function() { var b = new Blob(['﻿'+(reportText||'')],{type:'text/plain;charset=utf-8'}); var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='策略报告_'+new Date().toISOString().slice(0,10)+'.txt';a.click(); }; }
+}
+
+function getShortTabLabel(title) {
+  title = title.replace(/^[🔲💰⚡🔄👥🔧💡🎯📊⭐⚠📖📌✅🚀\s]+/, '');
+  var map = {
+    '洞察总览': '总览', '核心用户画像与场景': '用户画像', '核心卖点与价值验证': '核心卖点',
+    '主要痛点与负面归因': '主要痛点', '改进建议与优先级': '改进建议',
+    '潜在机会与差异化': '潜在机会', '典型用户深度解析': '典型用户', '关键洞察总结': '洞察总结',
+    '产品矩阵与组合': '产品矩阵', '定价策略': '定价策略', '产品力分析': '产品力',
+    '生命周期与迭代': '生命周期', '用户画像与细分': '用户分层', '配件与组套协同': '配件协同',
+    '策略总结': '策略总结', '情感词云': '情感词云', '内容热度总览': '热度总览', '博主分析': '博主分析', '内容特征': '内容特征', '品类趋势洞察': '品类趋势', '总结建议': '总结建议', '重点品牌策略': '品牌策略', '用户画像': '用户画像', '核心需求': '核心需求'
+  };
+  for (var k in map) { if (title.indexOf(k) !== -1) return map[k]; }
+  return title.length > 10 ? title.substring(0, 8) + '...' : title;
 }
 
 function switchReportTab(el, idx) {
