@@ -41,7 +41,9 @@ app.post('/api/proxy', async (req, res) => {
             return res.status(fetchResp.status).send(err);
         }
 
-        // Stream response back
+        // Stream response back (disable timeout for long-running AI analysis)
+        res.setTimeout(0);
+        res.flushHeaders();
         res.setHeader('Content-Type', fetchResp.headers.get('content-type') || 'application/json');
         const reader = fetchResp.body.getReader();
         while (true) {
@@ -51,7 +53,7 @@ app.post('/api/proxy', async (req, res) => {
         }
         res.end();
     } catch (e) {
-        res.status(502).json({ error: e.message });
+        if (!res.headersSent) res.status(502).json({ error: e.message });
     }
 });
 
