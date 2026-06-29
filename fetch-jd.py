@@ -44,18 +44,20 @@ def main():
                 headers=headers, timeout=10
             )
             data = r.json()
+            mp = max(data.get('maxPage', 0) or 0, 1)  # Always include, min 1 page
+            s = data.get('productCommentSummary', {})
+            ref = ''
+            color = ''
             if data.get('comments') and len(data['comments']) > 0:
                 ref = data['comments'][0]['referenceName']
                 color = data['comments'][0].get('productColor', '')
-                mp = data.get('maxPage', 0) or 1
-                s = data.get('productCommentSummary', {})
-                if not product_name: product_name = ref
-                valid_skus.append({
-                    'sku': sid, 'name': ref, 'color': color, 'maxPage': mp,
-                    'total': s.get('commentCountStr', '0'), 'avgScore': s.get('averageScore', 0),
-                    'goodRate': s.get('goodRateShow', 0)
-                })
-                status({"phase": "validate", "message": f"SKU {sid} ({color}) - {s.get('commentCountStr','?')} reviews"})
+            if not product_name and ref: product_name = ref
+            valid_skus.append({
+                'sku': sid, 'name': ref, 'color': color, 'maxPage': mp,
+                'total': s.get('commentCountStr', '0'), 'avgScore': s.get('averageScore', 0),
+                'goodRate': s.get('goodRateShow', 0)
+            })
+            status({"phase": "validate", "message": f"SKU {sid} ({color or '?'}) - {s.get('commentCountStr','0')} reviews, {mp} pages"})
         except: pass
         time.sleep(0.3)
 
