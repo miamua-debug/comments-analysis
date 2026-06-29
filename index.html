@@ -3265,15 +3265,22 @@ function renderInteractiveReport(text, isStrategy, isTrend) {
   var html = '<div class="rpt-report-wrapper">';
 
   // Title
-  var productName = document.getElementById('product-name-input');
-  var displayTitle = (productName && productName.value.trim()) ? productName.value.trim() : '';
+  var displayTitle = '';
+  if (isStrategy && state.strategyMeta && state.strategyMeta.shopName) {
+    displayTitle = state.strategyMeta.shopName + ' — 产品策略分析报告';
+  } else if (isTrend && state.trendMeta && state.trendMeta.keyword) {
+    displayTitle = state.trendMeta.keyword + ' — 品类趋势分析报告';
+  } else {
+    var productName = document.getElementById('product-name-input');
+    displayTitle = (productName && productName.value.trim()) ? productName.value.trim() : '';
+  }
   if (!displayTitle && titleSection) {
     displayTitle = titleSection.body.replace(/^###\s*/, '').replace(/【|】/g, '').trim();
   }
   if (displayTitle) {
     html += '<div class="rpt-report-title">' + escHtml(displayTitle) + '</div>';
-    var subMeta = state.reportMeta ? state.reportMeta : (state.strategyMeta || {});
-    var subText = subMeta.reviewCount ? (subMeta.reviewCount + ' 条评论') : (subMeta.totalSkus ? (subMeta.totalSkus + ' SKU') : '');
+    var subMeta = isStrategy ? (state.strategyMeta || {}) : (state.reportMeta || {});
+    var subText = isStrategy ? (subMeta.totalSkus ? (subMeta.totalSkus + ' SKU / ' + subMeta.familyCount + ' 族') : '') : (subMeta.reviewCount ? (subMeta.reviewCount + ' 条评论') : '');
     html += '<div class="rpt-report-subtitle">' + subText + '</div>';
   }
 
