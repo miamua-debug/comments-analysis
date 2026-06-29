@@ -1238,7 +1238,7 @@ async function startOnlineFetch() {
 
     while (true) {
       var result = await reader.read();
-      if (result.done) break;
+      if (result.done) { console.log('[SSE] stream done, buffer left:', buffer.length, 'chars'); break; }
       buffer += decoder.decode(result.value, { stream: true });
 
       var lines = buffer.split('\n');
@@ -1247,15 +1247,15 @@ async function startOnlineFetch() {
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i].trim();
         if (line === '') continue;
-        if (line.startsWith('event:')) continue; // ignore event: lines
-        if (!line.startsWith('data: ')) continue;
+        if (line.startsWith('event:')) continue;
+        if (!line.startsWith('data: ')) { console.log('[SSE] unknown line:', line.substring(0,50)); continue; }
 
         var jsonStr = line.slice(6);
         var data;
-        try { data = JSON.parse(jsonStr); } catch(e) { continue; }
+        try { data = JSON.parse(jsonStr); } catch(e) { console.log('[SSE] parse error:', e.message, 'line len:', jsonStr.length); continue; }
 
-        // Check type field to distinguish progress vs result
         if (data.type === 'result') {
+          console.log('[SSE] got result, reviews:', data.reviews ? data.reviews.length : 0);
           allReviews = data;
           result = { done: true };
           break;
@@ -1284,13 +1284,15 @@ async function startOnlineFetch() {
       if (allReviews) break;
     }
 
-    // Flush remaining buffer (in case DATA was in the last chunk)
+    // Flush remaining buffer
     if (!allReviews && buffer.trim()) {
+      console.log('[SSE] flushing buffer:', buffer.length, 'chars, starts:', buffer.substring(0,30));
       var lastLine = buffer.trim();
       if (lastLine.startsWith('data: ')) {
-        try { var d = JSON.parse(lastLine.slice(6)); if (d.type==='result') allReviews = d; } catch(e) {}
-      }
+        try { var d = JSON.parse(lastLine.slice(6)); if (d.type==='result') { console.log('[SSE] flush got result'); allReviews = d; } } catch(e) { console.log('[SSE] flush parse error:', e.message); }
+      } else { console.log('[SSE] flush: line does not start with data:'); }
     }
+    console.log('[SSE] done. allReviews:', allReviews ? 'YES' : 'NULL');
 
     // Process the complete data
     if (allReviews && allReviews.reviews && allReviews.reviews.length > 0) {
