@@ -64,6 +64,7 @@ function spawnPython(script, args, res, envVars = {}) {
         'X-Accel-Buffering': 'no',
     });
     res.flushHeaders();  // Ensure headers sent immediately
+    res.setTimeout(0);   // Disable timeout for long-running requests
 
     const env = { ...process.env, PYTHONUNBUFFERED: '1', PYTHONIOENCODING: 'utf-8', ...envVars };
     const py = spawn(process.env.PYTHON_BIN || 'python', [script, ...args], { env });
