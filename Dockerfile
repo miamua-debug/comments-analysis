@@ -9,15 +9,16 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
-# Install Python deps
+# Install Python deps (use venv to avoid PEP 668 restriction)
 COPY requirements.txt ./
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN python3 -m venv /opt/venv && /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy app
 COPY . .
 
-# Docker uses python3 binary
-ENV PYTHON_BIN=python3
+# Use venv python
+ENV PYTHON_BIN=/opt/venv/bin/python
 
 EXPOSE 9876
 CMD ["node", "server.js"]
