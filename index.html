@@ -1810,10 +1810,12 @@ state.strategyReport = state.strategyReport || '';
 state.strategyMeta = state.strategyMeta || {};
 
 async function startStoreFetch() {
+  console.log('[StoreFetch] called');
   var platform = document.getElementById('strategy-platform').value;
   var shopId = document.getElementById('strategy-shop-id').value.trim();
   var keyword = document.getElementById('strategy-keyword').value.trim();
   var targetShop = document.getElementById('strategy-target-shop').value.trim();
+  console.log('[StoreFetch] platform=' + platform + ' keyword=' + keyword + ' apifyToken=' + (state.apifyToken ? 'YES' : 'NO'));
 
   if (platform === 'jd' && !shopId) { alert('请输入店铺ID'); return; }
   if (platform !== 'jd' && !keyword) { alert('请输入搜索关键词'); return; }
