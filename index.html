@@ -1926,6 +1926,7 @@ async function startStoreFetch() {
     } catch(e) { console.error('Render SKU preview error:', e); alert('渲染错误: ' + e.message); }
     }
   } catch(err) {
+    console.error('[StoreFetch] ERROR:', err.message, err);
     if (err.name !== 'AbortError') { alert('获取失败: ' + err.message); }
   }
   document.getElementById('store-fetch-progress').style.display = 'none';
