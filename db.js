@@ -61,7 +61,11 @@ db.exec(`
 
 // --- User Settings ---
 function getSettings() {
-  return db.prepare('SELECT * FROM user_settings WHERE id = 1').get();
+  var row = db.prepare('SELECT * FROM user_settings WHERE id = 1').get();
+  // Fallback to environment variables if DB is empty
+  if (!row.api_key && process.env.API_KEY) row.api_key = process.env.API_KEY;
+  if (!row.apify_token && process.env.APIFY_TOKEN) row.apify_token = process.env.APIFY_TOKEN;
+  return row;
 }
 
 function saveSettings(settings) {
