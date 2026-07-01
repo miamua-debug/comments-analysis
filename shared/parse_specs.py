@@ -183,7 +183,8 @@ def parse_specs(name, color, attrs):
             specs['ScreenCount'] = re.search(r'双屏|单屏|无屏', color).group(0)
         if re.search(r'酷睿\s*(i\d)', color):
             specs['CPU'] = 'Intel'
-            specs['CPUModel'] = f"酷睿{re.search(r'酷睿\s*(i\d)', color).group(1)}"
+            _m = re.search(r'酷睿\s*(i\d)', color)
+            specs['CPUModel'] = f"酷睿{_m.group(1)}" if _m else '酷睿'
         elif re.search(r'锐龙|Ryzen', color, re.IGNORECASE):
             specs['CPU'] = 'AMD'
             if rm := re.search(r'(?:锐龙|Ryzen)\s*(R?\d\s*\d*)', color, re.IGNORECASE):
