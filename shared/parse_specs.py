@@ -203,7 +203,8 @@ def parse_specs(name, color, attrs):
             specs['RAM'] = f"{m.group(1)}G"
             specs['Disk'] = f"{m.group(2)}G"
         elif not specs['RAM'] and re.search(r'(\d+)G\s*(?:内存|运存|RAM)', name):
-            specs['RAM'] = f"{re.search(r'(\d+)G\s*(?:内存|运存|RAM)', name).group(1)}G"
+            _m = re.search(r'(\d+)G\s*(?:内存|运存|RAM)', name)
+            specs['RAM'] = f"{_m.group(1)}G" if _m else ''
         # Tmall-style: '/' separated segments
         if not specs['RAM'] or not specs['Disk']:
             for seg in name.split('/'):
@@ -224,11 +225,13 @@ def parse_specs(name, color, attrs):
                 specs['Disk'] = f"{t_vals[0]}T"
         # TB support
         if not specs['Disk'] and re.search(r'(\d+)\s*T\s*(?:硬盘|存储|固态|SSD|闪存|大存储|机械|HDD)', name):
-            specs['Disk'] = f"{re.search(r'(\d+)\s*T\s*(?:硬盘|存储|固态|SSD|闪存|大存储|机械|HDD)', name).group(1)}T"
+            _d = re.search(r'(\d+)\s*T\s*(?:硬盘|存储|固态|SSD|闪存|大存储|机械|HDD)', name)
+            specs['Disk'] = f"{_d.group(1)}T" if _d else ''
         # CPU from name
         if (not specs['CPU']) and re.search(r'酷睿\s*(i\d)', name):
             specs['CPU'] = 'Intel'
-            specs['CPUModel'] = f"酷睿{re.search(r'酷睿\s*(i\d)', name).group(1)}"
+            _c = re.search(r'酷睿\s*(i\d)', name)
+            specs['CPUModel'] = f"酷睿{_c.group(1)}" if _c else '酷睿'
         elif not specs['CPU'] and re.search(r'\bIntel\b', name):
             specs['CPU'] = 'Intel'
         elif not specs['CPU'] and re.search(r'锐龙|Ryzen', name, re.IGNORECASE):
