@@ -1006,8 +1006,8 @@ function init() {
     hintBanner.className = 'alert alert-warning';
     hintBanner.innerHTML = '<strong><i data-lucide="alert-triangle" class="lucide-icon"></i> 提示：</strong> 首次使用请先配置 <a href="#" onclick="switchPage(\'settings\');return false" style="color:#92400e;text-decoration:underline">Anthropic API Key</a>，或点击「加载示例数据」后按提示输入。';
     var firstCard = importPage.querySelector('.card');
-    if (firstCard) {
-      importPage.insertBefore(hintBanner, firstCard);
+    if (firstCard && firstCard.parentNode) {
+      firstCard.parentNode.insertBefore(hintBanner, firstCard);
     }
   } else {
     document.getElementById('settings-msg').innerHTML = '<div class="alert alert-success">API Key 已配置，可直接导入数据开始分析</div>';
