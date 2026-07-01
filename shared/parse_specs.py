@@ -89,7 +89,8 @@ def parse_specs(name, color, attrs):
                     cpu_info = m.group(1).strip()
                     if re.search(r'酷睿\s*(i\d)', cpu_info):
                         specs['CPU'] = 'Intel'
-                        specs['CPUModel'] = f"酷睿{re.search(r'酷睿\s*(i\d)', cpu_info).group(1)}"
+                        m_core = re.search(r'酷睿\s*(i\d)', cpu_info)
+                        specs['CPUModel'] = f"酷睿{m_core.group(1)}" if m_core else '酷睿'
                     elif re.search(r'\bIntel\b', cpu_info):
                         specs['CPU'] = 'Intel'; specs['CPUModel'] = cpu_info
                     elif re.search(r'锐龙|Ryzen\s*(R\d|\d)', cpu_info, re.IGNORECASE):
