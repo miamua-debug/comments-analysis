@@ -1,7 +1,8 @@
 FROM node:18-slim
+# v3 — Railway Dockerfile build
 
 # Install Python for data fetching scripts
-RUN apt-get update && apt-get install -y python3 python3-pip && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y python3 python3-pip python3-venv && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -9,15 +10,13 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
-# Install Python deps (use venv to avoid PEP 668 restriction)
+# Install Python deps in venv
 RUN python3 -m venv /opt/venv && /opt/venv/bin/pip install --no-cache-dir requests apify-client
 ENV PATH="/opt/venv/bin:$PATH"
+ENV PYTHON_BIN=/opt/venv/bin/python
 
 # Copy app
 COPY . .
-
-# Use venv python
-ENV PYTHON_BIN=/opt/venv/bin/python
 
 EXPOSE 9876
 CMD ["node", "server.js"]
