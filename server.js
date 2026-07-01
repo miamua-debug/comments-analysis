@@ -115,11 +115,23 @@ function spawnPython(script, args, res, envVars = {}) {
     });
 
     py.stderr.on('data', (data) => {
-        console.error(`[${path.basename(script)}] ${data.toString().trim()}`);
+        const msg = data.toString().trim();
+        console.error(`[${path.basename(script)}] ${msg}`);
+        // Forward Python errors to client as SSE progress message
+        if (!res.writableEnded) {
+            const errSse = `data: ${JSON.stringify({type:'progress',phase:'error',message:msg})}\n\n`;
+            try { res.write(errSse); } catch(e) {}
+        }
     });
 
-    py.on('close', () => {
-        if (!res.writableEnded) res.end();
+    py.on('close', (code) => {
+        if (!res.writableEnded) {
+            // If no DATA was sent, send error result
+            const errResult = JSON.stringify({type:'result',error:`Python process exited with code ${code}`,totalSkus:0,skus:[],shopName:''});
+            const sse = `data: ${errResult}\n\n`;
+            try { res.write(sse); } catch(e) {}
+            res.end();
+        }
     });
 }
 
