@@ -1,0 +1,161 @@
+Server running on http://localhost:9876
+  Data API: /api/reports, /api/strategy-reports, /api/trend-reports
+  Data file: D:\E\==VC\review-insight\data\review-insight.db
+[fetch-jd.py] Started with args: [ '--sku', '10155280695826' ]
+[SSE] STATUS: {"phase": "discover", "message": "Discovering SKUs under same SPU..."}
+[SSE] STATUS: {"phase": "discover", "message": "Found 4 candidate SKUs"}
+[SSE] STATUS: {"phase": "validate", "message": "Validating SKUs..."}
+[SSE] STATUS: {"phase": "validate", "message": "SKU 10097232860197 (?) - 2 reviews, 1 p
+[SSE] STATUS: {"phase": "validate", "message": "SKU 10097232860185 (?) - 2 reviews, 1 p
+[SSE] STATUS: {"phase": "validate", "message": "SKU 10097232860179 (?) - 2 reviews, 1 p
+[SSE] STATUS: {"phase": "validate", "message": "SKU 10155280695826 (?) - 1 reviews, 1 p
+[SSE] STATUS: {"phase": "validate", "message": "Valid SKUs: 4"}
+[SSE] STATUS: {"phase": "fetch", "sku": "10097232860197", "currentPage": 1, "maxPage": 
+[SSE] STATUS: {"phase": "fetch", "sku": "10097232860185", "currentPage": 1, "maxPage": 
+[SSE] STATUS: {"phase": "fetch", "sku": "10097232860179", "currentPage": 1, "maxPage": 
+[SSE] STATUS: {"phase": "fetch", "sku": "10155280695826", "currentPage": 1, "maxPage": 
+[SSE] STATUS: {"phase": "complete", "productName": "", "skuCount": 4, "totalReviews": 0
+[SSE] DATA (531 chars)
+[fetch-jd.py] Started with args: [ '--sku', '10112888866589' ]
+[SSE] STATUS: {"phase": "discover", "message": "Discovering SKUs under same SPU..."}
+[SSE] STATUS: {"phase": "discover", "message": "Found 4 candidate SKUs"}
+[SSE] STATUS: {"phase": "validate", "message": "Validating SKUs..."}
+[SSE] STATUS: {"phase": "validate", "message": "SKU 10112888866594 (C8双Ai双屏内置支付8G+256G)
+[SSE] STATUS: {"phase": "validate", "message": "SKU 10022565877678 (C8尊享版双屏【疾速四核 高配不卡】)
+[SSE] STATUS: {"phase": "validate", "message": "SKU 10022565877684 (?) - 15 reviews, 1 
+[SSE] STATUS: {"phase": "validate", "message": "SKU 10112888866589 (C7单屏酷睿i5/8G+128G) -
+[SSE] STATUS: {"phase": "validate", "message": "Valid SKUs: 4"}
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 1, "maxPage": 
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 2, "maxPage": 
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 3, "maxPage": 
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 4, "maxPage": 
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 5, "maxPage": 
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 6, "maxPage": 
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 7, "maxPage": 
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 8, "maxPage": 
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 9, "maxPage": 
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 10, "maxPage":
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 11, "maxPage":
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 12, "maxPage":
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 13, "maxPage":
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 14, "maxPage":
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 15, "maxPage":
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 16, "maxPage":
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 17, "maxPage":
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 18, "maxPage":
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 19, "maxPage":
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 20, "maxPage":
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 21, "maxPage":
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 22, "maxPage":
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 23, "maxPage":
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 24, "maxPage":
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 25, "maxPage":
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866594", "currentPage": 26, "maxPage":
+[SSE] STATUS: {"phase": "fetch", "sku": "10022565877678", "currentPage": 1, "maxPage": 
+[SSE] STATUS: {"phase": "fetch", "sku": "10022565877678", "currentPage": 2, "maxPage": 
+[SSE] STATUS: {"phase": "fetch", "sku": "10022565877678", "currentPage": 3, "maxPage": 
+[SSE] STATUS: {"phase": "fetch", "sku": "10022565877678", "currentPage": 4, "maxPage": 
+[SSE] STATUS: {"phase": "fetch", "sku": "10022565877684", "currentPage": 1, "maxPage": 
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866589", "currentPage": 1, "maxPage": 
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866589", "currentPage": 2, "maxPage": 
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866589", "currentPage": 3, "maxPage": 
+[SSE] STATUS: {"phase": "fetch", "sku": "10112888866589", "currentPage": 4, "maxPage": 
+[SSE] STATUS: {"phase": "complete", "productName": "芯友智能Ai识别收银秤称重收银机一体机触屏商场超市生鲜农贸果蔬零食熟食
+[SSE] DATA (102727 chars)
+[API] -> deepseek stream=false body=6749 chars
+[API] <- deepseek status=200
+[API] stream complete
+[API] -> deepseek stream=false body=4743 chars
+[API] <- deepseek status=200
+[API] stream complete
+[API] -> deepseek stream=false body=4582 chars
+[API] <- deepseek status=200
+[API] stream complete
+[API] -> deepseek stream=true body=56397 chars
+[API] <- deepseek status=200
+[API] stream complete
+[fetch-store-skus.py] Started with args: [ '--shopId', '10320377', '--keyword', '芯友', '--targetShop', '芯友旗舰店' ]
+[SSE] STATUS: {"phase": "search", "message": "Finding total pages..."}
+[SSE] STATUS: {"phase": "search", "message": "Found 40 pages"}
+[SSE] STATUS: {"phase": "download", "message": "Downloading 40 pages...", "total": 40}
+[SSE] STATUS: {"phase": "download", "message": "Downloaded 5/40", "current": 5, "total"
+[SSE] STATUS: {"phase": "download", "message": "Downloaded 10/40", "current": 10, "tota
+[SSE] STATUS: {"phase": "download", "message": "Downloaded 15/40", "current": 15, "tota
+[SSE] STATUS: {"phase": "download", "message": "Downloaded 20/40", "current": 20, "tota
+[SSE] STATUS: {"phase": "download", "message": "Downloaded 25/40", "current": 25, "tota
+[SSE] STATUS: {"phase": "download", "message": "Downloaded 30/40", "current": 30, "tota
+[SSE] STATUS: {"phase": "download", "message": "Downloaded 35/40", "current": 35, "tota
+[SSE] STATUS: {"phase": "download", "message": "Downloaded 40/40", "current": 40, "tota
+[SSE] STATUS: {"phase": "extract", "message": "Extracting SKU data..."}
+[SSE] STATUS: {"phase": "extract", "message": "Extracted 389 candidate SKUs"}
+[SSE] STATUS: {"phase": "filter", "message": "After shop filter: 256 SKUs from 芯友旗舰店"}
+[SSE] STATUS: {"phase": "reviews", "message": "Fetching reviews for 256 SKUs...", "tota
+[SSE] STATUS: {"phase": "reviews", "message": "Fetched reviews: 30/256", "current": 30,
+[SSE] STATUS: {"phase": "reviews", "message": "Fetched reviews: 60/256", "current": 60,
+[SSE] STATUS: {"phase": "reviews", "message": "Fetched reviews: 90/256", "current": 90,
+[SSE] STATUS: {"phase": "reviews", "message": "Fetched reviews: 120/256", "current": 12
+[SSE] STATUS: {"phase": "reviews", "message": "Fetched reviews: 150/256", "current": 15
+[SSE] STATUS: {"phase": "reviews", "message": "Fetched reviews: 180/256", "current": 18
+[SSE] STATUS: {"phase": "reviews", "message": "Fetched reviews: 210/256", "current": 21
+[SSE] STATUS: {"phase": "reviews", "message": "Fetched reviews: 240/256", "current": 24
+[SSE] STATUS: {"phase": "reviews", "message": "Fetched reviews: 256/256", "current": 25
+[SSE] STATUS: {"phase": "parse", "message": "Parsing specs..."}
+[SSE] STATUS: {"phase": "parse", "message": "Parsed specs for 256 SKUs"}
+[SSE] STATUS: {"phase": "family", "message": "Grouping product families..."}
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 1/256", "current": 1
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 6/256", "current": 6
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 11/256", "current": 
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 16/256", "current": 
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 21/256", "current": 
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 26/256", "current": 
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 31/256", "current": 
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 36/256", "current": 
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 41/256", "current": 
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 46/256", "current": 
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 51/256", "current": 
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 56/256", "current": 
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 61/256", "current": 
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 66/256", "current": 
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 71/256", "current": 
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 76/256", "current": 
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 81/256", "current": 
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 86/256", "current": 
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 91/256", "current": 
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 96/256", "current": 
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 101/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 106/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 111/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 116/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 121/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 126/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 131/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 136/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 141/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 146/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 151/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 156/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 161/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 166/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 171/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 176/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 181/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 186/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 191/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 196/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 201/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 206/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 211/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 216/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 221/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 226/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 231/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 236/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 241/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 246/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 251/256", "current":
+[SSE] STATUS: {"phase": "family", "message": "Processing families: 256/256", "current":
+[SSE] STATUS: {"phase": "complete", "totalSkus": 256, "familyCount": 256}
+[SSE] DATA (130315 chars)
+[API] -> deepseek stream=true body=170020 chars
+[API] <- deepseek status=200
+[API] stream complete
