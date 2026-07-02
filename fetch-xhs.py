@@ -49,12 +49,20 @@ def main():
             print("DATA:" + json.dumps({"totalNotes": 0, "notes": [], "keyword": keyword}, ensure_ascii=False), flush=True)
             return
 
-        try:
-            items = list(client.dataset(dataset_id).iterate_items())
-        except Exception as e2:
-            status("error", f"Dataset read failed: {str(e2)[:100]}")
-            print("DATA:" + json.dumps({"totalNotes": 0, "notes": [], "keyword": keyword}, ensure_ascii=False), flush=True)
-            return
+        import time as _time
+        items = []
+        for attempt in range(3):
+            try:
+                items = list(client.dataset(dataset_id).iterate_items())
+                break
+            except Exception as e2:
+                if attempt < 2:
+                    status("detail", f"Dataset retry {attempt+1}/3...")
+                    _time.sleep(5)
+                else:
+                    status("error", f"Dataset read failed after 3 retries: {str(e2)[:100]}")
+                    print("DATA:" + json.dumps({"totalNotes": 0, "notes": [], "keyword": keyword}, ensure_ascii=False), flush=True)
+                    return
 
         if not items:
             result = {"totalNotes": 0, "notes": [], "keyword": keyword}
