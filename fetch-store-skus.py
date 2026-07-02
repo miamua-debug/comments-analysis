@@ -94,20 +94,22 @@ def main():
         shop_counts = {}
         for sid, s in all_skus.items():
             sn = s['Shop'] or '(none)'; shop_counts[sn] = shop_counts.get(sn, 0) + 1
-        # Filter by shop: substring match if user-specified, else auto-pick largest
+        # Filter by shop: substring match if user-specified, else auto-pick best match
         if args.targetShop:
             target_shop = args.targetShop
             filtered = {sid: s for sid, s in all_skus.items() if target_shop in s['Shop']}
             if filtered:
                 all_skus = filtered
             else:
-                # No match found — keep all SKUs and warn
-                status({"phase": "filter", "message": f"Shop '{target_shop}' not found in results, keeping all {len(all_skus)} SKUs"})
-                for sn, cnt in sorted(shop_counts.items(), key=lambda x: -x[1])[:5]:
-                    status({"phase": "filter", "message": f"  Available: {sn} ({cnt} SKUs)"})
+                status({"phase": "filter", "message": f"Shop '{target_shop}' not found, keeping all {len(all_skus)} SKUs from top shop"})
                 target_shop = max(shop_counts, key=shop_counts.get) or target_shop
         else:
-            target_shop = max(shop_counts, key=shop_counts.get)
+            # Auto-detect: prefer shop with keyword in name, then largest
+            keyword_shops = [sn for sn in shop_counts if keyword in sn]
+            if keyword_shops:
+                target_shop = max(keyword_shops, key=lambda sn: shop_counts[sn])
+            else:
+                target_shop = max(shop_counts, key=shop_counts.get)
             all_skus = {sid: s for sid, s in all_skus.items() if s['Shop'] == target_shop}
         status({"phase": "filter", "message": f"After shop filter: {len(all_skus)} SKUs from {target_shop}"})
 
