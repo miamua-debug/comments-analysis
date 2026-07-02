@@ -35,9 +35,10 @@ def main():
 
         status("search", f"Searching XHS for: {keyword}")
         run = client.actor(ACTOR).call(run_input={
-            'searchKeyword': keyword,
-            'maxItems': limit,
+            'keywords': [keyword],
+            'maxItems': max(limit, 100),
             'sortType': 'general',
+            'noteType': 'all',
         })
 
         items = list(client.dataset(run.dict()["default_dataset_id"]).iterate_items())
@@ -49,19 +50,25 @@ def main():
         notes = []
         for i, item in enumerate(items):
             d = item if isinstance(item, dict) else item.__dict__
+            inner = d.get('item', {}) or {}
+            card = inner.get('note_card', {}) or {}
+            user = card.get('user', {}) or {}
+            interact = card.get('interact_info', {}) or {}
+            cover = card.get('cover', {}) or {}
+
             notes.append({
                 'index': i + 1,
-                'noteId': d.get('noteId', d.get('id', '')),
-                'url': d.get('noteUrl', d.get('url', '')),
-                'title': d.get('title', d.get('noteTitle', '')),
-                'content': (d.get('desc', d.get('content', '')) or '').replace('\n', ' ').strip(),
-                'likes': str(d.get('likes', d.get('likedCount', 0)) or 0),
-                'comments': str(d.get('comments', d.get('commentsCount', 0)) or 0),
-                'collects': str(d.get('collects', d.get('collectedCount', 0)) or 0),
-                'publishedAt': d.get('publishTime', d.get('time', '')),
-                'author': d.get('author', d.get('nickname', d.get('user', {}).get('nickname', '')) if isinstance(d.get('user'), dict) else ''),
-                'authorUrl': d.get('authorUrl', d.get('user', {}).get('userId', '') if isinstance(d.get('user'), dict) else ''),
-                'tags': ', '.join(d.get('tags', d.get('tagList', []))) if isinstance(d.get('tags', []), list) else '',
+                'noteId': inner.get('id', d.get('id', '')),
+                'url': d.get('link', ''),
+                'title': card.get('display_title', ''),
+                'content': '',  # not provided by this actor
+                'likes': str(interact.get('liked_count', 0) or 0),
+                'comments': '0',   # not provided
+                'collects': '0',   # not provided
+                'publishedAt': d.get('scrapedAt', ''),
+                'author': user.get('nick_name', user.get('nickname', '')),
+                'authorUrl': user.get('user_id', ''),
+                'tags': '',
             })
 
             if (i + 1) % 5 == 0 or i == len(items) - 1:
