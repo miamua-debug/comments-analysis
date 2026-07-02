@@ -672,6 +672,7 @@ h4{font-size:16px;margin-top:12px}
         <div class="form-group"><label>搜索关键词</label><input type="text" id="trend-keyword" placeholder="例如: 收银机、智能收银秤"></div>
         <div class="form-group"><label>获取数量</label>
           <select id="trend-limit"><option value="10">10</option><option value="20" selected>20</option><option value="50">50</option><option value="100">100</option><option value="150">150</option><option value="200">200</option></select></div>
+        <div class="form-group"><label>Chrome Profile <span class="text-muted">（仅本地）</span></label><input type="text" id="trend-profile" value="hkzg2bpx" placeholder="opencli profile name"></div>
         <button class="btn btn-primary" id="btn-trend-fetch" onclick="startTrendFetch()"><i data-lucide="search" class="lucide-icon"></i> 搜索笔记</button>
         <div id="trend-fetch-progress" style="display:none;margin-top:12px">
           <div class="progress-bar-wrap"><div class="progress-bar-fill" id="trend-progress-fill"></div></div>
@@ -1963,8 +1964,8 @@ var TREND_PROMPT = [
 async function startTrendFetch() {
   var keyword = document.getElementById('trend-keyword').value.trim();
   var limit = parseInt(document.getElementById('trend-limit').value) || 20;
+  var profile = document.getElementById('trend-profile').value.trim() || 'hkzg2bpx';
   if (!keyword) { alert('请输入搜索关键词'); return; }
-  if (!state.apifyToken) { alert('请先在设置页面配置 Apify API Token'); return; }
 
   _trendAbort = new AbortController();
   document.getElementById('trend-fetch-progress').style.display = 'block';
@@ -1975,7 +1976,7 @@ async function startTrendFetch() {
   try {
     var resp = await fetch(window.location.origin + '/api/fetch-xhs-notes', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ keyword: keyword, limit: limit, apifyToken: state.apifyToken }),
+      body: JSON.stringify({ keyword: keyword, limit: limit, profile: profile }),
       signal: _trendAbort.signal
     });
     var reader = resp.body.getReader(); var decoder = new TextDecoder(); var buffer = ''; var resultData = null;
