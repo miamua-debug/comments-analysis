@@ -94,8 +94,17 @@ def main():
         shop_counts = {}
         for sid, s in all_skus.items():
             sn = s['Shop'] or '(none)'; shop_counts[sn] = shop_counts.get(sn, 0) + 1
-        target_shop = args.targetShop or max(shop_counts, key=shop_counts.get)
-        all_skus = {sid: s for sid, s in all_skus.items() if s['Shop'] == target_shop}
+        # Filter by shop: exact match if auto-detected, substring match if user-specified
+        if args.targetShop:
+            target_shop = args.targetShop
+            # Find matching shop name(s) using substring
+            matching_shops = [sn for sn in shop_counts if target_shop in sn]
+            if matching_shops:
+                target_shop = matching_shops[0]  # Use first match as canonical name
+            all_skus = {sid: s for sid, s in all_skus.items() if target_shop in s['Shop']}
+        else:
+            target_shop = max(shop_counts, key=shop_counts.get)
+            all_skus = {sid: s for sid, s in all_skus.items() if s['Shop'] == target_shop}
         status({"phase": "filter", "message": f"After shop filter: {len(all_skus)} SKUs from {target_shop}"})
 
         # Phase 4: Fetch review data
