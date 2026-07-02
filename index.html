@@ -666,13 +666,14 @@ h4{font-size:16px;margin-top:12px}
   <!-- Page: Trend Fetch -->
   <div class="page" id="page-trend-fetch">
     <h4 class="mb-3"><i data-lucide="search" class="lucide-icon" style="width:20px;height:20px"></i> 笔记数据获取</h4>
+    <div class="alert alert-warning" id="trend-online-warning" style="display:none"><strong>提示：</strong>小红书笔记获取需要本地 Chrome 浏览器 + opencli，线上部署暂不支持。请在本地方案使用此功能。</div>
     <div class="card">
       <div class="card-header"><i data-lucide="globe" class="lucide-icon"></i> 小红书笔记搜索</div>
       <div class="card-body">
         <div class="form-group"><label>搜索关键词</label><input type="text" id="trend-keyword" placeholder="例如: 收银机、智能收银秤"></div>
         <div class="form-group"><label>获取数量</label>
           <select id="trend-limit"><option value="10">10</option><option value="20" selected>20</option><option value="50">50</option><option value="100">100</option><option value="150">150</option><option value="200">200</option></select></div>
-        <div class="form-group"><label>Chrome Profile <span class="text-muted">（仅本地）</span></label><input type="text" id="trend-profile" value="hkzg2bpx" placeholder="opencli profile name"></div>
+        <div class="form-group"><label>Chrome Profile</label><input type="text" id="trend-profile" value="hkzg2bpx" placeholder="opencli profile name"></div>
         <button class="btn btn-primary" id="btn-trend-fetch" onclick="startTrendFetch()"><i data-lucide="search" class="lucide-icon"></i> 搜索笔记</button>
         <div id="trend-fetch-progress" style="display:none;margin-top:12px">
           <div class="progress-bar-wrap"><div class="progress-bar-fill" id="trend-progress-fill"></div></div>
@@ -1073,6 +1074,11 @@ function switchPage(page) {
   if (page === 'trend-report') renderTrendReport();
   if (page === 'trend-detail') renderTrendDetail();
   if (page === 'trend-history') renderTrendHistory();
+  // Show warning for online deployment (XHS local-only)
+  if (page === 'trend-fetch') {
+    var isOnline = window.location.hostname.indexOf('railway.app') !== -1;
+    document.getElementById('trend-online-warning').style.display = isOnline ? 'block' : 'none';
+  }
 }
 
 // ============================================
