@@ -78,7 +78,6 @@ function spawnPython(script, args, res, envVars = {}) {
     });
     res.flushHeaders();
     res.setTimeout(600000);  // 10 min timeout for slow Apify calls
-    req.setTimeout(600000);
 
     const env = { ...process.env, PYTHONUNBUFFERED: '1', PYTHONIOENCODING: 'utf-8', ...envVars };
     const py = spawn(process.env.PYTHON_BIN || 'python', [script, ...args], { env });
