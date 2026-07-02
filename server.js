@@ -168,14 +168,14 @@ app.post('/api/fetch-tmall-skus', (req, res) => {
     spawnPython(script, ['--file', tmpFile], res, { PYTHONIOENCODING: 'utf-8' });
 });
 
-// ===== Fetch XHS Notes =====
+// ===== Fetch XHS Notes (Apify) =====
 app.post('/api/fetch-xhs-notes', (req, res) => {
-    const { keyword, limit, profile } = req.body;
-    if (!keyword) return res.status(400).json({ error: 'keyword required' });
+    const { keyword, limit, apifyToken } = req.body;
+    if (!keyword || !apifyToken) return res.status(400).json({ error: 'keyword and apifyToken required' });
+    const tmpFile = path.join(require('os').tmpdir(), `xhs_${Date.now()}.json`);
+    fs.writeFileSync(tmpFile, JSON.stringify({ keyword, apifyToken, limit: limit || 20 }), 'utf-8');
     const script = path.join(__dirname, 'fetch-xhs.py');
-    const args = ['--keyword', keyword, '--limit', String(limit || 20)];
-    if (profile) args.push('--profile', profile);
-    spawnPython(script, args, res);
+    spawnPython(script, ['--file', tmpFile], res, { PYTHONIOENCODING: 'utf-8' });
 });
 
 // ===== Data API (SQLite replaces browser localStorage) =====

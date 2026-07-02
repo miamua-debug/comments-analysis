@@ -1,82 +1,81 @@
-# fetch-xhs.py - Extract Xiaohongshu notes via opencli
-import sys, json, re, argparse, subprocess, tempfile, os
-
-def status(msg):
-    print("STATUS:" + json.dumps(msg, ensure_ascii=False), flush=True)
+# fetch-xhs.py - Extract Xiaohongshu notes via Apify (replaces opencli for Railway deployment)
+import sys, json, argparse
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--keyword', required=True)
-    parser.add_argument('--limit', type=int, default=20)
-    parser.add_argument('--profile', default='hkzg2bpx')
+    parser.add_argument('--keyword', required=True, help='Search keyword')
+    parser.add_argument('--token', required=True, help='Apify API token')
+    parser.add_argument('--limit', type=int, default=20, help='Max notes')
+    parser.add_argument('--file', help='JSON config file {keyword, apifyToken, limit}')
     args = parser.parse_args()
 
-    status({"phase": "search", "message": f"Searching XHS for: {args.keyword}"})
+    if args.file:
+        with open(args.file, 'r', encoding='utf-8-sig') as f:
+            config = json.load(f)
+        keyword = config.get('keyword', '')
+        token = config.get('apifyToken', '')
+        limit = int(config.get('limit', 20))
+    else:
+        keyword = args.keyword or ''
+        token = args.token or ''
+        limit = args.limit
 
-    # Step 1: Search
+    if not keyword or not token:
+        print(json.dumps({"error": "keyword and apifyToken required"})); sys.exit(1)
+
+    def status(phase, message, **kw):
+        d = {"phase": phase, "message": message}; d.update(kw)
+        print("STATUS:" + json.dumps(d, ensure_ascii=False), flush=True)
+
+    status("init", "Initializing XHS scraper via Apify...")
     try:
-        result = subprocess.run(
-            f'opencli --profile {args.profile} xiaohongshu search "{args.keyword}" --limit {args.limit} -f json',
-            shell=True, capture_output=True, text=True, timeout=120, encoding='utf-8', errors='replace'
-        )
-        output = result.stdout.strip()
-        # Extract JSON array from output
-        start = output.find('['); end = output.rfind(']')
-        if start >= 0 and end > start:
-            search_data = json.loads(output[start:end+1])
-        else:
-            search_data = []
-    except Exception as e:
-        status({"phase": "error", "message": f"Search failed: {e}"})
-        search_data = []
+        from apify_client import ApifyClient
+        client = ApifyClient(token)
+        ACTOR = 'curious_coder/xiaohongshu-real-time-scraper'
 
-    total = len(search_data) if isinstance(search_data, list) else 0
-    if total == 0:
-        print("DATA:" + json.dumps({"totalNotes": 0, "notes": []}, ensure_ascii=False), flush=True)
-        return
-
-    status({"phase": "search", "message": f"Found {total} notes", "total": total})
-
-    # Step 2: Get details
-    notes = []
-    for i, item in enumerate(search_data):
-        url = item.get('url', '')
-        note_id = ''
-        if m := re.search(r'search_result/([a-f0-9]+)', url): note_id = m.group(1)
-
-        content, collects, comments, tags = '', '0', '0', ''
-        if url:
-            try:
-                result2 = subprocess.run(
-                    f'opencli --profile {args.profile} xiaohongshu note "{url}" -f json',
-                    shell=True, capture_output=True, text=True, timeout=30, encoding='utf-8', errors='replace'
-                )
-                detail_output = result2.stdout.strip()
-                ds = detail_output.find('['); de = detail_output.rfind(']')
-                if ds >= 0 and de > ds:
-                    detail = json.loads(detail_output[ds:de+1])
-                    for d in detail:
-                        fld = d.get('field', ''); val = d.get('value', '')
-                        if fld == 'content': content = val
-                        elif fld == 'collects': collects = val
-                        elif fld == 'comments': comments = val
-                        elif fld == 'tags': tags = val
-            except: pass
-
-        notes.append({
-            'index': i+1, 'noteId': note_id, 'url': url, 'title': item.get('title',''),
-            'content': (content or '').replace('\n',' ').strip(),
-            'likes': str(item.get('likes','0')), 'comments': comments, 'collects': collects,
-            'publishedAt': item.get('published_at',''), 'author': item.get('author',''),
-            'authorUrl': item.get('author_url',''), 'tags': tags
+        status("search", f"Searching XHS for: {keyword}")
+        run = client.actor(ACTOR).call(run_input={
+            'searchKeyword': keyword,
+            'maxItems': limit,
+            'sortType': 'general',
         })
 
-        if (i+1) % 5 == 0 or i == total - 1:
-            status({"phase": "detail", "message": f"Fetched {i+1}/{total}", "current": i+1, "total": total})
+        items = list(client.dataset(run.dict()["default_dataset_id"]).iterate_items())
+        if not items:
+            result = {"totalNotes": 0, "notes": [], "keyword": keyword}
+            print("DATA:" + json.dumps(result, ensure_ascii=False), flush=True)
+            return
 
-    status({"phase": "complete", "totalNotes": len(notes)})
-    result_data = {'keyword': args.keyword, 'totalNotes': len(notes), 'notes': notes}
-    print("DATA:" + json.dumps(result_data, ensure_ascii=False), flush=True)
+        notes = []
+        for i, item in enumerate(items):
+            d = item if isinstance(item, dict) else item.__dict__
+            notes.append({
+                'index': i + 1,
+                'noteId': d.get('noteId', d.get('id', '')),
+                'url': d.get('noteUrl', d.get('url', '')),
+                'title': d.get('title', d.get('noteTitle', '')),
+                'content': (d.get('desc', d.get('content', '')) or '').replace('\n', ' ').strip(),
+                'likes': str(d.get('likes', d.get('likedCount', 0)) or 0),
+                'comments': str(d.get('comments', d.get('commentsCount', 0)) or 0),
+                'collects': str(d.get('collects', d.get('collectedCount', 0)) or 0),
+                'publishedAt': d.get('publishTime', d.get('time', '')),
+                'author': d.get('author', d.get('nickname', d.get('user', {}).get('nickname', '')) if isinstance(d.get('user'), dict) else ''),
+                'authorUrl': d.get('authorUrl', d.get('user', {}).get('userId', '') if isinstance(d.get('user'), dict) else ''),
+                'tags': ', '.join(d.get('tags', d.get('tagList', []))) if isinstance(d.get('tags', []), list) else '',
+            })
+
+            if (i + 1) % 5 == 0 or i == len(items) - 1:
+                status("detail", f"Parsed {i+1}/{len(items)} notes", current=i+1, total=len(items))
+
+        result = {'keyword': keyword, 'totalNotes': len(notes), 'notes': notes}
+        status("complete", f"Total: {len(notes)} notes", totalNotes=len(notes))
+        print("DATA:" + json.dumps(result, ensure_ascii=False), flush=True)
+
+    except ImportError:
+        print("DATA:" + json.dumps({"error": "apify-client not installed", "totalNotes": 0, "notes": []}, ensure_ascii=False), flush=True)
+    except Exception as e:
+        status("error", str(e)[:200])
+        print("DATA:" + json.dumps({"error": str(e)[:200], "totalNotes": 0, "notes": []}, ensure_ascii=False), flush=True)
 
 if __name__ == '__main__':
     main()
