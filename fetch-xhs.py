@@ -31,7 +31,7 @@ def main():
     try:
         from apify_client import ApifyClient
         client = ApifyClient(token)
-        ACTOR = 'curious_coder/xiaohongshu-real-time-scraper'
+        ACTOR = 'easyapi/rednote-xiaohongshu-search-scraper'
 
         status("search", f"Searching XHS for: {keyword}")
         run = client.actor(ACTOR).call(run_input={
