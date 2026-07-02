@@ -30,7 +30,7 @@ def main():
     status("init", "Initializing XHS scraper (zen-studio, no cookies)...")
     try:
         from apify_client import ApifyClient
-        client = ApifyClient(token, timeout_secs=300)
+        client = ApifyClient(token)
         ACTOR = 'zen-studio/rednote-search-scraper'
 
         status("search", f"Searching XHS for: {keyword}")
