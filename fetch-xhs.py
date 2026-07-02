@@ -31,12 +31,13 @@ def main():
     try:
         from apify_client import ApifyClient
         client = ApifyClient(token)
-        ACTOR = 'zen-studio/rednote-search-scraper'
+        ACTOR = 'habit.zhou/xiaohongshu-pro-scraper'
 
         status("search", f"Searching XHS for: {keyword}")
         run = client.actor(ACTOR).call(run_input={
+            'mode': 'search',
             'keywords': [keyword],
-            'maxResults': max(limit, 1),
+            'maxItemsPerInput': max(limit, 1),
             'sortType': 'general',
         })
 
@@ -67,22 +68,20 @@ def main():
         notes = []
         for i, item in enumerate(items):
             d = item if isinstance(item, dict) else item.__dict__
-            eng = d.get('engagement', {}) or {}
-            author = d.get('author', {}) or {}
 
             notes.append({
                 'index': i + 1,
-                'noteId': d.get('id', ''),
-                'url': d.get('url', ''),
+                'noteId': str(d.get('noteId', '')),
+                'url': d.get('noteUrl', ''),
                 'title': d.get('title', ''),
-                'content': (d.get('desc', '') or '').replace('\n', ' ').strip(),
-                'likes': str(eng.get('liked_count', 0) or 0),
-                'comments': str(eng.get('comments_count', 0) or 0),
-                'collects': str(eng.get('collected_count', 0) or 0),
-                'publishedAt': d.get('timestamp', ''),
-                'author': author.get('nickname', ''),
-                'authorUrl': author.get('userid', author.get('red_id', '')),
-                'tags': '',
+                'content': (d.get('bodyText', '') or '').replace('\n', ' ').strip(),
+                'likes': str(d.get('likes', 0) or 0),
+                'comments': str(d.get('commentsCount', 0) or 0),
+                'collects': str(d.get('collects', 0) or 0),
+                'publishedAt': d.get('publishedAt', ''),
+                'author': d.get('author', ''),
+                'authorUrl': d.get('authorId', ''),
+                'tags': ', '.join(d.get('hashtags', [])) if isinstance(d.get('hashtags', []), list) else '',
             })
 
             if (i + 1) % 10 == 0 or i == len(items) - 1:
