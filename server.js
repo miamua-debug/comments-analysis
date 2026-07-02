@@ -76,8 +76,9 @@ function spawnPython(script, args, res, envVars = {}) {
         'Connection': 'keep-alive',
         'X-Accel-Buffering': 'no',
     });
-    res.flushHeaders();  // Ensure headers sent immediately
-    res.setTimeout(0);   // Disable timeout for long-running requests
+    res.flushHeaders();
+    res.setTimeout(600000);  // 10 min timeout for slow Apify calls
+    req.setTimeout(600000);
 
     const env = { ...process.env, PYTHONUNBUFFERED: '1', PYTHONIOENCODING: 'utf-8', ...envVars };
     const py = spawn(process.env.PYTHON_BIN || 'python', [script, ...args], { env });
@@ -115,13 +116,7 @@ function spawnPython(script, args, res, envVars = {}) {
     });
 
     py.stderr.on('data', (data) => {
-        const msg = data.toString().trim();
-        console.error(`[${path.basename(script)}] ${msg}`);
-        // Forward Python errors to client as SSE progress message
-        if (!res.writableEnded) {
-            const errSse = `data: ${JSON.stringify({type:'progress',phase:'error',message:msg})}\n\n`;
-            try { res.write(errSse); } catch(e) {}
-        }
+        console.error(`[${path.basename(script)}] ${data.toString().trim()}`);
     });
 
     py.on('close', (code) => {
