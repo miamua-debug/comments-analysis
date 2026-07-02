@@ -41,7 +41,21 @@ def main():
             'noteType': 'all',
         })
 
-        items = list(client.dataset(run.dict()["default_dataset_id"]).iterate_items())
+        # Handle Pydantic v2 deprecation
+        run_dict = run.model_dump() if hasattr(run, 'model_dump') else run.dict()
+        dataset_id = run_dict.get("default_dataset_id", run_dict.get("defaultDatasetId", ""))
+        if not dataset_id:
+            status("error", "No dataset ID in run result")
+            print("DATA:" + json.dumps({"totalNotes": 0, "notes": [], "keyword": keyword}, ensure_ascii=False), flush=True)
+            return
+
+        try:
+            items = list(client.dataset(dataset_id).iterate_items())
+        except Exception as e2:
+            status("error", f"Dataset read failed: {str(e2)[:100]}")
+            print("DATA:" + json.dumps({"totalNotes": 0, "notes": [], "keyword": keyword}, ensure_ascii=False), flush=True)
+            return
+
         if not items:
             result = {"totalNotes": 0, "notes": [], "keyword": keyword}
             print("DATA:" + json.dumps(result, ensure_ascii=False), flush=True)
