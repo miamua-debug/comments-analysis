@@ -1,81 +1,102 @@
-# fetch-xhs.py - Extract Xiaohongshu notes via opencli (local only)
-import sys, json, re, argparse, subprocess, tempfile, os
-
-def status(msg):
-    print("STATUS:" + json.dumps(msg, ensure_ascii=False), flush=True)
+# fetch-xhs.py - Extract Xiaohongshu notes via Apify (zen-studio, no cookies needed)
+import sys, json, argparse, time as _time, os
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--keyword', required=True)
-    parser.add_argument('--limit', type=int, default=20)
-    parser.add_argument('--profile', default='hkzg2bpx')
+    parser.add_argument('--keyword', help='Search keyword')
+    parser.add_argument('--token', help='Apify API token')
+    parser.add_argument('--limit', type=int, default=20, help='Max notes')
+    parser.add_argument('--file', help='JSON config file {keyword, apifyToken, limit}')
     args = parser.parse_args()
 
-    status({"phase": "search", "message": f"Searching XHS for: {args.keyword}"})
+    if args.file:
+        with open(args.file, 'r', encoding='utf-8-sig') as f:
+            config = json.load(f)
+        keyword = config.get('keyword', '')
+        token = config.get('apifyToken', '')
+        limit = int(config.get('limit', 20))
+    else:
+        keyword = args.keyword or ''
+        token = args.token or ''
+        limit = args.limit
 
-    # Step 1: Search
+    if not keyword or not token:
+        print(json.dumps({"error": "keyword and apifyToken required"})); sys.exit(1)
+
+    def status(phase, message, **kw):
+        d = {"phase": phase, "message": message}; d.update(kw)
+        print("STATUS:" + json.dumps(d, ensure_ascii=False), flush=True)
+
+    status("init", "Initializing XHS scraper (zen-studio, no cookies)...")
     try:
-        result = subprocess.run(
-            f'opencli --profile {args.profile} xiaohongshu search "{args.keyword}" --limit {args.limit} -f json',
-            shell=True, capture_output=True, text=True, timeout=120, encoding='utf-8', errors='replace'
-        )
-        output = result.stdout.strip()
-        start = output.find('['); end = output.rfind(']')
-        if start >= 0 and end > start:
-            search_data = json.loads(output[start:end+1])
-        else:
-            search_data = []
-    except Exception as e:
-        status({"phase": "error", "message": f"Search failed: {e}"})
-        search_data = []
+        from apify_client import ApifyClient
+        client = ApifyClient(token, timeout_secs=300)
+        ACTOR = 'zen-studio/rednote-search-scraper'
 
-    total = len(search_data) if isinstance(search_data, list) else 0
-    if total == 0:
-        print("DATA:" + json.dumps({"totalNotes": 0, "notes": []}, ensure_ascii=False), flush=True)
-        return
-
-    status({"phase": "search", "message": f"Found {total} notes", "total": total})
-
-    # Step 2: Get details
-    notes = []
-    for i, item in enumerate(search_data):
-        url = item.get('url', '')
-        note_id = ''
-        if m := re.search(r'search_result/([a-f0-9]+)', url): note_id = m.group(1)
-
-        content, collects, comments, tags = '', '0', '0', ''
-        if url:
-            try:
-                result2 = subprocess.run(
-                    f'opencli --profile {args.profile} xiaohongshu note "{url}" -f json',
-                    shell=True, capture_output=True, text=True, timeout=30, encoding='utf-8', errors='replace'
-                )
-                detail_output = result2.stdout.strip()
-                ds = detail_output.find('['); de = detail_output.rfind(']')
-                if ds >= 0 and de > ds:
-                    detail = json.loads(detail_output[ds:de+1])
-                    for d_item in detail:
-                        fld = d_item.get('field', ''); val = d_item.get('value', '')
-                        if fld == 'content': content = val
-                        elif fld == 'collects': collects = val
-                        elif fld == 'comments': comments = val
-                        elif fld == 'tags': tags = val
-            except: pass
-
-        notes.append({
-            'index': i+1, 'noteId': note_id, 'url': url, 'title': item.get('title',''),
-            'content': (content or '').replace('\n',' ').strip(),
-            'likes': str(item.get('likes','0')), 'comments': comments, 'collects': collects,
-            'publishedAt': item.get('published_at',''), 'author': item.get('author',''),
-            'authorUrl': item.get('author_url',''), 'tags': tags
+        status("search", f"Searching XHS for: {keyword}")
+        run = client.actor(ACTOR).call(run_input={
+            'keywords': [keyword],
+            'maxResults': max(limit, 1),
+            'sortType': 'general',
         })
 
-        if (i+1) % 5 == 0 or i == total - 1:
-            status({"phase": "detail", "message": f"Fetched {i+1}/{total}", "current": i+1, "total": total})
+        # Handle Pydantic v2
+        run_dict = run.model_dump() if hasattr(run, 'model_dump') else run.dict()
+        dataset_id = run_dict.get("default_dataset_id", run_dict.get("defaultDatasetId", ""))
+        if not dataset_id:
+            status("error", "No dataset ID in run result")
+            print("DATA:" + json.dumps({"totalNotes": 0, "notes": [], "keyword": keyword}, ensure_ascii=False), flush=True)
+            return
 
-    status({"phase": "complete", "totalNotes": len(notes)})
-    result_data = {'keyword': args.keyword, 'totalNotes': len(notes), 'notes': notes}
-    print("DATA:" + json.dumps(result_data, ensure_ascii=False), flush=True)
+        # Retry dataset read
+        items = []
+        for attempt in range(3):
+            try:
+                items = list(client.dataset(dataset_id).iterate_items())
+                break
+            except Exception as e2:
+                if attempt < 2:
+                    status("detail", f"Dataset retry {attempt+1}/3...")
+                    _time.sleep(5)
+
+        if not items:
+            result = {"totalNotes": 0, "notes": [], "keyword": keyword}
+            print("DATA:" + json.dumps(result, ensure_ascii=False), flush=True)
+            return
+
+        notes = []
+        for i, item in enumerate(items):
+            d = item if isinstance(item, dict) else item.__dict__
+            eng = d.get('engagement', {}) or {}
+            author = d.get('author', {}) or {}
+
+            notes.append({
+                'index': i + 1,
+                'noteId': d.get('id', ''),
+                'url': d.get('url', ''),
+                'title': d.get('title', ''),
+                'content': (d.get('desc', '') or '').replace('\n', ' ').strip(),
+                'likes': str(eng.get('liked_count', 0) or 0),
+                'comments': str(eng.get('comments_count', 0) or 0),
+                'collects': str(eng.get('collected_count', 0) or 0),
+                'publishedAt': d.get('timestamp', ''),
+                'author': author.get('nickname', ''),
+                'authorUrl': author.get('userid', author.get('red_id', '')),
+                'tags': '',
+            })
+
+            if (i + 1) % 10 == 0 or i == len(items) - 1:
+                status("detail", f"Parsed {i+1}/{len(items)} notes", current=i+1, total=len(items))
+
+        result = {'keyword': keyword, 'totalNotes': len(notes), 'notes': notes}
+        status("complete", f"Total: {len(notes)} notes", totalNotes=len(notes))
+        print("DATA:" + json.dumps(result, ensure_ascii=False), flush=True)
+
+    except ImportError:
+        print("DATA:" + json.dumps({"error": "apify-client not installed", "totalNotes": 0, "notes": []}, ensure_ascii=False), flush=True)
+    except Exception as e:
+        status("error", str(e)[:200])
+        print("DATA:" + json.dumps({"error": str(e)[:200], "totalNotes": 0, "notes": []}, ensure_ascii=False), flush=True)
 
 if __name__ == '__main__':
     main()
