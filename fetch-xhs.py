@@ -3,8 +3,8 @@ import sys, json, argparse
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--keyword', required=True, help='Search keyword')
-    parser.add_argument('--token', required=True, help='Apify API token')
+    parser.add_argument('--keyword', help='Search keyword')
+    parser.add_argument('--token', help='Apify API token')
     parser.add_argument('--limit', type=int, default=20, help='Max notes')
     parser.add_argument('--file', help='JSON config file {keyword, apifyToken, limit}')
     args = parser.parse_args()
