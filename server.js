@@ -137,10 +137,24 @@ app.post('/api/fetch-reviews', (req, res) => {
     spawnPython(script, ['--sku', sku], res);
 });
 
-// ===== Fetch JD Store SKUs =====
+// ===== Fetch JD Store SKUs (Apify if online, HTML scrape if local) =====
 app.post('/api/fetch-store-skus', (req, res) => {
-    const { shopId, keyword, targetShop } = req.body;
-    if (!shopId || !keyword) return res.status(400).json({ error: 'shopId and keyword required' });
+    const { shopId, keyword, targetShop, apifyToken } = req.body;
+    if (!keyword) return res.status(400).json({ error: 'keyword required' });
+
+    // If Apify token is provided (online/Railway), use Apify script
+    if (apifyToken) {
+        const tmpFile = path.join(require('os').tmpdir(), `jd_skus_${Date.now()}.json`);
+        fs.writeFileSync(tmpFile, JSON.stringify({
+            keyword, apifyToken, shopId: shopId || '', targetShop: targetShop || '',
+        }), 'utf-8');
+        const script = path.join(__dirname, 'fetch-jd-skus-apify.py');
+        spawnPython(script, ['--file', tmpFile], res, { PYTHONIOENCODING: 'utf-8' });
+        return;
+    }
+
+    // Local fallback: HTML scraping
+    if (!shopId) return res.status(400).json({ error: 'shopId required for local mode' });
     const script = path.join(__dirname, 'fetch-store-skus.py');
     const args = ['--shopId', shopId, '--keyword', keyword];
     if (targetShop) args.push('--targetShop', targetShop);

@@ -1833,7 +1833,7 @@ async function startStoreFetch() {
     var maxPages = platform === 'tmall' ? 2 : 10;
     var body = (platform === 'douyin' || platform === 'tmall')
       ? JSON.stringify({ keyword: keyword, apifyToken: state.apifyToken, maxPages: maxPages, shopId: shopId || '' })
-      : JSON.stringify({ platform: platform, shopId: shopId, keyword: keyword, targetShop: targetShop || '' });
+      : JSON.stringify({ platform: platform, shopId: shopId, keyword: keyword, targetShop: targetShop || '', apifyToken: state.apifyToken || '' });
 
     var resp = await fetch(window.location.origin + apiUrl, {
       method: 'POST',
