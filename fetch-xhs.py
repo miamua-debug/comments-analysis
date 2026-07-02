@@ -30,7 +30,7 @@ def main():
     status("init", "Initializing XHS scraper via Apify...")
     try:
         from apify_client import ApifyClient
-        client = ApifyClient(token)
+        client = ApifyClient(token, timeout_secs=300)
         ACTOR = 'easyapi/rednote-xiaohongshu-search-scraper'
 
         status("search", f"Searching XHS for: {keyword}")
