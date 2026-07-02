@@ -109,9 +109,15 @@ def main():
                 all_skus = {}
                 target_shop = target_shop
         else:
-            # Auto-detect: prefer shop with keyword in name, then largest
-            keyword_shops = [sn for sn in shop_counts if keyword in sn]
+            # Auto-detect: prefer shop matching keyword brand (first 2-4 chars), then largest
+            # Match shops containing the beginning of the keyword (e.g. '美团' from '美团收银系统')
+            brand_parts = []
+            for n in [4, 3, 2]:
+                if len(keyword) >= n:
+                    brand_parts.append(keyword[:n])
+            keyword_shops = [sn for sn in shop_counts if any(p in sn for p in brand_parts)]
             if keyword_shops:
+                # Pick largest among keyword-matching shops
                 target_shop = max(keyword_shops, key=lambda sn: shop_counts[sn])
             else:
                 target_shop = max(shop_counts, key=shop_counts.get)
