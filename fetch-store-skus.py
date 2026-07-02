@@ -101,8 +101,13 @@ def main():
             if filtered:
                 all_skus = filtered
             else:
-                status({"phase": "filter", "message": f"Shop '{target_shop}' not found, keeping all {len(all_skus)} SKUs from top shop"})
-                target_shop = max(shop_counts, key=shop_counts.get) or target_shop
+                # Suggest closest matches
+                suggestions = [sn for sn in shop_counts if any(c in sn for c in target_shop.split())]
+                if not suggestions:
+                    suggestions = sorted(shop_counts, key=lambda sn: -shop_counts[sn])[:3]
+                status({"phase": "filter", "message": f"Shop '{target_shop}' not found. Available shops with '{target_shop}': {', '.join(suggestions[:5])}"})
+                all_skus = {}
+                target_shop = target_shop
         else:
             # Auto-detect: prefer shop with keyword in name, then largest
             keyword_shops = [sn for sn in shop_counts if keyword in sn]
